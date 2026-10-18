@@ -72,7 +72,7 @@ Regras recomendadas, sem exagero para uma equipe de duas pessoas:
 - exigir que a verificação **Build e testes** (job do CI) passe;
 - bloquear *force push* e a exclusão da `main`.
 
-Como configurar: **Settings → Branches → Add branch ruleset / protection rule** para `main`. Essas regras dependem do plano da conta e de permissão de administrador; o estado real de ativação é acompanhado na Issue de configuração das regras de proteção.
+Como configurar: **Settings → Branches → Add branch ruleset / protection rule** para `main`. Configurar essas regras exige permissão de administrador do repositório. O estado real de ativação é acompanhado na Issue #74.
 
 ## Migrations (Flyway)
 
