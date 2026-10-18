@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build e testes
+    # Versão fixa do runner: "ubuntu-latest" passa a apontar para outra versão do Ubuntu em 19/10/2026.
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    # Banco descartável, criado só para esta execução. Não usa segredos:
+    # a senha abaixo vale apenas para este container temporário.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: classbook_test
+          POSTGRES_USER: classbook
+          POSTGRES_PASSWORD: classbook
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U classbook -d classbook_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DB_URL: jdbc:postgresql://localhost:5432/classbook_test
+      DB_USERNAME: classbook
+      DB_PASSWORD: classbook
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v6
+
+      - name: Configurar Java 21 e cache do Maven
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+
+      # Compila, roda os testes (resultados do Surefire aparecem no log) e empacota.
+      # Qualquer falha de compilação, teste ou verificação reprova o job.
+      - name: Maven verify
+        run: mvn -B verify
