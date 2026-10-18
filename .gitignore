@@ -1,0 +1,53 @@
+### Maven ###
+target/
+.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+HELP.md
+
+### Configuração local e segredos (nunca versionar) ###
+.env
+.env.*
+!.env.example
+application-local.properties
+application-local.yml
+*.local
+
+### Logs ###
+*.log
+logs/
+
+### IntelliJ IDEA ###
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### VS Code ###
+.vscode/
+
+### Eclipse / STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### Sistema operacional ###
+.DS_Store
+Thumbs.db
