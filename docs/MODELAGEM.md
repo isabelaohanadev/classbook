@@ -1,6 +1,6 @@
 # Modelagem do ClassBook
 
-> **Proposta inicial.** A modelagem abaixo **deve ser revisada em conjunto pelos dois integrantes antes da implementação** (Issues #3 e #4). Nenhuma entidade, tabela ou migration foi criada ainda.
+> **Em revisão (Issue #3).** `Autor` e `Livro` já foram revisados; `Categoria`, `Disciplina` e `MaterialDigital` ainda aguardam a revisão (ver [Decisões da revisão conjunta](#decisões-da-revisão-conjunta)). Os relacionamentos serão definidos na Issue #4. Nenhuma entidade, tabela ou migration foi criada ainda.
 
 ## Entidades e atributos
 
@@ -26,12 +26,20 @@ Nome **não** é único (homônimos existem).
 | --- | --- | --- | --- |
 | id | Long | `id` | PK |
 | titulo | String | `titulo VARCHAR(200)` | obrigatório |
-| isbn | String | `isbn VARCHAR(13)` | obrigatório, **único**, guardado só com dígitos (10 ou 13) |
+| isbn | String | `isbn VARCHAR(13)` | obrigatório, **único**, guardado sem hífens nem espaços, em maiúsculas (10 ou 13 caracteres; só o ISBN-10 pode terminar em `X`) |
 | anoPublicacao | Integer | `ano_publicacao INTEGER` | opcional; não pode ser futuro |
 | descricao | String | `descricao TEXT` | opcional |
 | editora | String | `editora VARCHAR(120)` | opcional |
 | autor | Autor | `autor_id BIGINT` | **obrigatório**, FK para `autor` |
 | categoria | Categoria | `categoria_id BIGINT` | **opcional**, FK para `categoria` |
+
+Sobre o ISBN:
+
+- O valor recebido é normalizado (remove hífens e espaços, converte para maiúsculas) e validado pelo formato `^(\d{9}[\dX]|\d{13})$`. O dígito verificador **não** é conferido, para manter o escopo simples.
+- A unicidade vale para o texto guardado: o mesmo livro cadastrado uma vez com ISBN-10 e outra com ISBN-13 não é detectado como duplicado.
+- O tratamento do erro de duplicidade (409) é implementado na Issue #46.
+
+O ano de publicação "não futuro" não cabe numa anotação do Bean Validation para `Integer`; a regra é conferida no `service` (ou em um validador próprio).
 
 ### Categoria (`categoria`)
 
@@ -130,7 +138,7 @@ erDiagram
 - **Relacionamentos unidirecionais, só no lado "muitos".** `Livro` conhece `Autor`, mas `Autor` não guarda uma lista de livros. Isso evita recursão infinita na serialização JSON, carregamentos desnecessários e código a mais. A consulta "livros de um autor" é feita por query no repositório.
 - **`@ManyToOne(fetch = LAZY)`** em todas as associações, para não carregar dados que ninguém pediu.
 - **DTOs na entrada e na saída.** As entidades nunca são expostas pela API. Sugestão: `XxxRequest` e `XxxResponse` como *records* Java, em `dto/`. As respostas de `Livro` trazem resumos aninhados (`autor: {id, nome}`, `categoria: {id, nome}`), e as de `MaterialDigital` trazem `disciplina: {id, nome}`.
-- **Um autor por livro.** Atende ao requisito "relacionamento com Autor" com o menor custo. Coautoria exigiria a tabela `livro_autor`; fica como ponto em aberto.
+- **Um autor por livro.** Atende ao requisito "relacionamento com Autor" com o menor custo. Coautoria exigiria a tabela `livro_autor` e mudaria a API e a interface; fica fora desta versão (decidido na Issue #3, ver [Limitações assumidas](REQUISITOS.md#limitações-assumidas)).
 - **Categoria opcional em Livro.** Reduz o acoplamento entre as duas frentes de trabalho: o CRUD de Livro funciona sem esperar o CRUD de Categoria. A associação é ligada na Issue #26, que depende explicitamente das Issues #30 e #31.
 - **Schema só por Flyway.** A pasta `db/migration` é a fonte da verdade e o Hibernate roda com `ddl-auto=validate`. A migration inicial cria as cinco tabelas já revisadas; mudanças posteriores entram em novas migrations (ver [CONTRIBUTING](../CONTRIBUTING.md#migrations-flyway)).
 - **Unicidade onde há regra de negócio:** ISBN, código da disciplina e nome da categoria. Nome de autor não, por haver homônimos.
@@ -148,14 +156,18 @@ Serve para o backend e a interface JavaFX avançarem em paralelo. Será refinado
 | Disciplina | `GET/POST /api/disciplinas`, `GET/PUT/DELETE /api/disciplinas/{id}` |
 | MaterialDigital | `GET/POST /api/materiais`, `GET/PUT/DELETE /api/materiais/{id}` |
 
-- **Pesquisa avançada:** `GET /api/livros?titulo=&autorId=&categoriaId=` (filtros opcionais e combináveis).
+- **Pesquisa avançada:** `GET /api/livros?titulo=&autorId=&categoriaId=` (filtros opcionais e combináveis; o filtro de autor usa só o ID).
 - **Códigos HTTP:** `200` (consulta, edição), `201` com `Location` (cadastro), `204` (exclusão), `400` (dados inválidos), `404` (ID inexistente), `409` (duplicidade ou registro em uso).
 
-## Pontos em aberto para a revisão conjunta
+## Decisões da revisão conjunta
 
-1. Um ou vários autores por livro?
-2. Categoria obrigatória ou opcional em Livro?
-3. ISBN obrigatório? Guardar com ou sem hífens?
-4. `tipo`, `formato` e `serieEscolar` como texto livre validado ou como enum Java?
-5. A busca por autor usa o ID, o nome ou ambos?
-6. Nome de categoria único? Código de disciplina único?
+Respostas aos pontos em aberto da proposta (Issue #3). As decisões 1, 2, 3 e 5 dizem respeito a `Autor` e `Livro`; as decisões 4 e 6 ficam para a revisão de `Categoria`, `Disciplina` e `MaterialDigital`.
+
+| # | Pergunta | Decisão |
+| --- | --- | --- |
+| 1 | Um ou vários autores por livro? | **Um.** `livro.autor_id` obrigatório. Coautoria fica fora desta versão (ver *Justificativas*). |
+| 2 | Categoria obrigatória ou opcional em Livro? | **Opcional**, como já decidido na Issue #2 ([REQUISITOS](REQUISITOS.md#decisões-da-revisão-de-requisitos)). |
+| 3 | ISBN obrigatório? Com ou sem hífens? | **Obrigatório e único**, guardado **sem hífens** (normalizado). Detalhes em [Livro](#livro-livro). |
+| 4 | `tipo`, `formato` e `serieEscolar` como texto livre validado ou como enum Java? | **Pendente (Juan)**, junto com a revisão de `Categoria`, `Disciplina` e `MaterialDigital`. |
+| 5 | A busca por autor usa o ID, o nome ou ambos? | **Só o ID** (`autorId`). O nome do autor não é único, então uma busca por nome seria ambígua; na interface o autor é escolhido em uma lista. |
+| 6 | Nome de categoria único? Código de disciplina único? | **Pendente (Juan)**. O resultado define o que entra no RF09 e na Issue #46. |
