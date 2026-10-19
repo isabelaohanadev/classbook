@@ -120,4 +120,4 @@ Responsabilidades compartilhadas: requisitos e modelagem, configuração inicial
 
 ## Licença
 
-A licença ainda será definida pelos integrantes.
+Distribuído sob a licença MIT. Veja o arquivo [LICENSE](LICENSE).

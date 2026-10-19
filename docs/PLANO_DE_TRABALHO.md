@@ -161,6 +161,5 @@ Da primeira à última tarefa, respeitando todas as dependências. É a mesma or
 ## Informações pendentes (não inventar)
 
 - Datas de entrega e de avaliação.
-- Licença do repositório (os integrantes ainda não escolheram).
 - Como e quando o professor terá acesso ao repositório e ao Project.
 - Regras de proteção da `main`: o estado real de ativação é acompanhado na Issue #74.
