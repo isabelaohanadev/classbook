@@ -68,7 +68,7 @@ Sem nenhum filtro, a pesquisa devolve todos os livros. Quando há mais de um fil
 
 ## Limitações assumidas
 
-- Um livro tem **um único autor** nesta versão (coautoria exigiria uma tabela de associação; ver pontos em aberto na modelagem).
+- Um livro tem **um único autor** nesta versão (coautoria exigiria uma tabela de associação; ver [decisões da modelagem](MODELAGEM.md#decisões-da-revisão-conjunta)).
 - Materiais digitais guardam apenas a **URL**; o sistema não armazena arquivos.
 - Sem controle de usuários: qualquer cliente da API pode executar todas as operações.
 - A interface é local (desktop) e depende de o backend estar em execução.
@@ -84,6 +84,6 @@ Respostas às perguntas em aberto do rascunho (Issue #2):
 | --- | --- | --- |
 | 1 | A busca avançada também deve cobrir materiais digitais? | **Não.** Cobre somente livros, como no backlog (#27 e #28). Ver *Funcionalidade extra* e *Limitações assumidas*. |
 | 2 | A categoria é opcional em um livro? | **Sim.** O livro pode ser cadastrado sem categoria (RF02), como na [MODELAGEM](MODELAGEM.md#livro-livro). |
-| 3 | O ISBN é obrigatório? | **Sim.** É obrigatório, único e guardado só com dígitos (10 ou 13). O tratamento de duplicidade é implementado na Issue #46. |
+| 3 | O ISBN é obrigatório? | **Sim.** É obrigatório, único e guardado sem hífens (10 ou 13 caracteres; o ISBN-10 pode terminar em `X`). O tratamento de duplicidade é implementado na Issue #46. |
 | 4 | As listagens precisam de paginação? | **Não.** O volume esperado é pequeno (RNF10). |
 | 5 | Há alguma exigência específica da disciplina ou do professor que não esteja listada? | **Pendente.** O enunciado não está no repositório e a resposta não pode ser presumida. A conferência é feita na Issue #78. |
