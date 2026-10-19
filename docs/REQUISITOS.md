@@ -34,7 +34,7 @@ Autenticação e autorização, empréstimo ou reserva de livros, upload de arqu
 | RF06 | Pesquisar livros por título, autor e categoria, com filtros combináveis (ver *Funcionalidade extra*). |
 | RF07 | Validar os dados de entrada e responder com mensagens claras em caso de erro. |
 | RF08 | Responder erros com códigos HTTP coerentes: 400 (dados inválidos), 404 (ID inexistente), 409 (conflito) e 500 (erro inesperado), em formato padronizado. |
-| RF09 | Impedir duplicidades relevantes: ISBN do livro e, conforme a decisão da Issue #46, código da disciplina e nome da categoria. |
+| RF09 | Impedir duplicidades relevantes: ISBN do livro, código da disciplina e nome da categoria (decisão da Issue #3, ver [MODELAGEM](MODELAGEM.md#enums-e-unicidade)). |
 | RF10 | Impedir a exclusão de um registro que ainda é referenciado (ex.: autor com livros), respondendo 409. |
 | RF11 | Documentar todas as rotas no Swagger/OpenAPI. |
 | RF12 | Oferecer interface desktop que permita navegar pelo catálogo, buscar e filtrar livros, cadastrar e editar registros, ver detalhes de um livro e abrir os links dos materiais digitais, exibindo mensagens de sucesso e de erro. |
