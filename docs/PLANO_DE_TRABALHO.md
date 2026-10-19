@@ -162,4 +162,5 @@ Da primeira à última tarefa, respeitando todas as dependências. É a mesma or
 
 - Datas de entrega e de avaliação.
 - Como e quando o professor terá acesso ao repositório e ao Project.
+- Exigências do enunciado da disciplina que ainda não constem em `docs/REQUISITOS.md`: a conferência é acompanhada na Issue #78.
 - Regras de proteção da `main`: o estado real de ativação é acompanhado na Issue #74.

@@ -1,6 +1,6 @@
 # Requisitos do ClassBook
 
-> **Rascunho inicial.** Este documento é a proposta de partida e precisa ser confirmado pelos dois integrantes (Issue #2). Alterações de escopo devem ser registradas aqui por PR.
+> **Revisado na Issue #2.** As perguntas em aberto do rascunho foram respondidas na seção [Decisões da revisão de requisitos](#decisões-da-revisão-de-requisitos). A conferência com o enunciado da disciplina é acompanhada na Issue #78. Alterações de escopo devem ser registradas aqui por PR.
 
 ## Objetivo do sistema
 
@@ -34,7 +34,7 @@ Autenticação e autorização, empréstimo ou reserva de livros, upload de arqu
 | RF06 | Pesquisar livros por título, autor e categoria, com filtros combináveis (ver *Funcionalidade extra*). |
 | RF07 | Validar os dados de entrada e responder com mensagens claras em caso de erro. |
 | RF08 | Responder erros com códigos HTTP coerentes: 400 (dados inválidos), 404 (ID inexistente), 409 (conflito) e 500 (erro inesperado), em formato padronizado. |
-| RF09 | Impedir duplicidades relevantes: ISBN do livro, código da disciplina e nome da categoria (a confirmar na Issue #46). |
+| RF09 | Impedir duplicidades relevantes: ISBN do livro e, conforme a decisão da Issue #46, código da disciplina e nome da categoria. |
 | RF10 | Impedir a exclusão de um registro que ainda é referenciado (ex.: autor com livros), respondendo 409. |
 | RF11 | Documentar todas as rotas no Swagger/OpenAPI. |
 | RF12 | Oferecer interface desktop que permita navegar pelo catálogo, buscar e filtrar livros, cadastrar e editar registros, ver detalhes de um livro e abrir os links dos materiais digitais, exibindo mensagens de sucesso e de erro. |
@@ -64,7 +64,7 @@ Pesquisa de livros combinando filtros opcionais:
 
 Sem nenhum filtro, a pesquisa devolve todos os livros. Quando há mais de um filtro, todos precisam ser satisfeitos (E lógico). A rota proposta é `GET /api/livros` com parâmetros de consulta (ver [MODELAGEM](MODELAGEM.md#contrato-inicial-da-api-proposta)). Na interface JavaFX, a tela de catálogo oferece a busca e os filtros.
 
-**Ponto a decidir na Issue #2:** o enunciado de contexto fala em pesquisa de "livros e materiais", mas o backlog atual cobre apenas livros (Issues #27 e #28). Se a busca em materiais for desejada (por exemplo, por título e disciplina), é preciso criar uma Issue própria e avaliar o impacto no escopo.
+**Decidido na Issue #2:** a pesquisa avançada cobre **somente livros** (Issues #27 e #28). Os materiais digitais continuam acessíveis pela listagem e pela consulta por ID. Uma busca em materiais (por exemplo, por título e disciplina) fica fora desta versão e, se for desejada depois, precisa de uma Issue própria.
 
 ## Limitações assumidas
 
@@ -72,13 +72,18 @@ Sem nenhum filtro, a pesquisa devolve todos os livros. Quando há mais de um fil
 - Materiais digitais guardam apenas a **URL**; o sistema não armazena arquivos.
 - Sem controle de usuários: qualquer cliente da API pode executar todas as operações.
 - A interface é local (desktop) e depende de o backend estar em execução.
-- Sem paginação obrigatória nas listagens; pode ser adicionada se o volume exigir.
+- A pesquisa avançada cobre somente livros; não há busca com filtros em materiais digitais.
+- Sem paginação nas listagens; pode ser adicionada se o volume exigir.
 - Datas de entrega e de avaliação não estão registradas aqui; serão incluídas somente quando forem informadas.
 
-## Perguntas em aberto para a revisão de requisitos
+## Decisões da revisão de requisitos
 
-1. A busca avançada também deve cobrir materiais digitais?
-2. A categoria é opcional em um livro? (proposta: sim)
-3. O ISBN é obrigatório? (proposta: sim, único e normalizado)
-4. As listagens precisam de paginação?
-5. Há alguma exigência específica da disciplina ou do professor que não esteja listada?
+Respostas às perguntas em aberto do rascunho (Issue #2):
+
+| # | Pergunta | Decisão |
+| --- | --- | --- |
+| 1 | A busca avançada também deve cobrir materiais digitais? | **Não.** Cobre somente livros, como no backlog (#27 e #28). Ver *Funcionalidade extra* e *Limitações assumidas*. |
+| 2 | A categoria é opcional em um livro? | **Sim.** O livro pode ser cadastrado sem categoria (RF02), como na [MODELAGEM](MODELAGEM.md#livro-livro). |
+| 3 | O ISBN é obrigatório? | **Sim.** É obrigatório, único e guardado só com dígitos (10 ou 13). O tratamento de duplicidade é implementado na Issue #46. |
+| 4 | As listagens precisam de paginação? | **Não.** O volume esperado é pequeno (RNF10). |
+| 5 | Há alguma exigência específica da disciplina ou do professor que não esteja listada? | **Pendente.** O enunciado não está no repositório e a resposta não pode ser presumida. A conferência é feita na Issue #78. |
