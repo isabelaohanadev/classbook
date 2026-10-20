@@ -33,7 +33,7 @@ Autenticação e autorização, empréstimo ou reserva de livros, upload de arqu
 | RF05 | Cadastrar, editar, listar, consultar por ID e excluir **materiais digitais**, cada um vinculado a uma disciplina. |
 | RF06 | Pesquisar livros por título, autor e categoria, com filtros combináveis (ver *Funcionalidade extra*). |
 | RF07 | Validar os dados de entrada e responder com mensagens claras em caso de erro. |
-| RF08 | Responder erros com códigos HTTP coerentes: 400 (dados inválidos), 404 (ID inexistente), 409 (conflito) e 500 (erro inesperado), em formato padronizado. |
+| RF08 | Responder erros com códigos HTTP coerentes: 400 (dados inválidos, inclusive o ID de autor, categoria ou disciplina inexistente no corpo), 404 (ID inexistente na rota), 409 (conflito) e 500 (erro inesperado), em formato padronizado. |
 | RF09 | Impedir duplicidades relevantes: ISBN do livro, código da disciplina e nome da categoria (decisão da Issue #3, ver [MODELAGEM](MODELAGEM.md#enums-e-unicidade)). |
 | RF10 | Impedir a exclusão de um registro que ainda é referenciado (ex.: autor com livros), respondendo 409. |
 | RF11 | Documentar todas as rotas no Swagger/OpenAPI. |
