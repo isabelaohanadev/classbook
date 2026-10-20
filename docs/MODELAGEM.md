@@ -1,6 +1,6 @@
 # Modelagem do ClassBook
 
-> **Revisada na Issue #3; relacionamentos em definição na Issue #4.** As cinco entidades foram revisadas e as decisões estão em [Decisões da revisão conjunta](#decisões-da-revisão-conjunta). Livro–Autor, Livro–Categoria e o contrato de Autor e Livro estão definidos (ver [Decisões dos relacionamentos](#decisões-dos-relacionamentos)); MaterialDigital–Disciplina e o contrato de Categoria, Disciplina e MaterialDigital aguardam a parte do Juan. Nenhuma entidade, tabela ou migration foi criada ainda.
+> **Revisada nas Issues #3 e #4.** As cinco entidades foram revisadas e as decisões estão em [Decisões da revisão conjunta](#decisões-da-revisão-conjunta). Os três relacionamentos e o contrato inicial da API estão definidos (ver [Decisões dos relacionamentos](#decisões-dos-relacionamentos)). Nenhuma entidade, tabela ou migration foi criada ainda.
 
 ## Entidades e atributos
 
@@ -116,7 +116,15 @@ Excluir um autor, categoria ou disciplina que ainda é referenciado deve respond
 
 ### MaterialDigital → Disciplina
 
-> **Pendente (Juan, Issue #4).** Detalhar no mesmo formato de Livro → Autor: cardinalidade, nulabilidade, exclusão, mapeamento JPA e campos da API.
+| Aspecto | Definição |
+| --- | --- |
+| Cardinalidade | N:1. Um material pertence a exatamente uma disciplina; uma disciplina pode ter vários materiais ou nenhum. |
+| Lado dono da FK | `material_digital.disciplina_id` |
+| Nulabilidade | `NOT NULL`: todo material tem disciplina. |
+| Exclusão | `ON DELETE RESTRICT`: uma disciplina com materiais não é excluída (`409`). Excluir um material não afeta a disciplina. |
+| Mapeamento JPA | `@ManyToOne(fetch = LAZY, optional = false)` com `@JoinColumn(name = "disciplina_id", nullable = false)`. Unidirecional e sem `cascade`: `Disciplina` não tem lista de materiais. |
+| Carregamento | A listagem de materiais carrega a disciplina na mesma consulta (`@EntityGraph(attributePaths = "disciplina")` ou `JOIN FETCH`). Aqui o `JOIN` simples serve, porque a disciplina é obrigatória. |
+| API | Entrada: `disciplinaId` (obrigatório). Saída: `disciplina: {id, nome, codigo}`. O `codigo` entra no resumo porque o nome da disciplina não é único (a mesma disciplina existe em séries diferentes). |
 
 ### Regras comuns às relações
 
@@ -179,7 +187,7 @@ erDiagram
 
 - **Relacionamentos unidirecionais, só no lado "muitos".** `Livro` conhece `Autor`, mas `Autor` não guarda uma lista de livros. Isso evita recursão infinita na serialização JSON, carregamentos desnecessários e código a mais. A consulta "livros de um autor" é feita por query no repositório.
 - **`@ManyToOne(fetch = LAZY)`** em todas as associações, para não carregar dados que ninguém pediu.
-- **DTOs na entrada e na saída.** As entidades nunca são expostas pela API. Sugestão: `XxxRequest` e `XxxResponse` como *records* Java, em `dto/`. As respostas de `Livro` trazem resumos aninhados (`autor: {id, nome}`, `categoria: {id, nome}`), e as de `MaterialDigital` trazem `disciplina: {id, nome}`.
+- **DTOs na entrada e na saída.** As entidades nunca são expostas pela API. Sugestão: `XxxRequest` e `XxxResponse` como *records* Java, em `dto/`. As respostas de `Livro` trazem resumos aninhados (`autor: {id, nome}`, `categoria: {id, nome}`), e as de `MaterialDigital` trazem `disciplina: {id, nome, codigo}` (o `codigo` desambigua disciplinas de mesmo nome).
 - **Um autor por livro.** Atende ao requisito "relacionamento com Autor" com o menor custo. Coautoria exigiria a tabela `livro_autor` e mudaria a API e a interface; fica fora desta versão (decidido na Issue #3, ver [Limitações assumidas](REQUISITOS.md#limitações-assumidas)).
 - **Categoria opcional em Livro.** Reduz o acoplamento entre as duas frentes de trabalho: o CRUD de Livro funciona sem esperar o CRUD de Categoria. A associação é ligada na Issue #26, que depende explicitamente das Issues #30 e #31.
 - **Schema só por Flyway.** A pasta `db/migration` é a fonte da verdade e o Hibernate roda com `ddl-auto=validate`. A migration inicial cria as cinco tabelas já revisadas; mudanças posteriores entram em novas migrations (ver [CONTRIBUTING](../CONTRIBUTING.md#migrations-flyway)).
@@ -189,7 +197,7 @@ erDiagram
 
 ## Contrato inicial da API (proposta)
 
-Serve para o backend e a interface JavaFX avançarem em paralelo. Validado na Issue #4 para Autor e Livro; Categoria, Disciplina e MaterialDigital aguardam a parte do Juan. Será documentado no Swagger.
+Serve para o backend e a interface JavaFX avançarem em paralelo. Validado na Issue #4 para os cinco recursos. Será documentado no Swagger.
 
 | Recurso | Rotas |
 | --- | --- |
@@ -264,11 +272,77 @@ Corpo de `LivroRequest` (entrada de `POST` e `PUT`):
 | `POST /api/livros`, `PUT /api/livros/{id}` | `409` | ISBN já cadastrado em outro livro |
 | `GET`, `PUT` e `DELETE /api/livros/{id}` | `404` | livro inexistente |
 | `DELETE /api/autores/{id}` | `409` | autor com livros |
-| `DELETE /api/categorias/{id}` | `409` | categoria com livros |
 
 ### Categoria, Disciplina e MaterialDigital
 
-> **Pendente (Juan, Issue #4).** Confirmar as rotas e os códigos das tabelas acima para esses três recursos e registrar aqui o que for específico deles (por exemplo, `409` ao excluir disciplina com materiais e `400` para `disciplinaId` inexistente).
+As rotas e as tabelas de códigos acima valem sem mudanças para os três recursos. Como em livros, o `PUT` substitui o registro inteiro (campo opcional ausente ou `null` limpa o valor), campos opcionais sem valor vêm como `null` na resposta e os enums trafegam pelo nome exato da constante, em maiúsculas (`"LITERATURA"`, `"PRIMEIRA_SERIE"`, `"PDF"`), nos dois sentidos: `"PDF"` sim, `"pdf"` não (responde `400`). As listagens não têm filtros (a pesquisa avançada cobre só livros) e são ordenadas: categorias por nome, disciplinas por código e materiais por título.
+
+Corpo de `CategoriaRequest`:
+
+```json
+{
+  "nome": "Literatura",
+  "descricao": "Romances, contos e poesia",
+  "faixaEtaria": "14 a 17 anos",
+  "tipo": "LITERATURA"
+}
+```
+
+Corpo de `DisciplinaRequest`:
+
+```json
+{
+  "nome": "Matemática",
+  "codigo": "mat-1",
+  "descricao": "Matemática da 1ª série",
+  "serieEscolar": "PRIMEIRA_SERIE"
+}
+```
+
+O `codigo` acima volta normalizado na resposta (`"MAT-1"`). `CategoriaResponse` e `DisciplinaResponse` repetem os campos do corpo, com o `id`.
+
+Corpo de `MaterialDigitalRequest`:
+
+```json
+{
+  "titulo": "Lista de exercícios de funções",
+  "formato": "PDF",
+  "url": "https://exemplo.com/funcoes.pdf",
+  "descricao": "Texto opcional",
+  "dataPublicacao": "2026-03-10",
+  "disciplinaId": 3
+}
+```
+
+`MaterialDigitalResponse`: o `disciplinaId` vira um resumo aninhado.
+
+```json
+{
+  "id": 12,
+  "titulo": "Lista de exercícios de funções",
+  "formato": "PDF",
+  "url": "https://exemplo.com/funcoes.pdf",
+  "descricao": "Texto opcional",
+  "dataPublicacao": "2026-03-10",
+  "disciplina": { "id": 3, "nome": "Matemática", "codigo": "MAT-1" }
+}
+```
+
+- **Unicidade no `PUT`:** a verificação de nome de categoria e de código de disciplina ignora o próprio registro. Mudar "literatura" para "Literatura" na mesma categoria não é conflito.
+- **Erros específicos de categorias, disciplinas e materiais:**
+
+| Rota | Código | Causa |
+| --- | --- | --- |
+| `POST /api/categorias`, `PUT /api/categorias/{id}` | `400` | `nome` ou `tipo` ausente; `tipo` fora da lista; demais campos inválidos |
+| `POST /api/categorias`, `PUT /api/categorias/{id}` | `409` | nome já usado por outra categoria (sem diferenciar maiúsculas de minúsculas) |
+| `POST /api/disciplinas`, `PUT /api/disciplinas/{id}` | `400` | `nome`, `codigo` ou `serieEscolar` ausente; `serieEscolar` fora da lista; demais campos inválidos |
+| `POST /api/disciplinas`, `PUT /api/disciplinas/{id}` | `409` | código já usado por outra disciplina (após a normalização) |
+| `POST /api/materiais`, `PUT /api/materiais/{id}` | `400` | `disciplinaId` ausente ou inexistente; `titulo`, `formato` ou `url` ausente; `formato` fora da lista; `url` que não é http/https; demais campos inválidos |
+| `GET`, `PUT` e `DELETE` em `/api/categorias/{id}`, `/api/disciplinas/{id}` e `/api/materiais/{id}` | `404` | registro da rota inexistente |
+| `DELETE /api/categorias/{id}` | `409` | categoria com livros |
+| `DELETE /api/disciplinas/{id}` | `409` | disciplina com materiais |
+
+Material nunca responde `409`: não tem campo único, então cadastrar ou editar não gera duplicidade, e nada o referencia, então a exclusão não é bloqueada.
 
 ## Decisões da revisão conjunta
 
@@ -294,4 +368,4 @@ Pontos que estavam em aberto ao definir as relações e o contrato (Issue #4). A
 | 3 | O que responde a pesquisa com `autorId` ou `categoriaId` que não existe? | **`200` com lista vazia**, como qualquer filtro sem resultado (Issue #28). Valor que não é número responde `400`. |
 | 4 | O que faz um `PUT` sem `categoriaId`? | **Remove a categoria.** O `PUT` é uma substituição completa; o formulário de edição envia o campo vazio para limpar a categoria. |
 | 5 | Como ler `autor` e `categoria` de forma `LAZY` com `open-in-view=false`? | Converter para DTO dentro do `service` transacional e carregar as duas associações na consulta da listagem (`LEFT JOIN FETCH` ou `@EntityGraph`). Ver [Regras comuns às relações](#regras-comuns-às-relações). |
-| 6 | MaterialDigital → Disciplina: `disciplinaId` inexistente também responde `400`? E os demais pontos da relação? | **Pendente (Juan).** A Issue #45 pede o mesmo erro padronizado para `autorId`, `categoriaId` e `disciplinaId`; a proposta é seguir a decisão 2. |
+| 6 | MaterialDigital → Disciplina: `disciplinaId` inexistente também responde `400`? E os demais pontos da relação? | **`400`, seguindo a decisão 2**, com o mesmo erro padronizado de `autorId` e `categoriaId` (Issue #45). A relação é N:1, `NOT NULL`, `LAZY`, unidirecional e com **`ON DELETE RESTRICT`**: `CASCADE` apagaria todos os materiais de uma disciplina sem aviso, pelo mesmo motivo que levou a rejeitar o `SET NULL` na decisão 1. Ver [MaterialDigital → Disciplina](#materialdigital--disciplina). |
