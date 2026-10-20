@@ -124,7 +124,7 @@ Excluir um autor, categoria ou disciplina que ainda é referenciado deve respond
 | Exclusão | `ON DELETE RESTRICT`: uma disciplina com materiais não é excluída (`409`). Excluir um material não afeta a disciplina. |
 | Mapeamento JPA | `@ManyToOne(fetch = LAZY, optional = false)` com `@JoinColumn(name = "disciplina_id", nullable = false)`. Unidirecional e sem `cascade`: `Disciplina` não tem lista de materiais. |
 | Carregamento | A listagem de materiais carrega a disciplina na mesma consulta (`@EntityGraph(attributePaths = "disciplina")` ou `JOIN FETCH`). Aqui o `JOIN` simples serve, porque a disciplina é obrigatória. |
-| API | Entrada: `disciplinaId` (obrigatório). Saída: `disciplina: {id, nome}`. |
+| API | Entrada: `disciplinaId` (obrigatório). Saída: `disciplina: {id, nome, codigo}`. O `codigo` entra no resumo porque o nome da disciplina não é único (a mesma disciplina existe em séries diferentes). |
 
 ### Regras comuns às relações
 
@@ -187,7 +187,7 @@ erDiagram
 
 - **Relacionamentos unidirecionais, só no lado "muitos".** `Livro` conhece `Autor`, mas `Autor` não guarda uma lista de livros. Isso evita recursão infinita na serialização JSON, carregamentos desnecessários e código a mais. A consulta "livros de um autor" é feita por query no repositório.
 - **`@ManyToOne(fetch = LAZY)`** em todas as associações, para não carregar dados que ninguém pediu.
-- **DTOs na entrada e na saída.** As entidades nunca são expostas pela API. Sugestão: `XxxRequest` e `XxxResponse` como *records* Java, em `dto/`. As respostas de `Livro` trazem resumos aninhados (`autor: {id, nome}`, `categoria: {id, nome}`), e as de `MaterialDigital` trazem `disciplina: {id, nome}`.
+- **DTOs na entrada e na saída.** As entidades nunca são expostas pela API. Sugestão: `XxxRequest` e `XxxResponse` como *records* Java, em `dto/`. As respostas de `Livro` trazem resumos aninhados (`autor: {id, nome}`, `categoria: {id, nome}`), e as de `MaterialDigital` trazem `disciplina: {id, nome, codigo}` (o `codigo` desambigua disciplinas de mesmo nome).
 - **Um autor por livro.** Atende ao requisito "relacionamento com Autor" com o menor custo. Coautoria exigiria a tabela `livro_autor` e mudaria a API e a interface; fica fora desta versão (decidido na Issue #3, ver [Limitações assumidas](REQUISITOS.md#limitações-assumidas)).
 - **Categoria opcional em Livro.** Reduz o acoplamento entre as duas frentes de trabalho: o CRUD de Livro funciona sem esperar o CRUD de Categoria. A associação é ligada na Issue #26, que depende explicitamente das Issues #30 e #31.
 - **Schema só por Flyway.** A pasta `db/migration` é a fonte da verdade e o Hibernate roda com `ddl-auto=validate`. A migration inicial cria as cinco tabelas já revisadas; mudanças posteriores entram em novas migrations (ver [CONTRIBUTING](../CONTRIBUTING.md#migrations-flyway)).
@@ -272,11 +272,10 @@ Corpo de `LivroRequest` (entrada de `POST` e `PUT`):
 | `POST /api/livros`, `PUT /api/livros/{id}` | `409` | ISBN já cadastrado em outro livro |
 | `GET`, `PUT` e `DELETE /api/livros/{id}` | `404` | livro inexistente |
 | `DELETE /api/autores/{id}` | `409` | autor com livros |
-| `DELETE /api/categorias/{id}` | `409` | categoria com livros |
 
 ### Categoria, Disciplina e MaterialDigital
 
-As rotas e as tabelas de códigos acima valem sem mudanças para os três recursos. Como em livros, o `PUT` substitui o registro inteiro (campo opcional ausente ou `null` limpa o valor), campos opcionais sem valor vêm como `null` na resposta e os enums trafegam pelo nome da constante (`"LITERATURA"`, `"PRIMEIRA_SERIE"`, `"PDF"`), nos dois sentidos. As listagens não têm filtros (a pesquisa avançada cobre só livros) e são ordenadas: categorias por nome, disciplinas por código e materiais por título.
+As rotas e as tabelas de códigos acima valem sem mudanças para os três recursos. Como em livros, o `PUT` substitui o registro inteiro (campo opcional ausente ou `null` limpa o valor), campos opcionais sem valor vêm como `null` na resposta e os enums trafegam pelo nome exato da constante, em maiúsculas (`"LITERATURA"`, `"PRIMEIRA_SERIE"`, `"PDF"`), nos dois sentidos: `"PDF"` sim, `"pdf"` não (responde `400`). As listagens não têm filtros (a pesquisa avançada cobre só livros) e são ordenadas: categorias por nome, disciplinas por código e materiais por título.
 
 Corpo de `CategoriaRequest`:
 
@@ -325,7 +324,7 @@ Corpo de `MaterialDigitalRequest`:
   "url": "https://exemplo.com/funcoes.pdf",
   "descricao": "Texto opcional",
   "dataPublicacao": "2026-03-10",
-  "disciplina": { "id": 3, "nome": "Matemática" }
+  "disciplina": { "id": 3, "nome": "Matemática", "codigo": "MAT-1" }
 }
 ```
 
@@ -343,7 +342,7 @@ Corpo de `MaterialDigitalRequest`:
 | `DELETE /api/categorias/{id}` | `409` | categoria com livros |
 | `DELETE /api/disciplinas/{id}` | `409` | disciplina com materiais |
 
-Excluir um material nunca responde `409`, porque nada o referencia.
+Material nunca responde `409`: não tem campo único, então cadastrar ou editar não gera duplicidade, e nada o referencia, então a exclusão não é bloqueada.
 
 ## Decisões da revisão conjunta
 
