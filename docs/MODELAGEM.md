@@ -1,6 +1,6 @@
 # Modelagem do ClassBook
 
-> **Revisada na Issue #3.** As cinco entidades foram revisadas e as decisões estão em [Decisões da revisão conjunta](#decisões-da-revisão-conjunta). Os relacionamentos serão definidos na Issue #4. Nenhuma entidade, tabela ou migration foi criada ainda.
+> **Revisada na Issue #3; relacionamentos em definição na Issue #4.** As cinco entidades foram revisadas e as decisões estão em [Decisões da revisão conjunta](#decisões-da-revisão-conjunta). Livro–Autor, Livro–Categoria e o contrato de Autor e Livro estão definidos (ver [Decisões dos relacionamentos](#decisões-dos-relacionamentos)); MaterialDigital–Disciplina e o contrato de Categoria, Disciplina e MaterialDigital aguardam a parte do Juan. Nenhuma entidade, tabela ou migration foi criada ainda.
 
 ## Entidades e atributos
 
@@ -92,6 +92,39 @@ Os valores fechados (`tipo`, `formato` e `serieEscolar`) são **enums Java** em 
 
 Excluir um autor, categoria ou disciplina que ainda é referenciado deve responder **409 Conflict**, tratado no `service` e protegido pela FK no banco.
 
+### Livro → Autor
+
+| Aspecto | Definição |
+| --- | --- |
+| Cardinalidade | N:1. Um livro tem exatamente um autor; um autor pode ter vários livros. |
+| Lado dono da FK | `livro.autor_id` |
+| Nulabilidade | `NOT NULL`: todo livro tem autor. |
+| Exclusão | `ON DELETE RESTRICT`: um autor com livros não é excluído (`409`). Excluir um livro não afeta o autor. |
+| Mapeamento JPA | `@ManyToOne(fetch = LAZY, optional = false)` com `@JoinColumn(name = "autor_id", nullable = false)`. Unidirecional e sem `cascade`: `Autor` não tem lista de livros. |
+| API | Entrada: `autorId` (obrigatório). Saída: `autor: {id, nome}`. |
+
+### Livro → Categoria
+
+| Aspecto | Definição |
+| --- | --- |
+| Cardinalidade | N:1 opcional. Um livro tem no máximo uma categoria; uma categoria pode ter vários livros. |
+| Lado dono da FK | `livro.categoria_id` |
+| Nulabilidade | Aceita `NULL`: o livro pode não ter categoria. |
+| Exclusão | `ON DELETE RESTRICT`: uma categoria com livros não é excluída (`409`). |
+| Mapeamento JPA | `@ManyToOne(fetch = LAZY)` com `@JoinColumn(name = "categoria_id")`. Unidirecional e sem `cascade`. |
+| API | Entrada: `categoriaId` (opcional). Saída: `categoria: {id, nome}`, ou `null` quando o livro não tem categoria. |
+
+### MaterialDigital → Disciplina
+
+> **Pendente (Juan, Issue #4).** Detalhar no mesmo formato de Livro → Autor: cardinalidade, nulabilidade, exclusão, mapeamento JPA e campos da API.
+
+### Regras comuns às relações
+
+- **Excluir um registro em uso:** como o lado "um" não guarda lista, o `service` consulta o repositório do lado "muitos" (por exemplo, `LivroRepository.existsByAutorId`) e responde `409` antes de tentar excluir. A FK com `RESTRICT` é a rede de segurança: se a violação de integridade chegar ao tratador global, também vira `409`, nunca `500`.
+- **Referência inexistente no corpo** (`autorId`, `categoriaId`, `disciplinaId`): responde `400` com mensagem clara (decisão 2 em [Decisões dos relacionamentos](#decisões-dos-relacionamentos)).
+- **`LAZY` com `open-in-view=false`:** a associação só pode ser lida dentro da transação. O `service` converte a entidade em DTO dentro do método `@Transactional`, nunca no controller, e a listagem e a pesquisa carregam autor e categoria na mesma consulta (`@EntityGraph(attributePaths = {"autor", "categoria"})` ou `LEFT JOIN FETCH`), para não gerar uma consulta extra por livro. Como a categoria é opcional, o `fetch` precisa ser `LEFT`: um `JOIN FETCH` simples esconderia os livros sem categoria.
+- **O que o Hibernate valida:** com `ddl-auto=validate`, ele confere tabelas e colunas, mas não `NOT NULL`, chave estrangeira nem `ON DELETE`. Essas regras só existem se a migration inicial (Issue #8) as declarar.
+
 ## Diagrama ER
 
 ```mermaid
@@ -156,7 +189,7 @@ erDiagram
 
 ## Contrato inicial da API (proposta)
 
-Serve para o backend e a interface JavaFX avançarem em paralelo. Será refinado na Issue #4 e documentado no Swagger.
+Serve para o backend e a interface JavaFX avançarem em paralelo. Validado na Issue #4 para Autor e Livro; Categoria, Disciplina e MaterialDigital aguardam a parte do Juan. Será documentado no Swagger.
 
 | Recurso | Rotas |
 | --- | --- |
@@ -166,8 +199,76 @@ Serve para o backend e a interface JavaFX avançarem em paralelo. Será refinado
 | Disciplina | `GET/POST /api/disciplinas`, `GET/PUT/DELETE /api/disciplinas/{id}` |
 | MaterialDigital | `GET/POST /api/materiais`, `GET/PUT/DELETE /api/materiais/{id}` |
 
-- **Pesquisa avançada:** `GET /api/livros?titulo=&autorId=&categoriaId=` (filtros opcionais e combináveis; o filtro de autor usa só o ID).
-- **Códigos HTTP:** `200` (consulta, edição), `201` com `Location` (cadastro), `204` (exclusão), `400` (dados inválidos), `404` (ID inexistente), `409` (duplicidade ou registro em uso).
+- **Pesquisa avançada:** `GET /api/livros?titulo=&autorId=&categoriaId=` (filtros opcionais e combináveis; o filtro de autor usa só o ID). Detalhes em [Livros e autores](#livros-e-autores).
+- **Códigos HTTP:** `200` (consulta, edição), `201` com `Location` (cadastro), `204` (exclusão), `400` (dados inválidos), `404` (ID da rota inexistente), `409` (duplicidade ou registro em uso). O que cada operação pode devolver está na tabela abaixo.
+
+### Códigos HTTP
+
+| Operação | Sucesso | Erros possíveis |
+| --- | --- | --- |
+| `GET /api/<recurso>` | `200` com a lista (vazia se não houver registros) | `400` (filtro inválido; só na pesquisa de livros) |
+| `GET /api/<recurso>/{id}` | `200` | `404` |
+| `POST /api/<recurso>` | `201` com `Location` e o registro criado no corpo | `400`, `409` |
+| `PUT /api/<recurso>/{id}` | `200` com o registro atualizado | `400`, `404`, `409` |
+| `DELETE /api/<recurso>/{id}` | `204`, sem corpo | `404`, `409` |
+
+| Código | Quando |
+| --- | --- |
+| `400` | Corpo ou parâmetro inválido: campo obrigatório ausente, valor fora da regra, valor de enum fora da lista, filtro que não é número, ou ID de autor, categoria ou disciplina que não existe. |
+| `404` | O `{id}` da própria rota não existe. |
+| `409` | Duplicidade (ISBN, nome de categoria, código de disciplina) ou exclusão de um registro ainda referenciado. |
+
+### Livros e autores
+
+Corpo de `LivroRequest` (entrada de `POST` e `PUT`):
+
+```json
+{
+  "titulo": "Livro de exemplo",
+  "isbn": "978-0-306-40615-7",
+  "anoPublicacao": 2020,
+  "descricao": "Texto opcional",
+  "editora": "Editora Exemplo",
+  "autorId": 1,
+  "categoriaId": 2
+}
+```
+
+`LivroResponse` (saída de todas as rotas de livro): os IDs viram resumos aninhados e o ISBN volta normalizado.
+
+```json
+{
+  "id": 7,
+  "titulo": "Livro de exemplo",
+  "isbn": "9780306406157",
+  "anoPublicacao": 2020,
+  "descricao": "Texto opcional",
+  "editora": "Editora Exemplo",
+  "autor": { "id": 1, "nome": "Autor Exemplo" },
+  "categoria": { "id": 2, "nome": "Literatura" }
+}
+```
+
+- **`PUT` substitui o registro inteiro.** Campo opcional ausente ou `null` limpa o valor; um `PUT` sem `categoriaId` remove a categoria do livro. `autorId` ausente responde `400`.
+- **Campos opcionais sem valor** vêm como `null` na resposta (`anoPublicacao`, `descricao`, `editora`, `categoria`).
+- **Pesquisa em `GET /api/livros`:**
+  - `titulo`: contém o texto, sem diferenciar maiúsculas de minúsculas; vazio ou em branco equivale a não informar.
+  - `autorId` e `categoriaId`: IDs numéricos. Um ID que não existe não é erro: a resposta é `200` com lista vazia. Valor que não é número responde `400`.
+  - Filtros informados juntos precisam ser todos satisfeitos (E lógico). Sem filtros, devolve todos os livros, ordenados por título.
+  - Livros sem categoria só aparecem quando o filtro de categoria não é usado.
+- **Erros específicos de livros e autores:**
+
+| Rota | Código | Causa |
+| --- | --- | --- |
+| `POST /api/livros`, `PUT /api/livros/{id}` | `400` | `autorId` ausente ou inexistente; `categoriaId` informado e inexistente; demais campos inválidos |
+| `POST /api/livros`, `PUT /api/livros/{id}` | `409` | ISBN já cadastrado em outro livro |
+| `GET`, `PUT` e `DELETE /api/livros/{id}` | `404` | livro inexistente |
+| `DELETE /api/autores/{id}` | `409` | autor com livros |
+| `DELETE /api/categorias/{id}` | `409` | categoria com livros |
+
+### Categoria, Disciplina e MaterialDigital
+
+> **Pendente (Juan, Issue #4).** Confirmar as rotas e os códigos das tabelas acima para esses três recursos e registrar aqui o que for específico deles (por exemplo, `409` ao excluir disciplina com materiais e `400` para `disciplinaId` inexistente).
 
 ## Decisões da revisão conjunta
 
@@ -181,3 +282,16 @@ Respostas aos pontos em aberto da proposta (Issue #3). As decisões 1, 2, 3 e 5 
 | 4 | `tipo`, `formato` e `serieEscolar` como texto livre validado ou como enum Java? | **Enum Java** para os três, guardado como texto. Valores fora da lista dão `400`. Valores e justificativa em [Enums e unicidade](#enums-e-unicidade). |
 | 5 | A busca por autor usa o ID, o nome ou ambos? | **Só o ID** (`autorId`). O nome do autor não é único, então uma busca por nome seria ambígua; na interface o autor é escolhido em uma lista. |
 | 6 | Nome de categoria único? Código de disciplina único? | **Os dois são únicos.** O nome da categoria sem diferenciar maiúsculas de minúsculas; o código da disciplina normalizado (sem espaços nas pontas, em maiúsculas). O nome da disciplina **não** é único. Detalhes em [Enums e unicidade](#enums-e-unicidade); o RF09 e a Issue #46 seguem essa decisão. |
+
+## Decisões dos relacionamentos
+
+Pontos que estavam em aberto ao definir as relações e o contrato (Issue #4). As decisões 1 a 5 dizem respeito a `Livro`, `Autor` e `Categoria`; a decisão 6, a `MaterialDigital` e `Disciplina`.
+
+| # | Pergunta | Decisão |
+| --- | --- | --- |
+| 1 | `ON DELETE` de Livro → Categoria, que é opcional: `RESTRICT` ou `SET NULL`? | **`RESTRICT`**, como nas outras relações. `SET NULL` tiraria a categoria de todos os livros sem aviso, e o RF10 pede bloquear a exclusão de registro em uso. Para excluir uma categoria, primeiro se reclassificam os livros. |
+| 2 | `autorId` ou `categoriaId` inexistente no corpo: `400` ou `404`? | **`400`.** O recurso da rota existe; o que está inválido é um valor enviado. Com `404`, um `PUT /api/livros/5` não diria se faltou o livro ou o autor. O `404` fica só para o `{id}` da rota (Issues #25, #26 e #45). |
+| 3 | O que responde a pesquisa com `autorId` ou `categoriaId` que não existe? | **`200` com lista vazia**, como qualquer filtro sem resultado (Issue #28). Valor que não é número responde `400`. |
+| 4 | O que faz um `PUT` sem `categoriaId`? | **Remove a categoria.** O `PUT` é uma substituição completa; o formulário de edição envia o campo vazio para limpar a categoria. |
+| 5 | Como ler `autor` e `categoria` de forma `LAZY` com `open-in-view=false`? | Converter para DTO dentro do `service` transacional e carregar as duas associações na consulta da listagem (`LEFT JOIN FETCH` ou `@EntityGraph`). Ver [Regras comuns às relações](#regras-comuns-às-relações). |
+| 6 | MaterialDigital → Disciplina: `disciplinaId` inexistente também responde `400`? E os demais pontos da relação? | **Pendente (Juan).** A Issue #45 pede o mesmo erro padronizado para `autorId`, `categoriaId` e `disciplinaId`; a proposta é seguir a decisão 2. |
