@@ -12,7 +12,7 @@
 	<artifactId>classbook</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>classbook</name>
-	<description>Biblioteca Escolar Digital desenvolvida em Java e Spring Boot para projeto academico.</description>
+	<description>Biblioteca Escolar Digital desenvolvida em Java e Spring Boot para projeto acadêmico.</description>
 	<properties>
 		<java.version>21</java.version>
 	</properties>
