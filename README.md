@@ -52,6 +52,16 @@ O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, aut
 - **PostgreSQL 16 ou superior** em execução local.
 - Maven **não precisa estar instalado**: use o wrapper (`./mvnw`, ou `mvnw.cmd` no Windows).
 
+## Como compilar
+
+Para só compilar e empacotar, sem banco de dados e sem rodar os testes, basta o JDK:
+
+```bash
+./mvnw -B -DskipTests verify
+```
+
+No Windows, use `mvnw.cmd`. Na primeira execução o wrapper baixa o Maven e as dependências, o que pode levar alguns minutos. Para executar a aplicação ou rodar os testes é preciso configurar o banco, como descrito a seguir.
+
 ## Configuração do banco
 
 1. Crie o usuário e os bancos (ajuste a senha):
