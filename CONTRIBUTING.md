@@ -74,6 +74,19 @@ Regras recomendadas, sem exagero para uma equipe de duas pessoas:
 
 Como configurar: **Settings → Branches → Add branch ruleset / protection rule** para `main`. Configurar essas regras exige permissão de administrador do repositório. O estado real de ativação é acompanhado na Issue #74.
 
+## Java e dependências
+
+- O projeto usa **Java 21**, definido pela propriedade `java.version` do `pom.xml`. O CI usa o mesmo Java 21 (Temurin).
+- **As versões vêm do BOM do Spring Boot** (`spring-boot-starter-parent`). Não declare `<version>` em dependência que o BOM já gerencia (starters, driver do PostgreSQL, Flyway etc.) nem fixe versões por propriedade sem necessidade. Se for inevitável, explique o motivo na descrição do PR.
+- **Mantenha o escopo simples** ([requisitos](docs/REQUISITOS.md)): toda dependência nova entra por PR, com o motivo na descrição.
+- **Em PRs que alteram o `pom.xml`, confira que não há conflitos de versão:**
+
+  ```bash
+  ./mvnw -B dependency:tree -Dverbose | grep "omitted for conflict"
+  ```
+
+  Sem nenhuma linha na saída, não há conflitos. As linhas *version managed from* e *omitted for duplicate* são normais: o BOM alinha versões de dependências transitivas.
+
 ## Migrations (Flyway)
 
 - Ficam em `src/main/resources/db/migration/` e **nunca** se edita uma migration já integrada na `main`: crie uma nova.
