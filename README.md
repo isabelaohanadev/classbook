@@ -64,7 +64,7 @@ No Windows, use `mvnw.cmd`. Na primeira execução o wrapper baixa o Maven e as 
 
 ## Configuração do banco
 
-1. Crie o usuário e os bancos (ajuste a senha):
+1. Conectado ao PostgreSQL como superusuário (por exemplo, `psql -U postgres`), crie o usuário e os bancos (ajuste a senha):
 
    ```sql
    CREATE USER classbook WITH PASSWORD 'defina_uma_senha_local';
@@ -79,19 +79,27 @@ No Windows, use `mvnw.cmd`. Na primeira execução o wrapper baixa o Maven e as 
      -e POSTGRES_PASSWORD=defina_uma_senha_local -p 5432:5432 postgres:16
    ```
 
+   Esse comando cria só o banco `classbook`. Quando o contêiner terminar de iniciar, crie também o banco dos testes:
+
+   ```bash
+   docker exec classbook-db createdb -U classbook classbook_test
+   ```
+
 2. Copie o modelo de variáveis de ambiente e ajuste a senha:
 
    ```bash
    cp .env.example .env
    ```
 
-   O arquivo `.env` é lido automaticamente pela aplicação e **não é versionado** (está no `.gitignore`). Variáveis de ambiente do sistema têm prioridade sobre o `.env`.
+   O arquivo `.env` é lido automaticamente pela aplicação e **não é versionado** (está no `.gitignore`). Variáveis de ambiente do sistema têm prioridade sobre o `.env`. Ele é procurado na pasta de onde o Maven é executado, então rode os comandos a partir da raiz do projeto. O `.env` usa o formato de arquivo `.properties`: não use a barra invertida (`\`) na senha.
 
 | Variável | Padrão | Descrição |
 | --- | --- | --- |
 | `DB_URL` | `jdbc:postgresql://localhost:5432/classbook` | URL JDBC do banco |
 | `DB_USERNAME` | `classbook` | Usuário do banco |
-| `DB_PASSWORD` | *(sem padrão)* | Senha do banco. Sem ela a aplicação não inicia |
+| `DB_PASSWORD` | *(sem padrão)* | Senha do usuário do banco. Precisa ser a mesma definida no passo 1 |
+
+Se `DB_PASSWORD` não for definida ou estiver errada, a conexão falha com `password authentication failed for user "classbook"`. A exceção é um PostgreSQL configurado com autenticação `trust`, que aceita a conexão mesmo sem senha.
 
 ## Como executar
 
