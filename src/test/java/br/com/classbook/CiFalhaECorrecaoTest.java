@@ -8,7 +8,7 @@ class CiFalhaECorrecaoTest {
 
 	@Test
 	void somaDeDoisNumeros() {
-		assertEquals(2, 1 + 2);
+		assertEquals(3, 1 + 2);
 	}
 
 }
