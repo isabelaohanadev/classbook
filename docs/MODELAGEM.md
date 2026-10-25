@@ -1,12 +1,25 @@
 # Modelagem do ClassBook
 
-> **Revisada nas Issues #3 e #4.** As cinco entidades foram revisadas e as decisões estão em [Decisões da revisão conjunta](#decisões-da-revisão-conjunta). Os três relacionamentos e o contrato inicial da API estão definidos (ver [Decisões dos relacionamentos](#decisões-dos-relacionamentos)). Nenhuma entidade, tabela ou migration foi criada ainda.
+> **Revisada nas Issues #3 e #4.** As cinco entidades foram revisadas e as decisões estão em [Decisões da revisão conjunta](#decisões-da-revisão-conjunta). Os três relacionamentos e o contrato inicial da API estão definidos (ver [Decisões dos relacionamentos](#decisões-dos-relacionamentos)). As tabelas são criadas pela migration inicial, [`V1__criar_tabelas_iniciais.sql`](../src/main/resources/db/migration/V1__criar_tabelas_iniciais.sql) (Issue #8); as entidades JPA ainda não foram criadas.
 
 ## Entidades e atributos
 
 Cada entidade tem pelo menos quatro atributos além do ID, como exige a disciplina. Chaves estrangeiras não entram nessa contagem.
 
 Convenções: IDs `BIGINT` gerados pelo PostgreSQL (`GENERATED ALWAYS AS IDENTITY`); tabelas e colunas em `snake_case`, tabelas no singular.
+
+Restrições e índices têm nome explícito, para que a mensagem de erro do banco diga qual regra foi violada (útil no tratamento do `409`, Issue #46):
+
+| Nome | Tabela | Regra |
+| --- | --- | --- |
+| `uk_livro_isbn` | `livro` | `UNIQUE (isbn)` |
+| `uk_categoria_nome` | `categoria` | índice único em `LOWER(nome)` |
+| `uk_disciplina_codigo` | `disciplina` | `UNIQUE (codigo)` |
+| `fk_livro_autor` | `livro` | `autor_id` → `autor`, `ON DELETE RESTRICT` |
+| `fk_livro_categoria` | `livro` | `categoria_id` → `categoria`, `ON DELETE RESTRICT` |
+| `fk_material_digital_disciplina` | `material_digital` | `disciplina_id` → `disciplina`, `ON DELETE RESTRICT` |
+
+Cada chave estrangeira também tem um índice (`idx_livro_autor_id`, `idx_livro_categoria_id`, `idx_material_digital_disciplina_id`), porque o PostgreSQL não cria um automaticamente. Eles servem aos filtros da pesquisa de livros e à verificação de registro em uso antes de uma exclusão.
 
 ### Autor (`autor`)
 
@@ -131,7 +144,7 @@ Excluir um autor, categoria ou disciplina que ainda é referenciado deve respond
 - **Excluir um registro em uso:** como o lado "um" não guarda lista, o `service` consulta o repositório do lado "muitos" (por exemplo, `LivroRepository.existsByAutorId`) e responde `409` antes de tentar excluir. A FK com `RESTRICT` é a rede de segurança: se a violação de integridade chegar ao tratador global, também vira `409`, nunca `500`.
 - **Referência inexistente no corpo** (`autorId`, `categoriaId`, `disciplinaId`): responde `400` com mensagem clara (decisão 2 em [Decisões dos relacionamentos](#decisões-dos-relacionamentos)).
 - **`LAZY` com `open-in-view=false`:** a associação só pode ser lida dentro da transação. O `service` converte a entidade em DTO dentro do método `@Transactional`, nunca no controller, e a listagem e a pesquisa carregam autor e categoria na mesma consulta (`@EntityGraph(attributePaths = {"autor", "categoria"})` ou `LEFT JOIN FETCH`), para não gerar uma consulta extra por livro. Como a categoria é opcional, o `fetch` precisa ser `LEFT`: um `JOIN FETCH` simples esconderia os livros sem categoria.
-- **O que o Hibernate valida:** com `ddl-auto=validate`, ele confere tabelas e colunas, mas não `NOT NULL`, chave estrangeira nem `ON DELETE`. Essas regras só existem se a migration inicial (Issue #8) as declarar.
+- **O que o Hibernate valida:** com `ddl-auto=validate`, ele confere tabelas e colunas, mas não `NOT NULL`, `UNIQUE`, chave estrangeira nem `ON DELETE`. Essas regras estão declaradas na migration inicial e são conferidas pelo teste `MigrationInicialTests`.
 
 ## Diagrama ER
 
