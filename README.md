@@ -27,14 +27,14 @@ O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, aut
 ```text
 .
 ├── .github/workflows/ci.yml      # CI: mvn -B verify em PRs e na main
-├── docs/                         # requisitos, modelagem, plano de trabalho, contribuições
+├── docs/                         # requisitos, modelagem, arquitetura, plano de trabalho, contribuições
 ├── desktop/                      # interface JavaFX (estrutura a definir — Issue #54)
 ├── src/main/java/br/com/classbook/
 │   ├── model/                    # entidades JPA
-│   ├── dto/                      # DTOs de entrada e saída
+│   ├── dto/                      # records de entrada (Request) e de saída (Response)
 │   ├── repository/               # Spring Data JPA
 │   ├── service/                  # regras de negócio
-│   ├── controller/               # rotas REST
+│   ├── controller/               # rotas REST (/api/...)
 │   ├── exception/                # exceções e tratamento global de erros
 │   └── config/                   # configurações (Swagger etc.)
 ├── src/main/resources/
@@ -123,6 +123,7 @@ DB_URL=jdbc:postgresql://localhost:5432/classbook_test ./mvnw verify
 
 - [Requisitos](docs/REQUISITOS.md)
 - [Modelagem](docs/MODELAGEM.md)
+- [Arquitetura e convenções do backend](docs/ARQUITETURA.md)
 - [Plano de trabalho](docs/PLANO_DE_TRABALHO.md)
 - [Contribuições](docs/CONTRIBUICOES.md)
 - [Como contribuir (GitHub Flow)](CONTRIBUTING.md)

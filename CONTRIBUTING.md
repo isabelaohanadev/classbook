@@ -87,6 +87,12 @@ Como configurar: **Settings → Branches → Add branch ruleset / protection rul
 
   Sem nenhuma linha na saída, não há conflitos. As linhas *version managed from* e *omitted for duplicate* são normais: o BOM alinha versões de dependências transitivas.
 
+## Arquitetura e convenções do código
+
+O backend é organizado em camadas (`controller → service → repository → model`), e as convenções ficam em [`docs/ARQUITETURA.md`](docs/ARQUITETURA.md): o papel de cada pacote, os nomes das classes, os DTOs, a conversão entre entidade e DTO, a validação e as exceções. Leia antes de começar um CRUD e use o *Checklist de revisão* de lá ao revisar um PR.
+
+Em resumo: a API recebe `XxxRequest` e devolve `XxxResponse` (records em `dto`), nunca a entidade; regras de negócio, transações e conversão ficam no service; erros são exceções de `exception`, transformadas em resposta pelo tratador global.
+
 ## Migrations (Flyway)
 
 - Ficam em `src/main/resources/db/migration/` e **nunca** se edita uma migration já integrada na `main`: crie uma nova.

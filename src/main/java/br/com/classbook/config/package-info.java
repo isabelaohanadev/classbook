@@ -1,4 +1,4 @@
 /**
- * Configurações da aplicação (por exemplo, Swagger/OpenAPI).
+ * Configurações da aplicação, em classes {@code XxxConfig} (por exemplo, Swagger/OpenAPI).
  */
 package br.com.classbook.config;
