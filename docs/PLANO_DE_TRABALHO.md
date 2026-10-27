@@ -1,6 +1,6 @@
 # Plano de trabalho
 
-Este plano organiza o desenvolvimento do ClassBook em etapas, com responsáveis e dependências. **Não há datas**: prazos e datas de avaliação só serão registrados quando forem informados. A fonte de verdade do andamento é o GitHub Project **ClassBook — Planejamento e Desenvolvimento** e as Issues do repositório; cada Issue tem um marco (*milestone*) com o nome da etapa.
+Este plano organiza o desenvolvimento do ClassBook em etapas, com responsáveis e dependências. **Não há datas**: prazos e datas de avaliação só serão registrados quando forem informados (Issue #94). A fonte de verdade do andamento é o GitHub Project **ClassBook — Planejamento e Desenvolvimento** e as Issues do repositório; cada Issue tem um marco (*milestone*) com o nome da etapa.
 
 ## Etapas
 
@@ -160,7 +160,8 @@ Da primeira à última tarefa, respeitando todas as dependências. É a mesma or
 
 ## Informações pendentes (não inventar)
 
-- Datas de entrega e de avaliação.
-- Como e quando o professor terá acesso ao repositório e ao Project.
-- Exigências do enunciado da disciplina que ainda não constem em `docs/REQUISITOS.md`: a conferência é acompanhada na Issue #78.
+- Datas de entrega, de avaliação e do acompanhamento semanal: o enunciado não as traz; o registro é acompanhado na Issue #94.
+- Acesso do professor ao Project. O enunciado exige só o acesso ao repositório, que é público (conferido na Issue #78).
+- Retorno do professor sobre a funcionalidade extra (pesquisa avançada): Issue #92.
+- Permanência da interface JavaFX no escopo, que o enunciado não exige: Issue #93.
 - Regras de proteção da `main`: o estado real de ativação é acompanhado na Issue #74.
