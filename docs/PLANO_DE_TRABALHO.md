@@ -162,6 +162,5 @@ Da primeira à última tarefa, respeitando todas as dependências. É a mesma or
 
 - Datas de entrega, de avaliação e do acompanhamento semanal: o enunciado não as traz; o registro é acompanhado na Issue #94.
 - Acesso do professor ao Project. O enunciado exige só o acesso ao repositório, que é público (conferido na Issue #78).
-- Retorno do professor sobre a funcionalidade extra (pesquisa avançada): Issue #92.
 - Permanência da interface JavaFX no escopo, que o enunciado não exige: Issue #93.
 - Regras de proteção da `main`: o estado real de ativação é acompanhado na Issue #74.

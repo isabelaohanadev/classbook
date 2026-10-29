@@ -66,6 +66,8 @@ Sem nenhum filtro, a pesquisa devolve todos os livros. Quando há mais de um fil
 
 **Decidido na Issue #2:** a pesquisa avançada cobre **somente livros** (Issues #27 e #28). Os materiais digitais continuam acessíveis pela listagem e pela consulta por ID. Uma busca em materiais (por exemplo, por título e disciplina) fica fora desta versão e, se for desejada depois, precisa de uma Issue própria.
 
+**Aprovada pelo professor (Issue #92):** a proposta desta seção foi apresentada ao professor, como exige o enunciado, e aprovada como está descrita aqui.
+
 ## Limitações assumidas
 
 - Um livro tem **um único autor** nesta versão (coautoria exigiria uma tabela de associação; ver [decisões da modelagem](MODELAGEM.md#decisões-da-revisão-conjunta)).
@@ -100,7 +102,7 @@ Feita na Issue #78, em 27/10/2026. O enunciado publicado pelo professor (não ve
 | Definir os requisitos, as entidades e o cronograma de desenvolvimento, indicando as responsabilidades de cada integrante | Este documento, [MODELAGEM](MODELAGEM.md) e [PLANO_DE_TRABALHO](PLANO_DE_TRABALHO.md) | **Em parte:** o plano tem etapas, responsáveis e ordem, mas não tem datas. Issue #94 |
 | Cinco CRUDs completos (cadastrar, editar, listar, consultar por ID e excluir); o CRUD de usuário das aulas não conta | RF01 a RF05 | Registrada; nenhum dos cinco é de usuário |
 | Pelo menos uma funcionalidade além dos CRUDs, relacionada à proposta | RF06 e *Funcionalidade extra* | Registrada |
-| A ideia da funcionalidade extra deve ser apresentada ao professor, para alinhar escopo e complexidade | — | **Não estava registrada.** Issue #92 |
+| A ideia da funcionalidade extra deve ser apresentada ao professor, para alinhar escopo e complexidade | *Funcionalidade extra* | Não estava registrada; apresentada e aprovada na Issue #92 |
 | Entidades com atributos e relacionamentos coerentes, com pelo menos 4 atributos além do ID (menos, só com justificativa) | [MODELAGEM](MODELAGEM.md#entidades-e-atributos): 4 ou 5 atributos por entidade e três relacionamentos | Registrada |
 | Camadas Model, DTO, Repository, Service e Controller | RNF04 e [ARQUITETURA](ARQUITETURA.md) | Registrada |
 | Persistir os dados em banco, com criação e alteração das tabelas por migrations | RNF02 | Registrada |
