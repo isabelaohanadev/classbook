@@ -4,7 +4,7 @@
 
 Biblioteca Escolar Digital desenvolvida em Java e Spring Boot para projeto acadêmico.
 
-O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, autores, categorias, disciplinas e materiais digitais** de uma escola de ensino médio, com pesquisa avançada de livros. O backend expõe uma API REST; a interface desktop (JavaFX) consome essa API.
+O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, autores, categorias, disciplinas e materiais digitais** de uma escola de ensino médio, com pesquisa avançada de livros. O backend expõe uma API REST; a interface desktop (JavaFX) consome essa API e é opcional, construída depois dos itens avaliados (decisão da Issue #93).
 
 > **Status:** em planejamento. O backlog completo está nas [Issues](../../issues) e no GitHub Project **ClassBook — Planejamento e Desenvolvimento**. Nenhum CRUD foi implementado ainda.
 
@@ -18,7 +18,7 @@ O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, aut
 | Migrations | Flyway |
 | Validação | Bean Validation |
 | Documentação da API | Swagger/OpenAPI (a configurar — Issue #47) |
-| Interface | JavaFX, consumindo a API REST (a criar — Issue #54) |
+| Interface | JavaFX, consumindo a API REST — opcional, pós-avaliação (a criar — Issue #54; decisão da Issue #93) |
 | Build | Maven (wrapper incluso) |
 | CI | GitHub Actions |
 
