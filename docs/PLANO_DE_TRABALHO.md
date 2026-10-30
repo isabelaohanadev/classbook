@@ -33,7 +33,7 @@ Este plano organiza o desenvolvimento do ClassBook em etapas, com responsáveis 
 | 2 — CRUD de Autor e Livro | A definir | #11 a #29 concluídas |
 | 3 — CRUD de Categoria, Disciplina e MaterialDigital | A definir | #30 a #41 concluídas |
 | 4 — Qualidade e integração | A definir | #42 a #53 e #71 a #75 concluídas |
-| 5 — Interface gráfica JavaFX | A definir (escopo em decisão: Issue #93) | #54 a #62 concluídas |
+| 5 — Interface gráfica JavaFX | A definir (opcional, depois dos itens avaliados: Issue #93) | #54 a #62 concluídas |
 | 6 — Entrega e apresentação | A definir | #63 a #70 concluídas |
 
 Os períodos são combinados pelos dois integrantes depois que as datas do professor forem informadas, de modo que o trabalho avaliado fique pronto antes da data de entrega. A ordem das tarefas e as dependências continuam na seção [Ordem sugerida de execução](#ordem-sugerida-de-execução).
