@@ -10,7 +10,7 @@ Este plano organiza o desenvolvimento do ClassBook em etapas, com responsáveis 
 | 2 — CRUD de Autor e Livro | Backend | #11 a #29 | Isabela |
 | 3 — CRUD de Categoria, Disciplina e MaterialDigital | Backend | #30 a #41 | Juan |
 | 4 — Qualidade e integração | Qualidade | #42 a #53 e #71 a #75 (CI e GitHub Flow) | Ambos |
-| 5 — Interface gráfica JavaFX | Interface | #54 a #62 | Isabela (catálogo e navegação) e Juan (formulários) |
+| 5 — Interface gráfica JavaFX (opcional, pós-avaliação — Issue #93) | Interface | #54 a #62 | Isabela (catálogo e navegação) e Juan (formulários) |
 | 6 — Entrega e apresentação | Entrega | #63 a #70 | Ambos |
 
 ## Cronograma
@@ -74,10 +74,9 @@ flowchart LR
     CDM --> T1
     T1 --> I["#50 e #52<br/>Integração e CRUDs integrados"]
     T1 --> HTTP["#59<br/>Comunicação HTTP (JavaFX)"]
-    HTTP --> UI["#56 a #61<br/>Telas JavaFX"]
-    I --> UT["#62<br/>Teste da interface com o backend"]
-    UI --> UT
-    UT --> ENS["#68 e #69<br/>Roteiro e ensaio"]
+    HTTP --> UI["#56 a #61<br/>Telas JavaFX (opcional)"]
+    UI --> UT["#62<br/>Teste da interface com o backend (opcional)"]
+    I --> ENS["#68 e #69<br/>Roteiro e ensaio"]
     ENS --> ENT["#70<br/>Arquivos para o Moodle"]
 ```
 
@@ -86,6 +85,7 @@ flowchart LR
 - Depois da modelagem (#3, #4), da migration inicial (#8) e da estrutura em camadas (#9), Isabela e Juan trabalham **em paralelo**, cada um em suas branches (`feature/crud-autor`, `feature/crud-livro`, `feature/crud-categoria`, `feature/crud-disciplina`, `feature/crud-material-digital`, `feature/pesquisa-avancada`).
 - O único ponto de sincronização do backend é o relacionamento **Livro–Categoria (#26)**, que depende de #30 e #31. Para não travar a frente de Autor e Livro, Juan começa pelo CRUD de Categoria.
 - A estrutura da interface (#54, #55) pode começar cedo. A comunicação HTTP (#59) e as telas que dependem de endpoints esperam os CRUDs correspondentes estarem testados.
+- A interface é opcional e pode ser construída depois dos itens avaliados, sem bloquear a Etapa 6 (decisão da Issue #93).
 - Validações, tratamento global de erros e Swagger (#42 a #48) avançam junto com os CRUDs, sem esperar que todos terminem.
 - O CI (#71) e o GitHub Flow (#73) existem antes das revisões de código em PR (#51).
 
@@ -167,12 +167,12 @@ Da primeira à última tarefa, respeitando todas as dependências. É a mesma or
 | 65 | #60 | Exibir detalhes dos livros e links dos materiais digitais | Isabela | #56, #38 |
 | 66 | #61 | Exibir mensagens de sucesso e de erro | Juan | #59, #44 |
 | 67 | #62 | Testar a interface com o backend integrado | Ambos | #52, #57, #58, #60, #61 |
-| 68 | #63 | Revisar o README e as instruções de execução | Juan | #53, #62 |
-| 69 | #64 | Documentar as contribuições individuais | Ambos | #62 |
-| 70 | #65 | Registrar o uso de ferramentas de IA | Ambos | #62 |
+| 68 | #63 | Revisar o README e as instruções de execução | Juan | #53 |
+| 69 | #64 | Documentar as contribuições individuais | Ambos | #52 |
+| 70 | #65 | Registrar o uso de ferramentas de IA | Ambos | #52 |
 | 71 | #66 | Verificar os commits e pull requests de cada integrante | Ambos | #64 |
-| 72 | #67 | Testar a aplicação em ambiente limpo | Juan | #63, #62 |
-| 73 | #68 | Preparar o roteiro da apresentação de até 10 minutos | Ambos | #52, #62 |
+| 72 | #67 | Testar a aplicação em ambiente limpo | Juan | #63 |
+| 73 | #68 | Preparar o roteiro da apresentação de até 10 minutos | Ambos | #52 |
 | 74 | #69 | Preparar cada integrante para perguntas individuais | Ambos | #68, #66 |
 | 75 | #70 | Conferir os arquivos necessários para a entrega no Moodle | Isabela | #63, #67, #69 |
 
@@ -188,11 +188,10 @@ Da primeira à última tarefa, respeitando todas as dependências. É a mesma or
 
 **Por etapa:** todas as Issues da etapa concluídas e verificadas.
 
-**Do projeto:** os cinco CRUDs funcionam integrados; a pesquisa avançada funciona; as migrations rodam em banco vazio; o README permite configurar e executar; a interface JavaFX usa a API; o CI está verde na `main`; a apresentação está ensaiada; os arquivos de entrega estão conferidos.
+**Do projeto:** os cinco CRUDs funcionam integrados; a pesquisa avançada funciona; as migrations rodam em banco vazio; o README permite configurar e executar; a interface JavaFX usa a API (opcional, não bloqueia a entrega — Issue #93); o CI está verde na `main`; a apresentação está ensaiada; os arquivos de entrega estão conferidos.
 
 ## Informações pendentes (não inventar)
 
 - Datas de entrega, de avaliação e do acompanhamento semanal: o enunciado não as traz; o registro é acompanhado na Issue #94.
 - Acesso do professor ao Project. O enunciado exige só o acesso ao repositório, que é público (conferido na Issue #78).
-- Permanência da interface JavaFX no escopo, que o enunciado não exige: Issue #93.
 - Regras de proteção da `main`: o estado real de ativação é acompanhado na Issue #74.

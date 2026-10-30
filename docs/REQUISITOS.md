@@ -15,7 +15,7 @@ O ClassBook é uma biblioteca digital para uma escola de ensino médio. Ele orga
 - Pesquisa avançada de livros (funcionalidade extra).
 - Validação de entrada e tratamento padronizado de erros HTTP.
 - Documentação das rotas com Swagger/OpenAPI.
-- Interface gráfica desktop em JavaFX consumindo a API: catálogo, busca e filtros, formulários de cadastro e edição, detalhes de livros e links de materiais, mensagens de sucesso e erro. O enunciado não exige interface visual; a permanência dela no escopo é decidida na Issue #93.
+- Interface gráfica desktop em JavaFX consumindo a API: catálogo, busca e filtros, formulários de cadastro e edição, detalhes de livros e links de materiais, mensagens de sucesso e erro. O enunciado não exige interface visual; ela é **opcional, construída depois dos itens avaliados** (decisão da Issue #93, ver [Decisão sobre a interface JavaFX](#decisão-sobre-a-interface-javafx-issue-93)).
 - Migrations com Flyway, testes automatizados e CI com GitHub Actions.
 
 ### Fora do escopo
@@ -37,7 +37,7 @@ Autenticação e autorização, empréstimo ou reserva de livros, upload de arqu
 | RF09 | Impedir duplicidades relevantes: ISBN do livro, código da disciplina e nome da categoria (decisão da Issue #3, ver [MODELAGEM](MODELAGEM.md#enums-e-unicidade)). |
 | RF10 | Impedir a exclusão de um registro que ainda é referenciado (ex.: autor com livros), respondendo 409. |
 | RF11 | Documentar todas as rotas no Swagger/OpenAPI. |
-| RF12 | Oferecer interface desktop que permita navegar pelo catálogo, buscar e filtrar livros, cadastrar e editar registros, ver detalhes de um livro e abrir os links dos materiais digitais, exibindo mensagens de sucesso e de erro. Não é exigido pelo enunciado (ver Issue #93). |
+| RF12 | Oferecer interface desktop que permita navegar pelo catálogo, buscar e filtrar livros, cadastrar e editar registros, ver detalhes de um livro e abrir os links dos materiais digitais, exibindo mensagens de sucesso e de erro. Não é exigido pelo enunciado; **opcional, feito depois dos itens avaliados** (decisão da Issue #93). |
 
 ## Requisitos não funcionais
 
@@ -68,12 +68,19 @@ Sem nenhum filtro, a pesquisa devolve todos os livros. Quando há mais de um fil
 
 **Aprovada pelo professor (Issue #92):** a proposta desta seção foi apresentada ao professor, como exige o enunciado, e aprovada como está descrita aqui.
 
+## Decisão sobre a interface JavaFX (Issue #93)
+
+A conferência com o enunciado (Issue #78) confirmou que a interface visual não é exigida e que nenhum critério da avaliação a menciona (ver [Conferência com o enunciado da disciplina](#conferência-com-o-enunciado-da-disciplina)). Mesmo assim, a interface estava no escopo (RF12) como dependência da entrega: a Issue #62 bloqueava as Issues #63, #64, #65, #67 e #68 da Etapa 6.
+
+**Decisão:** a interface JavaFX continua no escopo (RF12), mas como **item opcional**, construído depois dos itens avaliados (CRUDs e pesquisa avançada). A Etapa 6 (entrega e apresentação) não depende mais da Etapa 5 (interface) — ver [PLANO_DE_TRABALHO](PLANO_DE_TRABALHO.md#etapas). Isso preserva o trabalho já planejado para a interface (Etapa 5, Issues #54 a #62) sem arriscar o prazo de entrega caso ela não fique pronta a tempo.
+
 ## Limitações assumidas
 
 - Um livro tem **um único autor** nesta versão (coautoria exigiria uma tabela de associação; ver [decisões da modelagem](MODELAGEM.md#decisões-da-revisão-conjunta)).
 - Materiais digitais guardam apenas a **URL**; o sistema não armazena arquivos.
 - Sem controle de usuários: qualquer cliente da API pode executar todas as operações.
 - A interface é local (desktop) e depende de o backend estar em execução.
+- A interface JavaFX é opcional e não bloqueia a entrega (decisão da Issue #93).
 - A pesquisa avançada cobre somente livros; não há busca com filtros em materiais digitais.
 - Sem paginação nas listagens; pode ser adicionada se o volume exigir.
 - Datas de entrega e de avaliação não estão registradas aqui; serão incluídas somente quando forem informadas. O enunciado também não as traz (ver Issue #94).
@@ -110,7 +117,7 @@ Feita na Issue #78, em 27/10/2026. O enunciado publicado pelo professor (não ve
 | Documentar todas as rotas no Swagger | RF11 | Registrada |
 | Projeto no GitHub, com instruções de execução e contribuições identificáveis de todos os integrantes | RNF07, RNF08 e [CONTRIBUICOES](CONTRIBUICOES.md) | Registrada |
 | Linguagem livre | RNF01 | Registrada (Java 21) |
-| A interface visual não é necessária | *Escopo* e RF12 incluem a interface JavaFX | **Vai além do exigido**, e as Issues #63, #64, #65, #67 e #68 dependem da #62 (teste da interface). Issue #93 |
+| A interface visual não é necessária | *Escopo* e RF12 incluem a interface JavaFX | **Decidida na Issue #93:** interface mantida, porém opcional e feita depois dos itens avaliados; a #62 deixou de ser dependência das Issues #63, #64, #65, #67 e #68 |
 
 **Acompanhamento, uso de IA, apresentação e entrega**
 
