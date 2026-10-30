@@ -1,6 +1,6 @@
 # Plano de trabalho
 
-Este plano organiza o desenvolvimento do ClassBook em etapas, com responsáveis e dependências. **Não há datas**: prazos e datas de avaliação só serão registrados quando forem informados (Issue #94). A fonte de verdade do andamento é o GitHub Project **ClassBook — Planejamento e Desenvolvimento** e as Issues do repositório; cada Issue tem um marco (*milestone*) com o nome da etapa.
+Este plano organiza o desenvolvimento do ClassBook em etapas, com responsáveis e dependências. As **datas** vêm do cronograma divulgado pelo professor e ainda não foram informadas: a seção [Cronograma](#cronograma) mostra o que falta registrar, e nenhuma data é presumida (Issue #94). A fonte de verdade do andamento é o GitHub Project **ClassBook — Planejamento e Desenvolvimento** e as Issues do repositório; cada Issue tem um marco (*milestone*) com o nome da etapa.
 
 ## Etapas
 
@@ -12,6 +12,38 @@ Este plano organiza o desenvolvimento do ClassBook em etapas, com responsáveis 
 | 4 — Qualidade e integração | Qualidade | #42 a #53 e #71 a #75 (CI e GitHub Flow) | Ambos |
 | 5 — Interface gráfica JavaFX | Interface | #54 a #62 | Isabela (catálogo e navegação) e Juan (formulários) |
 | 6 — Entrega e apresentação | Entrega | #63 a #70 | Ambos |
+
+## Cronograma
+
+**Situação:** aguardando o cronograma divulgado pelo professor (Issue #94). O enunciado não traz as datas. **Nenhuma data é presumida:** uma data só entra aqui com a sua fonte (o professor, ou um acordo dos dois integrantes) e o dia em que foi registrada.
+
+### Datas do professor
+
+| Evento | Data | Fonte | Registrada em |
+| --- | --- | --- | --- |
+| Acompanhamento semanal: o que cada integrante desenvolveu, as dificuldades e o plano da semana seguinte (não tem nota própria; ver [Requisitos](REQUISITOS.md#conferência-com-o-enunciado-da-disciplina)) | A informar | Cronograma divulgado pelo professor | — |
+| Entrega no Moodle do ZIP com o código e a documentação (Issue #70) | A informar | Cronograma divulgado pelo professor | — |
+| Apresentação, de até 15 minutos: até 10 para apresentar e até 5 para perguntas individuais (Issues #68 e #69) | A informar | Cronograma divulgado pelo professor | — |
+
+### Período previsto por etapa
+
+| Etapa (marco) | Período previsto | Termina quando |
+| --- | --- | --- |
+| 1 — Planejamento e configuração | A definir | #1 a #10 concluídas |
+| 2 — CRUD de Autor e Livro | A definir | #11 a #29 concluídas |
+| 3 — CRUD de Categoria, Disciplina e MaterialDigital | A definir | #30 a #41 concluídas |
+| 4 — Qualidade e integração | A definir | #42 a #53 e #71 a #75 concluídas |
+| 5 — Interface gráfica JavaFX | A definir (escopo em decisão: Issue #93) | #54 a #62 concluídas |
+| 6 — Entrega e apresentação | A definir | #63 a #70 concluídas |
+
+Os períodos são combinados pelos dois integrantes depois que as datas do professor forem informadas, de modo que o trabalho avaliado fique pronto antes da data de entrega. A ordem das tarefas e as dependências continuam na seção [Ordem sugerida de execução](#ordem-sugerida-de-execução).
+
+### Como registrar uma data
+
+1. Confirme a data com a fonte: o professor (aviso, Moodle ou conversa) ou um acordo dos dois integrantes.
+2. Troque *A informar* ou *A definir* na tabela correspondente e preencha a *Fonte* e o dia em que foi *Registrada em*.
+3. Defina a data de entrega do marco da etapa (*Issues → Milestones → Edit → Due date*).
+4. Quando todas as datas estiverem registradas, retire o item das *Informações pendentes* deste plano e a ressalva sobre datas em [Requisitos](REQUISITOS.md#limitações-assumidas) (*Limitações assumidas* e *Conferência com o enunciado*), e feche a Issue #94 pelo PR (`Closes #94`).
 
 ## Responsabilidades
 
