@@ -35,8 +35,12 @@ public class LivroService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<LivroResponse> listar() {
-		return livroRepository.findAll(Sort.by("titulo")).stream().map(LivroResponse::de).toList();
+	public List<LivroResponse> listar(String titulo) {
+		Sort porTitulo = Sort.by("titulo");
+		List<Livro> livros = titulo == null || titulo.isBlank()
+				? livroRepository.findAll(porTitulo)
+				: livroRepository.findByTituloContainingIgnoreCase(titulo, porTitulo);
+		return livros.stream().map(LivroResponse::de).toList();
 	}
 
 	@Transactional(readOnly = true)
