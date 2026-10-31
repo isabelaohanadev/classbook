@@ -2,6 +2,7 @@ package br.com.classbook.controller;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -90,6 +91,37 @@ class AutorControllerTests {
 	void consultaPorIdInexistenteRespondeNotFound() throws Exception {
 		mockMvc.perform(get("/api/autores/{id}", -1))
 				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void edicaoValidaRespondeOkComOAutorAtualizado() throws Exception {
+		Long id = cadastrar(new AutorRequest("Nome Antigo", "Brasileira", null, null));
+		AutorRequest edicao = new AutorRequest("Nome Novo", "Portuguesa", null, "Biografia nova");
+
+		mockMvc.perform(put("/api/autores/{id}", id).contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(edicao)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.nome").value("Nome Novo"))
+				.andExpect(jsonPath("$.nacionalidade").value("Portuguesa"));
+	}
+
+	@Test
+	void edicaoComIdInexistenteRespondeNotFound() throws Exception {
+		AutorRequest edicao = new AutorRequest("Nome", null, null, null);
+
+		mockMvc.perform(put("/api/autores/{id}", -1).contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(edicao)))
+				.andExpect(status().isNotFound());
+	}
+
+	@Test
+	void edicaoComDadosInvalidosRespondeBadRequest() throws Exception {
+		Long id = cadastrar(new AutorRequest("Nome Válido", null, null, null));
+		AutorRequest edicao = new AutorRequest("   ", null, null, null);
+
+		mockMvc.perform(put("/api/autores/{id}", id).contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(edicao)))
+				.andExpect(status().isBadRequest());
 	}
 
 	private Long cadastrar(AutorRequest request) throws Exception {
