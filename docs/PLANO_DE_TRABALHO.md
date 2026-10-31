@@ -23,7 +23,7 @@ Este plano organiza o desenvolvimento do ClassBook em etapas, com responsáveis 
 | --- | --- | --- | --- |
 | Acompanhamento semanal: o que cada integrante desenvolveu, as dificuldades e o plano da semana seguinte (não tem nota própria; ver [Requisitos](REQUISITOS.md#conferência-com-o-enunciado-da-disciplina)) | A informar | Cronograma divulgado pelo professor | — |
 | Entrega no Moodle do ZIP com o código e a documentação (Issue #70) | A informar | Cronograma divulgado pelo professor | — |
-| Apresentação, de até 15 minutos: até 10 para apresentar e até 5 para perguntas individuais (Issues #68 e #69) | A informar | Cronograma divulgado pelo professor | — |
+| Apresentação, de até 15 minutos: até 10 para apresentar e até 5 para perguntas individuais (Issues #68 e #69) | 06/11/2026 | Cronograma divulgado pelo professor, confirmado por Isabela | 31/10/2026 |
 
 ### Período previsto por etapa
 
