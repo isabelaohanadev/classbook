@@ -6,6 +6,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
@@ -14,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.AutorRequest;
@@ -72,6 +74,30 @@ class AutorControllerTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$").isArray())
 				.andExpect(jsonPath("$").isEmpty());
+	}
+
+	@Test
+	void consultaPorIdExistenteRespondeOkComOAutor() throws Exception {
+		Long id = cadastrar(new AutorRequest("Rachel de Queiroz", null, null, null));
+
+		mockMvc.perform(get("/api/autores/{id}", id))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(id))
+				.andExpect(jsonPath("$.nome").value("Rachel de Queiroz"));
+	}
+
+	@Test
+	void consultaPorIdInexistenteRespondeNotFound() throws Exception {
+		mockMvc.perform(get("/api/autores/{id}", -1))
+				.andExpect(status().isNotFound());
+	}
+
+	private Long cadastrar(AutorRequest request) throws Exception {
+		MvcResult resultado = mockMvc.perform(post("/api/autores").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+				.andReturn();
+		JsonNode corpo = objectMapper.readTree(resultado.getResponse().getContentAsString());
+		return corpo.get("id").asLong();
 	}
 
 }
