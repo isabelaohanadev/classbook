@@ -21,4 +21,4 @@ Toda ferramenta de IA usada no projeto deve ser registrada aqui, com o que foi f
 
 | Data | Ferramenta | Quem usou | Para quê | Revisão humana |
 | --- | --- | --- | --- | --- |
-| — | — | — | — | — |
+| 31/10/2026 | Claude Code | Isabela Ohana | Implementar o CRUD de Autor e de Livro da Etapa 2 (Issues #11–#25 e #27: entidades, DTOs, repositories, services, controllers, relacionamento Livro–Autor e pesquisa por título), seguindo as convenções de `docs/ARQUITETURA.md` e `docs/MODELAGEM.md` | Isabela acompanhou e direcionou a execução nesta sessão; a suíte de testes completa (`./mvnw verify`) rodou localmente contra um PostgreSQL 16, com resultado verde, antes de cada um dos 16 PRs (#101–#116). A revisão cruzada do Juan, prevista no fluxo de trabalho, ainda está pendente nesses PRs (ver checklist de cada um) |
