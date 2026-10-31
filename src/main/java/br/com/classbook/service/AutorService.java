@@ -8,17 +8,22 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.AutorRequest;
 import br.com.classbook.dto.AutorResponse;
+import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
 import br.com.classbook.model.Autor;
 import br.com.classbook.repository.AutorRepository;
+import br.com.classbook.repository.LivroRepository;
 
 @Service
 public class AutorService {
 
 	private final AutorRepository autorRepository;
 
-	public AutorService(AutorRepository autorRepository) {
+	private final LivroRepository livroRepository;
+
+	public AutorService(AutorRepository autorRepository, LivroRepository livroRepository) {
 		this.autorRepository = autorRepository;
+		this.livroRepository = livroRepository;
 	}
 
 	@Transactional
@@ -48,6 +53,9 @@ public class AutorService {
 	@Transactional
 	public void excluir(Long id) {
 		Autor autor = buscarOuLancar(id);
+		if (livroRepository.existsByAutorId(id)) {
+			throw new ConflitoException("Autor " + id + " possui livros vinculados.");
+		}
 		autorRepository.delete(autor);
 	}
 

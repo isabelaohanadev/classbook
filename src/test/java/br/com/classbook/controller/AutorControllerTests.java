@@ -21,6 +21,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.AutorRequest;
+import br.com.classbook.dto.LivroRequest;
 
 /**
  * Confere as rotas de {@code /api/autores} de ponta a ponta, com o contexto Spring completo e o
@@ -136,6 +137,26 @@ class AutorControllerTests {
 	@Test
 	void exclusaoComIdInexistenteRespondeNotFound() throws Exception {
 		mockMvc.perform(delete("/api/autores/{id}", -1)).andExpect(status().isNotFound());
+	}
+
+	@Test
+	void exclusaoDeAutorComLivrosVinculadosRespondeConflict() throws Exception {
+		Long id = cadastrar(new AutorRequest("Machado de Assis", null, null, null));
+		LivroRequest livro = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, id);
+		mockMvc.perform(post("/api/livros").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(livro)));
+
+		mockMvc.perform(delete("/api/autores/{id}", id)).andExpect(status().isConflict());
+		mockMvc.perform(get("/api/autores/{id}", id)).andExpect(status().isOk());
+	}
+
+	@Test
+	void respostaDoAutorNaoTrazCampoDeLivros() throws Exception {
+		Long id = cadastrar(new AutorRequest("Machado de Assis", null, null, null));
+
+		mockMvc.perform(get("/api/autores/{id}", id))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.livros").doesNotExist());
 	}
 
 	private Long cadastrar(AutorRequest request) throws Exception {
