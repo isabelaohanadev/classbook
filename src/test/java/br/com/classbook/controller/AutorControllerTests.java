@@ -1,5 +1,6 @@
 package br.com.classbook.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
@@ -122,6 +123,19 @@ class AutorControllerTests {
 		mockMvc.perform(put("/api/autores/{id}", id).contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(edicao)))
 				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void exclusaoDeAutorSemLivrosRespondeNoContent() throws Exception {
+		Long id = cadastrar(new AutorRequest("Autor Descartável", null, null, null));
+
+		mockMvc.perform(delete("/api/autores/{id}", id)).andExpect(status().isNoContent());
+		mockMvc.perform(get("/api/autores/{id}", id)).andExpect(status().isNotFound());
+	}
+
+	@Test
+	void exclusaoComIdInexistenteRespondeNotFound() throws Exception {
+		mockMvc.perform(delete("/api/autores/{id}", -1)).andExpect(status().isNotFound());
 	}
 
 	private Long cadastrar(AutorRequest request) throws Exception {
