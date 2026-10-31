@@ -153,6 +153,16 @@ class LivroControllerTests {
 		mockMvc.perform(delete("/api/livros/{id}", -1)).andExpect(status().isNotFound());
 	}
 
+	@Test
+	void exclusaoDeLivroMantemOAutor() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long livroId = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId));
+
+		mockMvc.perform(delete("/api/livros/{id}", livroId)).andExpect(status().isNoContent());
+
+		mockMvc.perform(get("/api/autores/{id}", autorId)).andExpect(status().isOk());
+	}
+
 	private Long cadastrarAutor(String nome) throws Exception {
 		MvcResult resultado = mockMvc.perform(post("/api/autores").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(new AutorRequest(nome, null, null, null))))

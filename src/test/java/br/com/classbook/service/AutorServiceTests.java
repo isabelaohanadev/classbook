@@ -12,8 +12,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.AutorRequest;
 import br.com.classbook.dto.AutorResponse;
+import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
+import br.com.classbook.model.Livro;
 import br.com.classbook.repository.AutorRepository;
+import br.com.classbook.repository.LivroRepository;
 
 /**
  * Confere as regras de negócio de {@link AutorService}. A transação é desfeita ao final de cada
@@ -28,6 +31,9 @@ class AutorServiceTests {
 
 	@Autowired
 	private AutorRepository autorRepository;
+
+	@Autowired
+	private LivroRepository livroRepository;
 
 	@Test
 	void criarGravaERetornaOAutor() {
@@ -101,6 +107,19 @@ class AutorServiceTests {
 	@Test
 	void excluirIdInexistenteLancaExcecao() {
 		assertThatThrownBy(() -> autorService.excluir(-1L)).isInstanceOf(RecursoNaoEncontradoException.class);
+	}
+
+	@Test
+	void excluirAutorComLivrosVinculadosLancaConflito() {
+		AutorResponse autor = autorService.criar(new AutorRequest("Machado de Assis", null, null, null));
+		Livro livro = new Livro();
+		livro.setTitulo("Dom Casmurro");
+		livro.setIsbn("9780306406157");
+		livro.setAutor(autorRepository.findById(autor.id()).orElseThrow());
+		livroRepository.save(livro);
+
+		assertThatThrownBy(() -> autorService.excluir(autor.id())).isInstanceOf(ConflitoException.class);
+		assertThat(autorRepository.findById(autor.id())).isPresent();
 	}
 
 }

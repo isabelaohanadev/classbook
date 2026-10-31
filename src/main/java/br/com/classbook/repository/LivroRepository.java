@@ -12,6 +12,8 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
 
 	boolean existsByIsbn(String isbn);
 
+	boolean existsByAutorId(Long autorId);
+
 	/**
 	 * Sobrescrito para carregar {@code autor} (e, a partir da Issue #26, a categoria) na mesma
 	 * consulta: evita uma consulta extra por livro ao converter a listagem para DTO (ver
