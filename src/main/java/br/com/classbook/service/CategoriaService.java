@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.CategoriaRequest;
 import br.com.classbook.dto.CategoriaResponse;
+import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
 import br.com.classbook.model.Categoria;
 import br.com.classbook.repository.CategoriaRepository;
@@ -23,6 +24,9 @@ public class CategoriaService {
 
 	@Transactional
 	public CategoriaResponse criar(CategoriaRequest request) {
+		if (categoriaRepository.existsByNomeIgnoreCase(request.nome())) {
+			throw new ConflitoException("Já existe uma categoria com o nome " + request.nome() + ".");
+		}
 		Categoria categoria = new Categoria();
 		preencher(categoria, request);
 		return CategoriaResponse.de(categoriaRepository.save(categoria));
@@ -41,6 +45,9 @@ public class CategoriaService {
 	@Transactional
 	public CategoriaResponse atualizar(Long id, CategoriaRequest request) {
 		Categoria categoria = buscarOuLancar(id);
+		if (categoriaRepository.existsByNomeIgnoreCaseAndIdNot(request.nome(), id)) {
+			throw new ConflitoException("Já existe uma categoria com o nome " + request.nome() + ".");
+		}
 		preencher(categoria, request);
 		return CategoriaResponse.de(categoriaRepository.save(categoria));
 	}

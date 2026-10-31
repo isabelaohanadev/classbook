@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.CategoriaRequest;
 import br.com.classbook.dto.CategoriaResponse;
+import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
 import br.com.classbook.model.TipoCategoria;
 import br.com.classbook.repository.CategoriaRepository;
@@ -97,6 +98,36 @@ class CategoriaServiceTests {
 	@Test
 	void excluirIdInexistenteLancaExcecao() {
 		assertThatThrownBy(() -> categoriaService.excluir(-1L)).isInstanceOf(RecursoNaoEncontradoException.class);
+	}
+
+	@Test
+	void criarComNomeJaUsadoLancaConflitoSemDiferenciarMaiusculas() {
+		categoriaService.criar(new CategoriaRequest("Literatura", null, null, TipoCategoria.LITERATURA));
+		CategoriaRequest duplicada = new CategoriaRequest("LITERATURA", null, null, TipoCategoria.OUTRO);
+
+		assertThatThrownBy(() -> categoriaService.criar(duplicada)).isInstanceOf(ConflitoException.class);
+	}
+
+	@Test
+	void atualizarComNomeDeOutraCategoriaLancaConflito() {
+		categoriaService.criar(new CategoriaRequest("Literatura", null, null, TipoCategoria.LITERATURA));
+		CategoriaResponse outra = categoriaService
+				.criar(new CategoriaRequest("Referência", null, null, TipoCategoria.REFERENCIA));
+		CategoriaRequest edicao = new CategoriaRequest("literatura", null, null, TipoCategoria.REFERENCIA);
+
+		assertThatThrownBy(() -> categoriaService.atualizar(outra.id(), edicao))
+				.isInstanceOf(ConflitoException.class);
+	}
+
+	@Test
+	void atualizarMantendoOProprioNomeNaoEhConflito() {
+		CategoriaResponse criada = categoriaService
+				.criar(new CategoriaRequest("literatura", null, null, TipoCategoria.LITERATURA));
+
+		CategoriaResponse atualizada = categoriaService.atualizar(criada.id(),
+				new CategoriaRequest("Literatura", null, null, TipoCategoria.LITERATURA));
+
+		assertThat(atualizada.nome()).isEqualTo("Literatura");
 	}
 
 }
