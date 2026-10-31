@@ -1,5 +1,6 @@
 package br.com.classbook.controller;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -50,6 +51,27 @@ class AutorControllerTests {
 		mockMvc.perform(post("/api/autores").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
 				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void listagemRespondeOkComAutoresOrdenadosPorNome() throws Exception {
+		mockMvc.perform(post("/api/autores").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(new AutorRequest("Machado de Assis", null, null, null))));
+		mockMvc.perform(post("/api/autores").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(new AutorRequest("Ariano Suassuna", null, null, null))));
+
+		mockMvc.perform(get("/api/autores"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$[0].nome").value("Ariano Suassuna"))
+				.andExpect(jsonPath("$[1].nome").value("Machado de Assis"));
+	}
+
+	@Test
+	void listagemSemAutoresRespondeOkComListaVazia() throws Exception {
+		mockMvc.perform(get("/api/autores"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$").isArray())
+				.andExpect(jsonPath("$").isEmpty());
 	}
 
 }
