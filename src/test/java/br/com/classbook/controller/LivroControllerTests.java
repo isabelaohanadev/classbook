@@ -83,6 +83,28 @@ class LivroControllerTests {
 	}
 
 	@Test
+	void pesquisaPorTituloRetornaCorrespondentesIgnorandoCaixa() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		cadastrarLivro(new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId));
+		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780316000000", null, null, null, autorId));
+
+		mockMvc.perform(get("/api/livros").param("titulo", "casmurro"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].titulo").value("Dom Casmurro"));
+	}
+
+	@Test
+	void pesquisaSemCorrespondenciaRespondeOkComListaVazia() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId));
+
+		mockMvc.perform(get("/api/livros").param("titulo", "inexistente"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$").isEmpty());
+	}
+
+	@Test
 	void listagemSemLivrosRespondeOkComListaVazia() throws Exception {
 		mockMvc.perform(get("/api/livros"))
 				.andExpect(status().isOk())

@@ -69,9 +69,28 @@ class LivroServiceTests {
 		livroService.criar(new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId));
 		livroService.criar(new LivroRequest("Dom Casmurro", "9780316000000", null, null, null, autorId));
 
-		List<LivroResponse> livros = livroService.listar();
+		List<LivroResponse> livros = livroService.listar(null);
 
 		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro", "Memórias Póstumas");
+	}
+
+	@Test
+	void listarComTituloFiltraSemDiferenciarMaiusculas() {
+		autorId = criarAutor();
+		livroService.criar(new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId));
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780316000000", null, null, null, autorId));
+
+		List<LivroResponse> livros = livroService.listar("casmurro");
+
+		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
+	}
+
+	@Test
+	void listarComTituloSemCorrespondenciaRetornaListaVazia() {
+		autorId = criarAutor();
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId));
+
+		assertThat(livroService.listar("inexistente")).isEmpty();
 	}
 
 	@Test
