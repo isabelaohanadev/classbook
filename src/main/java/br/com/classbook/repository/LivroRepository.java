@@ -23,4 +23,8 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
 	@EntityGraph(attributePaths = "autor")
 	List<Livro> findAll(Sort sort);
 
+	/** Pesquisa por título (Issue #27): contém o texto, sem diferenciar maiúsculas de minúsculas. */
+	@EntityGraph(attributePaths = "autor")
+	List<Livro> findByTituloContainingIgnoreCase(String titulo, Sort sort);
+
 }
