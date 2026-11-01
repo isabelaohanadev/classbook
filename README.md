@@ -119,6 +119,18 @@ DB_URL=jdbc:postgresql://localhost:5432/classbook_test ./mvnw verify
 
 É o mesmo comando que o CI executa (`mvn -B verify`), contra um PostgreSQL temporário criado pelo próprio workflow.
 
+## Erros da API
+
+Todo erro sai no mesmo formato JSON (`horario`, `status`, `erro`, `mensagem`, `caminho` e `campos`), com mensagem em português; o detalhe está em [Arquitetura, Erros e exceções](docs/ARQUITETURA.md#erros-e-exceções).
+
+| Código | Quando |
+| --- | --- |
+| `400` | Corpo ou parâmetro inválido: campo obrigatório ausente, valor fora da regra, enum fora da lista, JSON malformado, ID que não é número, ou ID de autor, categoria ou disciplina inexistente no corpo. `campos` lista o que está errado. |
+| `404` | O `{id}` da rota não existe, ou a rota não existe. |
+| `405` / `415` | Método HTTP não suportado na rota / corpo que não é JSON. |
+| `409` | Duplicidade (ISBN, nome de categoria, código de disciplina) ou exclusão de um registro ainda referenciado. |
+| `500` | Erro inesperado, com mensagem genérica (o detalhe vai só para o log). |
+
 ## Documentação
 
 - [Requisitos](docs/REQUISITOS.md)
