@@ -1,5 +1,6 @@
 package br.com.classbook.repository;
 
+import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
@@ -27,14 +28,14 @@ class DisciplinaRepositoryTests {
 	void salvaEBuscaUmaDisciplina() {
 		Disciplina disciplina = new Disciplina();
 		disciplina.setNome("Matemática");
-		disciplina.setCodigo("MAT-1");
+		disciplina.setCodigo(codigo("MAT-1"));
 		disciplina.setSerieEscolar(SerieEscolar.PRIMEIRA_SERIE);
 
 		Disciplina salva = disciplinaRepository.save(disciplina);
 
 		Optional<Disciplina> encontrada = disciplinaRepository.findById(salva.getId());
 		assertThat(encontrada).isPresent();
-		assertThat(encontrada.get().getCodigo()).isEqualTo("MAT-1");
+		assertThat(encontrada.get().getCodigo()).isEqualTo(codigo("MAT-1"));
 		assertThat(encontrada.get().getSerieEscolar()).isEqualTo(SerieEscolar.PRIMEIRA_SERIE);
 	}
 

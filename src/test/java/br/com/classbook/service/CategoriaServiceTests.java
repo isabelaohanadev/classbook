@@ -1,5 +1,6 @@
 package br.com.classbook.service;
 
+import static br.com.classbook.Unico.nome;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -31,30 +32,30 @@ class CategoriaServiceTests {
 
 	@Test
 	void criarGravaERetornaACategoria() {
-		CategoriaResponse response = categoriaService.criar(new CategoriaRequest("Literatura",
+		CategoriaResponse response = categoriaService.criar(new CategoriaRequest(nome("Literatura"),
 				"Romances, contos e poesia", "14 a 17 anos", TipoCategoria.LITERATURA));
 
 		assertThat(response.id()).isNotNull();
-		assertThat(response).isEqualTo(new CategoriaResponse(response.id(), "Literatura", "Romances, contos e poesia",
-				"14 a 17 anos", TipoCategoria.LITERATURA));
+		assertThat(response).isEqualTo(new CategoriaResponse(response.id(), nome("Literatura"),
+				"Romances, contos e poesia", "14 a 17 anos", TipoCategoria.LITERATURA));
 		assertThat(categoriaRepository.findById(response.id())).isPresent();
 	}
 
 	@Test
 	void listarRetornaOrdenadasPorNome() {
-		categoriaService.criar(new CategoriaRequest("Referência", null, null, TipoCategoria.REFERENCIA));
-		categoriaService.criar(new CategoriaRequest("Didáticos", null, null, TipoCategoria.DIDATICO));
-		categoriaService.criar(new CategoriaRequest("Literatura", null, null, TipoCategoria.LITERATURA));
+		categoriaService.criar(new CategoriaRequest(nome("Referência"), null, null, TipoCategoria.REFERENCIA));
+		categoriaService.criar(new CategoriaRequest(nome("Didáticos"), null, null, TipoCategoria.DIDATICO));
+		categoriaService.criar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
 
 		// Confere a ordem relativa, sem supor que o banco de teste começa vazio.
 		assertThat(categoriaService.listar()).extracting(CategoriaResponse::nome)
-				.containsSubsequence("Didáticos", "Literatura", "Referência");
+				.containsSubsequence(nome("Didáticos"), nome("Literatura"), nome("Referência"));
 	}
 
 	@Test
 	void buscarPorIdRetornaACategoriaExistente() {
 		CategoriaResponse criada = categoriaService
-				.criar(new CategoriaRequest("Literatura", null, null, TipoCategoria.LITERATURA));
+				.criar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
 
 		assertThat(categoriaService.buscarPorId(criada.id())).isEqualTo(criada);
 	}
@@ -68,18 +69,19 @@ class CategoriaServiceTests {
 	@Test
 	void atualizarSubstituiOsCamposDaCategoria() {
 		CategoriaResponse criada = categoriaService
-				.criar(new CategoriaRequest("Nome Antigo", "Descrição antiga", "12 a 14 anos", TipoCategoria.OUTRO));
+				.criar(new CategoriaRequest(nome("Nome Antigo"), "Descrição antiga", "12 a 14 anos",
+					TipoCategoria.OUTRO));
 
 		CategoriaResponse atualizada = categoriaService.atualizar(criada.id(),
-				new CategoriaRequest("Nome Novo", null, "15 a 17 anos", TipoCategoria.PARADIDATICO));
+				new CategoriaRequest(nome("Nome Novo"), null, "15 a 17 anos", TipoCategoria.PARADIDATICO));
 
-		assertThat(atualizada).isEqualTo(new CategoriaResponse(criada.id(), "Nome Novo", null, "15 a 17 anos",
+		assertThat(atualizada).isEqualTo(new CategoriaResponse(criada.id(), nome("Nome Novo"), null, "15 a 17 anos",
 				TipoCategoria.PARADIDATICO));
 	}
 
 	@Test
 	void atualizarIdInexistenteLancaExcecao() {
-		CategoriaRequest request = new CategoriaRequest("Nome", null, null, TipoCategoria.OUTRO);
+		CategoriaRequest request = new CategoriaRequest(nome("Nome"), null, null, TipoCategoria.OUTRO);
 
 		assertThatThrownBy(() -> categoriaService.atualizar(-1L, request))
 				.isInstanceOf(RecursoNaoEncontradoException.class);
@@ -88,7 +90,7 @@ class CategoriaServiceTests {
 	@Test
 	void excluirRemoveACategoria() {
 		CategoriaResponse criada = categoriaService
-				.criar(new CategoriaRequest("Categoria Descartável", null, null, TipoCategoria.OUTRO));
+				.criar(new CategoriaRequest(nome("Categoria Descartável"), null, null, TipoCategoria.OUTRO));
 
 		categoriaService.excluir(criada.id());
 
@@ -102,18 +104,18 @@ class CategoriaServiceTests {
 
 	@Test
 	void criarComNomeJaUsadoLancaConflitoSemDiferenciarMaiusculas() {
-		categoriaService.criar(new CategoriaRequest("Literatura", null, null, TipoCategoria.LITERATURA));
-		CategoriaRequest duplicada = new CategoriaRequest("LITERATURA", null, null, TipoCategoria.OUTRO);
+		categoriaService.criar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+		CategoriaRequest duplicada = new CategoriaRequest(nome("LITERATURA"), null, null, TipoCategoria.OUTRO);
 
 		assertThatThrownBy(() -> categoriaService.criar(duplicada)).isInstanceOf(ConflitoException.class);
 	}
 
 	@Test
 	void atualizarComNomeDeOutraCategoriaLancaConflito() {
-		categoriaService.criar(new CategoriaRequest("Literatura", null, null, TipoCategoria.LITERATURA));
+		categoriaService.criar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
 		CategoriaResponse outra = categoriaService
-				.criar(new CategoriaRequest("Referência", null, null, TipoCategoria.REFERENCIA));
-		CategoriaRequest edicao = new CategoriaRequest("literatura", null, null, TipoCategoria.REFERENCIA);
+				.criar(new CategoriaRequest(nome("Referência"), null, null, TipoCategoria.REFERENCIA));
+		CategoriaRequest edicao = new CategoriaRequest(nome("literatura"), null, null, TipoCategoria.REFERENCIA);
 
 		assertThatThrownBy(() -> categoriaService.atualizar(outra.id(), edicao))
 				.isInstanceOf(ConflitoException.class);
@@ -122,12 +124,12 @@ class CategoriaServiceTests {
 	@Test
 	void atualizarMantendoOProprioNomeNaoEhConflito() {
 		CategoriaResponse criada = categoriaService
-				.criar(new CategoriaRequest("literatura", null, null, TipoCategoria.LITERATURA));
+				.criar(new CategoriaRequest(nome("literatura"), null, null, TipoCategoria.LITERATURA));
 
 		CategoriaResponse atualizada = categoriaService.atualizar(criada.id(),
-				new CategoriaRequest("Literatura", null, null, TipoCategoria.LITERATURA));
+				new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
 
-		assertThat(atualizada.nome()).isEqualTo("Literatura");
+		assertThat(atualizada.nome()).isEqualTo(nome("Literatura"));
 	}
 
 }

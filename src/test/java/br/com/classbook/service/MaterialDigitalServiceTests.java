@@ -1,5 +1,6 @@
 package br.com.classbook.service;
 
+import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -43,7 +44,7 @@ class MaterialDigitalServiceTests {
 	@BeforeEach
 	void criarDisciplina() {
 		disciplinaId = disciplinaService
-				.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE)).id();
+				.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE)).id();
 	}
 
 	@Test
@@ -56,7 +57,7 @@ class MaterialDigitalServiceTests {
 		assertThat(response.id()).isNotNull();
 		assertThat(response).isEqualTo(new MaterialDigitalResponse(response.id(), "Lista de funções",
 				FormatoMaterial.PDF, "https://exemplo.com/funcoes.pdf", "Texto", LocalDate.of(2026, 3, 10),
-				new DisciplinaResumo(disciplinaId, "Matemática", "MAT-1")));
+				new DisciplinaResumo(disciplinaId, "Matemática", codigo("MAT-1"))));
 		assertThat(materialDigitalRepository.findById(response.id())).isPresent();
 	}
 
@@ -99,13 +100,14 @@ class MaterialDigitalServiceTests {
 				FormatoMaterial.PDF, "https://exemplo.com/antigo.pdf", "Texto", LocalDate.of(2026, 3, 10),
 				disciplinaId));
 		Long outraDisciplinaId = disciplinaService
-				.criar(new DisciplinaRequest("Física", "FIS-1", null, SerieEscolar.PRIMEIRA_SERIE)).id();
+				.criar(new DisciplinaRequest("Física", codigo("FIS-1"), null, SerieEscolar.PRIMEIRA_SERIE)).id();
 
 		MaterialDigitalResponse atualizado = materialDigitalService.atualizar(criado.id(), new MaterialDigitalRequest(
 				"Título novo", FormatoMaterial.VIDEO, "https://exemplo.com/novo", null, null, outraDisciplinaId));
 
 		assertThat(atualizado).isEqualTo(new MaterialDigitalResponse(criado.id(), "Título novo", FormatoMaterial.VIDEO,
-				"https://exemplo.com/novo", null, null, new DisciplinaResumo(outraDisciplinaId, "Física", "FIS-1")));
+				"https://exemplo.com/novo", null, null,
+				new DisciplinaResumo(outraDisciplinaId, "Física", codigo("FIS-1"))));
 	}
 
 	@Test

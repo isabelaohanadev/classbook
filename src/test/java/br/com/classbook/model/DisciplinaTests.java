@@ -1,5 +1,6 @@
 package br.com.classbook.model;
 
+import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.persistence.EntityManager;
@@ -29,20 +30,20 @@ class DisciplinaTests {
 
 	@Test
 	void gravaELeTodosOsCampos() {
-		Long id = persistir("Matemática", "MAT-1", "Matemática da 1ª série", SerieEscolar.PRIMEIRA_SERIE);
+		Long id = persistir("Matemática", codigo("MAT-1"), "Matemática da 1ª série", SerieEscolar.PRIMEIRA_SERIE);
 		entityManager.clear();
 
 		Disciplina lida = entityManager.find(Disciplina.class, id);
 
 		assertThat(lida.getNome()).isEqualTo("Matemática");
-		assertThat(lida.getCodigo()).isEqualTo("MAT-1");
+		assertThat(lida.getCodigo()).isEqualTo(codigo("MAT-1"));
 		assertThat(lida.getDescricao()).isEqualTo("Matemática da 1ª série");
 		assertThat(lida.getSerieEscolar()).isEqualTo(SerieEscolar.PRIMEIRA_SERIE);
 	}
 
 	@Test
 	void serieEscolarEhGravadaPeloNomeDaConstante() {
-		Long id = persistir("Física", "FIS-3", null, SerieEscolar.TERCEIRA_SERIE);
+		Long id = persistir("Física", codigo("FIS-3"), null, SerieEscolar.TERCEIRA_SERIE);
 
 		String serie = jdbc.queryForObject("SELECT serie_escolar FROM disciplina WHERE id = ?", String.class, id);
 
