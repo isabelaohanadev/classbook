@@ -8,6 +8,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.time.Year;
+
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -55,6 +57,17 @@ class LivroControllerTests {
 	@Test
 	void cadastroComAutorIdAusenteRespondeBadRequest() throws Exception {
 		LivroRequest request = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, null);
+
+		mockMvc.perform(post("/api/livros").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void cadastroComAnoDePublicacaoNoFuturoRespondeBadRequest() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		LivroRequest request = new LivroRequest("Livro do Futuro", "9780306406157", Year.now().getValue() + 1, null,
+				null, autorId);
 
 		mockMvc.perform(post("/api/livros").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
