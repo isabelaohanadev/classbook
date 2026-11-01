@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.DisciplinaRequest;
 import br.com.classbook.dto.DisciplinaResponse;
+import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
 import br.com.classbook.model.Disciplina;
 import br.com.classbook.repository.DisciplinaRepository;
@@ -23,6 +24,9 @@ public class DisciplinaService {
 
 	@Transactional
 	public DisciplinaResponse criar(DisciplinaRequest request) {
+		if (disciplinaRepository.existsByCodigo(request.codigo())) {
+			throw new ConflitoException("Já existe uma disciplina com o código " + request.codigo() + ".");
+		}
 		Disciplina disciplina = new Disciplina();
 		preencher(disciplina, request);
 		return DisciplinaResponse.de(disciplinaRepository.save(disciplina));
@@ -41,6 +45,9 @@ public class DisciplinaService {
 	@Transactional
 	public DisciplinaResponse atualizar(Long id, DisciplinaRequest request) {
 		Disciplina disciplina = buscarOuLancar(id);
+		if (disciplinaRepository.existsByCodigoAndIdNot(request.codigo(), id)) {
+			throw new ConflitoException("Já existe uma disciplina com o código " + request.codigo() + ".");
+		}
 		preencher(disciplina, request);
 		return DisciplinaResponse.de(disciplinaRepository.save(disciplina));
 	}

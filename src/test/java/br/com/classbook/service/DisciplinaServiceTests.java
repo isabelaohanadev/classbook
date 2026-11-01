@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.DisciplinaRequest;
 import br.com.classbook.dto.DisciplinaResponse;
+import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
 import br.com.classbook.model.SerieEscolar;
 import br.com.classbook.repository.DisciplinaRepository;
@@ -97,6 +98,46 @@ class DisciplinaServiceTests {
 	@Test
 	void excluirIdInexistenteLancaExcecao() {
 		assertThatThrownBy(() -> disciplinaService.excluir(-1L)).isInstanceOf(RecursoNaoEncontradoException.class);
+	}
+
+	@Test
+	void criarComCodigoJaUsadoLancaConflitoDepoisDaNormalizacao() {
+		disciplinaService.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		DisciplinaRequest duplicada = new DisciplinaRequest("Outra", " mat-1 ", null, SerieEscolar.SEGUNDA_SERIE);
+
+		assertThatThrownBy(() -> disciplinaService.criar(duplicada)).isInstanceOf(ConflitoException.class);
+	}
+
+	@Test
+	void mesmoNomeComCodigosDiferentesNaoEhConflito() {
+		disciplinaService.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+
+		DisciplinaResponse outraSerie = disciplinaService
+				.criar(new DisciplinaRequest("Matemática", "MAT-2", null, SerieEscolar.SEGUNDA_SERIE));
+
+		assertThat(outraSerie.id()).isNotNull();
+	}
+
+	@Test
+	void atualizarComCodigoDeOutraDisciplinaLancaConflito() {
+		disciplinaService.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		DisciplinaResponse outra = disciplinaService
+				.criar(new DisciplinaRequest("Física", "FIS-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		DisciplinaRequest edicao = new DisciplinaRequest("Física", "mat-1", null, SerieEscolar.PRIMEIRA_SERIE);
+
+		assertThatThrownBy(() -> disciplinaService.atualizar(outra.id(), edicao))
+				.isInstanceOf(ConflitoException.class);
+	}
+
+	@Test
+	void atualizarMantendoOProprioCodigoNaoEhConflito() {
+		DisciplinaResponse criada = disciplinaService
+				.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+
+		DisciplinaResponse atualizada = disciplinaService.atualizar(criada.id(),
+				new DisciplinaRequest("Matemática Básica", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+
+		assertThat(atualizada.nome()).isEqualTo("Matemática Básica");
 	}
 
 }
