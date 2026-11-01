@@ -109,6 +109,11 @@ Se `DB_PASSWORD` não for definida ou estiver errada, a conexão falha com `pass
 
 A aplicação sobe em `http://localhost:8080`. Na inicialização, o Flyway aplica as migrations de `src/main/resources/db/migration/`.
 
+Com a aplicação no ar, a documentação das rotas fica disponível no navegador:
+
+- **Swagger UI:** `http://localhost:8080/swagger-ui.html`, para ver e testar cada rota
+- **OpenAPI (JSON):** `http://localhost:8080/v3/api-docs`
+
 ## Como testar
 
 Os testes de integração usam o PostgreSQL. Para não misturar com seus dados de desenvolvimento, aponte para o banco `classbook_test`:

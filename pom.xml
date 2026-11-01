@@ -15,6 +15,8 @@
 	<description>Biblioteca Escolar Digital desenvolvida em Java e Spring Boot para projeto acadêmico.</description>
 	<properties>
 		<java.version>21</java.version>
+		<!-- 3.1.x é a linha do springdoc compilada contra o Spring Boot 4.1 (a 3.2 já exige o 4.1.2). -->
+		<springdoc.version>3.1.1</springdoc.version>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -36,6 +38,11 @@
 		<dependency>
 			<groupId>org.flywaydb</groupId>
 			<artifactId>flyway-database-postgresql</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>${springdoc.version}</version>
 		</dependency>
 
 		<dependency>
