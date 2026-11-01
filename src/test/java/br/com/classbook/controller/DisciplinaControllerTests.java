@@ -1,5 +1,6 @@
 package br.com.classbook.controller;
 
+import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -9,12 +10,18 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 import com.jayway.jsonpath.JsonPath;
 import tools.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -48,13 +55,14 @@ class DisciplinaControllerTests {
 
 	@Test
 	void cadastroValidoRespondeCreatedComLocationEOCodigoNormalizado() throws Exception {
-		DisciplinaRequest request = new DisciplinaRequest("Matemática", " mat-1 ", "Matemática da 1ª série",
+		DisciplinaRequest request = new DisciplinaRequest("Matemática", " " + codigo("mat-1") + " ",
+				"Matemática da 1ª série",
 				SerieEscolar.PRIMEIRA_SERIE);
 
 		MvcResult resultado = enviar(post("/api/disciplinas"), request)
 				.andExpect(status().isCreated())
 				.andExpect(jsonPath("$.nome").value("Matemática"))
-				.andExpect(jsonPath("$.codigo").value("MAT-1"))
+				.andExpect(jsonPath("$.codigo").value(codigo("MAT-1")))
 				.andExpect(jsonPath("$.descricao").value("Matemática da 1ª série"))
 				.andExpect(jsonPath("$.serieEscolar").value("PRIMEIRA_SERIE"))
 				.andReturn();
@@ -81,34 +89,35 @@ class DisciplinaControllerTests {
 
 	@Test
 	void cadastroComCodigoJaUsadoRespondeConflict() throws Exception {
-		cadastrar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
-		enviar(post("/api/disciplinas"), new DisciplinaRequest("Outra", "mat-1", null, SerieEscolar.SEGUNDA_SERIE))
+		enviar(post("/api/disciplinas"), new DisciplinaRequest("Outra", codigo("mat-1"), null,
+				SerieEscolar.SEGUNDA_SERIE))
 				.andExpect(status().isConflict());
 	}
 
 	@Test
 	void listagemRespondeOkComDisciplinasOrdenadasPorCodigo() throws Exception {
-		cadastrar(new DisciplinaRequest("Química", "QUI-2", null, SerieEscolar.SEGUNDA_SERIE));
-		cadastrar(new DisciplinaRequest("Física", "FIS-1", null, SerieEscolar.PRIMEIRA_SERIE));
-		cadastrar(new DisciplinaRequest("Matemática", "MAT-3", null, SerieEscolar.TERCEIRA_SERIE));
+		cadastrar(new DisciplinaRequest("Química", codigo("QUI-2"), null, SerieEscolar.SEGUNDA_SERIE));
+		cadastrar(new DisciplinaRequest("Física", codigo("FIS-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+		cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-3"), null, SerieEscolar.TERCEIRA_SERIE));
 
 		String corpo = mockMvc.perform(get("/api/disciplinas"))
 				.andExpect(status().isOk())
 				.andReturn().getResponse().getContentAsString();
 
 		List<String> codigos = JsonPath.read(corpo, "$[*].codigo");
-		assertThat(codigos).containsSubsequence("FIS-1", "MAT-3", "QUI-2");
+		assertThat(codigos).containsSubsequence(codigo("FIS-1"), codigo("MAT-3"), codigo("QUI-2"));
 	}
 
 	@Test
 	void consultaPorIdExistenteRespondeOkComADisciplina() throws Exception {
-		Long id = cadastrar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
 		mockMvc.perform(get("/api/disciplinas/{id}", id))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(id))
-				.andExpect(jsonPath("$.codigo").value("MAT-1"));
+				.andExpect(jsonPath("$.codigo").value(codigo("MAT-1")));
 	}
 
 	@Test
@@ -118,48 +127,48 @@ class DisciplinaControllerTests {
 
 	@Test
 	void edicaoValidaRespondeOkComADisciplinaAtualizada() throws Exception {
-		Long id = cadastrar(new DisciplinaRequest("Nome Antigo", "ANT-1", "Descrição antiga",
+		Long id = cadastrar(new DisciplinaRequest("Nome Antigo", codigo("ANT-1"), "Descrição antiga",
 				SerieEscolar.PRIMEIRA_SERIE));
 
-		enviar(put("/api/disciplinas/{id}", id), new DisciplinaRequest("Nome Novo", "nov-2", null,
+		enviar(put("/api/disciplinas/{id}", id), new DisciplinaRequest("Nome Novo", codigo("nov-2"), null,
 				SerieEscolar.SEGUNDA_SERIE))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.nome").value("Nome Novo"))
-				.andExpect(jsonPath("$.codigo").value("NOV-2"))
+				.andExpect(jsonPath("$.codigo").value(codigo("NOV-2")))
 				.andExpect(jsonPath("$.descricao").value(nullValue()))
 				.andExpect(jsonPath("$.serieEscolar").value("SEGUNDA_SERIE"));
 	}
 
 	@Test
 	void edicaoComIdInexistenteRespondeNotFound() throws Exception {
-		enviar(put("/api/disciplinas/{id}", -1), new DisciplinaRequest("Nome", "COD-1", null,
+		enviar(put("/api/disciplinas/{id}", -1), new DisciplinaRequest("Nome", codigo("COD-1"), null,
 				SerieEscolar.PRIMEIRA_SERIE))
 				.andExpect(status().isNotFound());
 	}
 
 	@Test
 	void edicaoComDadosInvalidosRespondeBadRequest() throws Exception {
-		Long id = cadastrar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
-		enviar(put("/api/disciplinas/{id}", id), new DisciplinaRequest("Matemática", "MAT-1", null, null))
+		enviar(put("/api/disciplinas/{id}", id), new DisciplinaRequest("Matemática", codigo("MAT-1"), null, null))
 				.andExpect(status().isBadRequest());
 	}
 
 	@Test
 	void edicaoComCodigoDeOutraDisciplinaRespondeConflict() throws Exception {
-		cadastrar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
-		Long id = cadastrar(new DisciplinaRequest("Física", "FIS-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+		Long id = cadastrar(new DisciplinaRequest("Física", codigo("FIS-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
-		enviar(put("/api/disciplinas/{id}", id), new DisciplinaRequest("Física", "MAT-1", null,
+		enviar(put("/api/disciplinas/{id}", id), new DisciplinaRequest("Física", codigo("MAT-1"), null,
 				SerieEscolar.PRIMEIRA_SERIE))
 				.andExpect(status().isConflict());
 	}
 
 	@Test
 	void edicaoMantendoOProprioCodigoRespondeOk() throws Exception {
-		Long id = cadastrar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
-		enviar(put("/api/disciplinas/{id}", id), new DisciplinaRequest("Matemática Básica", "mat-1", null,
+		enviar(put("/api/disciplinas/{id}", id), new DisciplinaRequest("Matemática Básica", codigo("mat-1"), null,
 				SerieEscolar.PRIMEIRA_SERIE))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.nome").value("Matemática Básica"));
@@ -167,7 +176,7 @@ class DisciplinaControllerTests {
 
 	@Test
 	void exclusaoDeDisciplinaSemMateriaisRespondeNoContent() throws Exception {
-		Long id = cadastrar(new DisciplinaRequest("Descartável", "DESC-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		Long id = cadastrar(new DisciplinaRequest("Descartável", codigo("DESC-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
 		mockMvc.perform(delete("/api/disciplinas/{id}", id)).andExpect(status().isNoContent());
 		mockMvc.perform(get("/api/disciplinas/{id}", id)).andExpect(status().isNotFound());
@@ -180,7 +189,7 @@ class DisciplinaControllerTests {
 
 	@Test
 	void exclusaoDeDisciplinaComMateriaisVinculadosRespondeConflict() throws Exception {
-		Long id = cadastrar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 		enviar(post("/api/materiais"), new MaterialDigitalRequest("Lista de funções", FormatoMaterial.PDF,
 				"https://exemplo.com/funcoes.pdf", null, null, id))
 				.andExpect(status().isCreated());
@@ -191,11 +200,48 @@ class DisciplinaControllerTests {
 
 	@Test
 	void respostaDaDisciplinaNaoTrazCampoDeMateriais() throws Exception {
-		Long id = cadastrar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
 		mockMvc.perform(get("/api/disciplinas/{id}", id))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.materiais").doesNotExist());
+	}
+
+	@Test
+	void corpoBaseDaMatrizDeValidacaoEhValido() throws Exception {
+		enviar(post("/api/disciplinas"), corpoValido()).andExpect(status().isCreated());
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("camposInvalidos")
+	void cadastroEEdicaoComCampoInvalidoRespondemBadRequest(String caso, String campo, Object valor)
+			throws Exception {
+		Long id = cadastrar(new DisciplinaRequest("Física", codigo("FIS-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+		Map<String, Object> corpo = corpoValido();
+		corpo.put(campo, valor);
+
+		enviar(post("/api/disciplinas"), corpo).andExpect(status().isBadRequest());
+		enviar(put("/api/disciplinas/{id}", id), corpo).andExpect(status().isBadRequest());
+	}
+
+	static Stream<Arguments> camposInvalidos() {
+		return Stream.of(
+				Arguments.of("nome ausente", "nome", null),
+				Arguments.of("nome em branco", "nome", "   "),
+				Arguments.of("nome maior que a coluna", "nome", "a".repeat(101)),
+				Arguments.of("código ausente", "codigo", null),
+				Arguments.of("código em branco", "codigo", "   "),
+				Arguments.of("código maior que a coluna", "codigo", "A".repeat(21)),
+				Arguments.of("descrição maior que a coluna", "descricao", "a".repeat(501)),
+				Arguments.of("série ausente", "serieEscolar", null),
+				Arguments.of("série fora da lista", "serieEscolar", "QUARTA_SERIE"),
+				Arguments.of("série em minúsculas", "serieEscolar", "primeira_serie"));
+	}
+
+	/** Corpo válido em que cada caso da matriz troca um único campo. */
+	private static Map<String, Object> corpoValido() {
+		return new HashMap<>(Map.of("nome", "Matemática", "codigo", codigo("MAT-1"), "descricao", "1ª série",
+				"serieEscolar", "PRIMEIRA_SERIE"));
 	}
 
 	private ResultActions enviar(MockHttpServletRequestBuilder requisicao, Object corpo) throws Exception {

@@ -1,5 +1,6 @@
 package br.com.classbook.repository;
 
+import static br.com.classbook.Unico.nome;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.Optional;
@@ -26,14 +27,14 @@ class CategoriaRepositoryTests {
 	@Test
 	void salvaEBuscaUmaCategoria() {
 		Categoria categoria = new Categoria();
-		categoria.setNome("Literatura");
+		categoria.setNome(nome("Literatura"));
 		categoria.setTipo(TipoCategoria.LITERATURA);
 
 		Categoria salva = categoriaRepository.save(categoria);
 
 		Optional<Categoria> encontrada = categoriaRepository.findById(salva.getId());
 		assertThat(encontrada).isPresent();
-		assertThat(encontrada.get().getNome()).isEqualTo("Literatura");
+		assertThat(encontrada.get().getNome()).isEqualTo(nome("Literatura"));
 		assertThat(encontrada.get().getTipo()).isEqualTo(TipoCategoria.LITERATURA);
 	}
 

@@ -1,5 +1,6 @@
 package br.com.classbook.model;
 
+import static br.com.classbook.Unico.nome;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.persistence.EntityManager;
@@ -29,12 +30,12 @@ class CategoriaTests {
 
 	@Test
 	void gravaELeTodosOsCampos() {
-		Long id = persistir("Literatura", "Romances, contos e poesia", "14 a 17 anos", TipoCategoria.LITERATURA);
+		Long id = persistir(nome("Literatura"), "Romances, contos e poesia", "14 a 17 anos", TipoCategoria.LITERATURA);
 		entityManager.clear();
 
 		Categoria lida = entityManager.find(Categoria.class, id);
 
-		assertThat(lida.getNome()).isEqualTo("Literatura");
+		assertThat(lida.getNome()).isEqualTo(nome("Literatura"));
 		assertThat(lida.getDescricao()).isEqualTo("Romances, contos e poesia");
 		assertThat(lida.getFaixaEtaria()).isEqualTo("14 a 17 anos");
 		assertThat(lida.getTipo()).isEqualTo(TipoCategoria.LITERATURA);
@@ -42,7 +43,7 @@ class CategoriaTests {
 
 	@Test
 	void tipoEhGravadoPeloNomeDaConstante() {
-		Long id = persistir("Dicionários", null, null, TipoCategoria.REFERENCIA);
+		Long id = persistir(nome("Dicionários"), null, null, TipoCategoria.REFERENCIA);
 
 		String tipo = jdbc.queryForObject("SELECT tipo FROM categoria WHERE id = ?", String.class, id);
 
