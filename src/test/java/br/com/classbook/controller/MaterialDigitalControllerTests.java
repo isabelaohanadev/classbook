@@ -11,6 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 import com.jayway.jsonpath.JsonPath;
 import tools.jackson.databind.ObjectMapper;
@@ -169,6 +170,36 @@ class MaterialDigitalControllerTests {
 	@Test
 	void exclusaoComIdInexistenteRespondeNotFound() throws Exception {
 		mockMvc.perform(delete("/api/materiais/{id}", -1)).andExpect(status().isNotFound());
+	}
+
+	@Test
+	void cadastroComDisciplinaInexistenteRespondeBadRequestComMensagemClara() throws Exception {
+		MvcResult resultado = enviar(post("/api/materiais"), material("Lista", "https://exemplo.com/a.pdf", -1L))
+				.andExpect(status().isBadRequest())
+				.andReturn();
+
+		assertThat(resultado.getResolvedException()).hasMessage("Disciplina -1 não existe.");
+	}
+
+	@Test
+	void resumoDaDisciplinaTrazSoIdNomeECodigo() throws Exception {
+		Long id = cadastrar("/api/materiais", material("Lista", "https://exemplo.com/a.pdf", disciplinaId));
+
+		String corpo = mockMvc.perform(get("/api/materiais/{id}", id))
+				.andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString();
+
+		Map<String, Object> disciplina = JsonPath.read(corpo, "$.disciplina");
+		assertThat(disciplina).containsOnlyKeys("id", "nome", "codigo");
+	}
+
+	@Test
+	void exclusaoDeMaterialMantemADisciplina() throws Exception {
+		Long id = cadastrar("/api/materiais", material("Lista", "https://exemplo.com/a.pdf", disciplinaId));
+
+		mockMvc.perform(delete("/api/materiais/{id}", id)).andExpect(status().isNoContent());
+
+		mockMvc.perform(get("/api/disciplinas/{id}", disciplinaId)).andExpect(status().isOk());
 	}
 
 	private static MaterialDigitalRequest material(String titulo, String url, Long disciplinaId) {

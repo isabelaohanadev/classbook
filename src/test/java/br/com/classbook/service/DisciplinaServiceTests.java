@@ -10,8 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.DisciplinaRequest;
 import br.com.classbook.dto.DisciplinaResponse;
+import br.com.classbook.dto.MaterialDigitalRequest;
 import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
+import br.com.classbook.model.FormatoMaterial;
 import br.com.classbook.model.SerieEscolar;
 import br.com.classbook.repository.DisciplinaRepository;
 
@@ -28,6 +30,9 @@ class DisciplinaServiceTests {
 
 	@Autowired
 	private DisciplinaRepository disciplinaRepository;
+
+	@Autowired
+	private MaterialDigitalService materialDigitalService;
 
 	@Test
 	void criarGravaERetornaADisciplinaComOCodigoNormalizado() {
@@ -98,6 +103,18 @@ class DisciplinaServiceTests {
 	@Test
 	void excluirIdInexistenteLancaExcecao() {
 		assertThatThrownBy(() -> disciplinaService.excluir(-1L)).isInstanceOf(RecursoNaoEncontradoException.class);
+	}
+
+	@Test
+	void excluirDisciplinaComMateriaisVinculadosLancaConflito() {
+		DisciplinaResponse disciplina = disciplinaService
+				.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		materialDigitalService.criar(new MaterialDigitalRequest("Lista de funções", FormatoMaterial.PDF,
+				"https://exemplo.com/funcoes.pdf", null, null, disciplina.id()));
+
+		assertThatThrownBy(() -> disciplinaService.excluir(disciplina.id())).isInstanceOf(ConflitoException.class)
+				.hasMessage("Disciplina " + disciplina.id() + " possui materiais vinculados.");
+		assertThat(disciplinaRepository.findById(disciplina.id())).isPresent();
 	}
 
 	@Test

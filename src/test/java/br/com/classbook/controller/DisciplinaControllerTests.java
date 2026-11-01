@@ -26,6 +26,8 @@ import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilde
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.DisciplinaRequest;
+import br.com.classbook.dto.MaterialDigitalRequest;
+import br.com.classbook.model.FormatoMaterial;
 import br.com.classbook.model.SerieEscolar;
 
 /**
@@ -176,8 +178,27 @@ class DisciplinaControllerTests {
 		mockMvc.perform(delete("/api/disciplinas/{id}", -1)).andExpect(status().isNotFound());
 	}
 
-	private ResultActions enviar(MockHttpServletRequestBuilder requisicao, DisciplinaRequest corpo)
-			throws Exception {
+	@Test
+	void exclusaoDeDisciplinaComMateriaisVinculadosRespondeConflict() throws Exception {
+		Long id = cadastrar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		enviar(post("/api/materiais"), new MaterialDigitalRequest("Lista de funções", FormatoMaterial.PDF,
+				"https://exemplo.com/funcoes.pdf", null, null, id))
+				.andExpect(status().isCreated());
+
+		mockMvc.perform(delete("/api/disciplinas/{id}", id)).andExpect(status().isConflict());
+		mockMvc.perform(get("/api/disciplinas/{id}", id)).andExpect(status().isOk());
+	}
+
+	@Test
+	void respostaDaDisciplinaNaoTrazCampoDeMateriais() throws Exception {
+		Long id = cadastrar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+
+		mockMvc.perform(get("/api/disciplinas/{id}", id))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.materiais").doesNotExist());
+	}
+
+	private ResultActions enviar(MockHttpServletRequestBuilder requisicao, Object corpo) throws Exception {
 		return mockMvc.perform(requisicao.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(corpo)));
 	}
