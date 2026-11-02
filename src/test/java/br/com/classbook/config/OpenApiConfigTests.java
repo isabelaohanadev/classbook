@@ -28,8 +28,8 @@ import org.springframework.test.web.servlet.MockMvc;
 @AutoConfigureMockMvc
 class OpenApiConfigTests {
 
-	/** Rotas com resumo e respostas documentados. As de Autor e Livro entram quando forem documentadas. */
-	private static final String ROTAS_DOCUMENTADAS = "/api/(categorias|disciplinas|materiais)(/\\{id\\})?";
+	/** Rotas com resumo e respostas documentados (Issue #48: as cinco entidades). */
+	private static final String ROTAS_DOCUMENTADAS = "/api/(autores|categorias|disciplinas|livros|materiais)(/\\{id\\})?";
 
 	@Autowired
 	private MockMvc mockMvc;
@@ -67,7 +67,7 @@ class OpenApiConfigTests {
 				JsonNode documentacao = metodo.getValue();
 				assertThat(documentacao.path("summary").asString()).as(operacao).isNotBlank();
 				assertThat(documentacao.path("tags").path(0).asString()).as(operacao)
-						.isIn("Categorias", "Disciplinas", "Materiais digitais");
+						.isIn("Autores", "Categorias", "Disciplinas", "Livros", "Materiais digitais");
 				for (Map.Entry<String, JsonNode> resposta : documentacao.path("responses").properties()) {
 					String codigo = operacao + " → " + resposta.getKey();
 					// "OK", "Created" e "No Content" são as descrições que o springdoc põe sem a anotação.
@@ -81,7 +81,7 @@ class OpenApiConfigTests {
 				operacoes.add(operacao);
 			}
 		}
-		assertThat(operacoes).hasSize(15);
+		assertThat(operacoes).hasSize(25);
 	}
 
 	@Test
