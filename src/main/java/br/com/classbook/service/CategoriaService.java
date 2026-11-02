@@ -12,14 +12,18 @@ import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
 import br.com.classbook.model.Categoria;
 import br.com.classbook.repository.CategoriaRepository;
+import br.com.classbook.repository.LivroRepository;
 
 @Service
 public class CategoriaService {
 
 	private final CategoriaRepository categoriaRepository;
 
-	public CategoriaService(CategoriaRepository categoriaRepository) {
+	private final LivroRepository livroRepository;
+
+	public CategoriaService(CategoriaRepository categoriaRepository, LivroRepository livroRepository) {
 		this.categoriaRepository = categoriaRepository;
+		this.livroRepository = livroRepository;
 	}
 
 	@Transactional
@@ -55,6 +59,9 @@ public class CategoriaService {
 	@Transactional
 	public void excluir(Long id) {
 		Categoria categoria = buscarOuLancar(id);
+		if (livroRepository.existsByCategoriaId(id)) {
+			throw new ConflitoException("Categoria " + id + " possui livros vinculados.");
+		}
 		categoriaRepository.delete(categoria);
 	}
 

@@ -13,8 +13,12 @@ import br.com.classbook.dto.CategoriaRequest;
 import br.com.classbook.dto.CategoriaResponse;
 import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
+import br.com.classbook.model.Autor;
+import br.com.classbook.model.Livro;
 import br.com.classbook.model.TipoCategoria;
+import br.com.classbook.repository.AutorRepository;
 import br.com.classbook.repository.CategoriaRepository;
+import br.com.classbook.repository.LivroRepository;
 
 /**
  * Confere as regras de negócio de {@link CategoriaService}. A transação é desfeita ao final de cada
@@ -29,6 +33,12 @@ class CategoriaServiceTests {
 
 	@Autowired
 	private CategoriaRepository categoriaRepository;
+
+	@Autowired
+	private AutorRepository autorRepository;
+
+	@Autowired
+	private LivroRepository livroRepository;
 
 	@Test
 	void criarGravaERetornaACategoria() {
@@ -100,6 +110,24 @@ class CategoriaServiceTests {
 	@Test
 	void excluirIdInexistenteLancaExcecao() {
 		assertThatThrownBy(() -> categoriaService.excluir(-1L)).isInstanceOf(RecursoNaoEncontradoException.class);
+	}
+
+	@Test
+	void excluirCategoriaComLivrosVinculadosLancaConflito() {
+		CategoriaResponse categoria = categoriaService
+				.criar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+		Autor autor = new Autor();
+		autor.setNome("Machado de Assis");
+		autorRepository.save(autor);
+		Livro livro = new Livro();
+		livro.setTitulo("Dom Casmurro");
+		livro.setIsbn("9780306406157");
+		livro.setAutor(autor);
+		livro.setCategoria(categoriaRepository.findById(categoria.id()).orElseThrow());
+		livroRepository.save(livro);
+
+		assertThatThrownBy(() -> categoriaService.excluir(categoria.id())).isInstanceOf(ConflitoException.class);
+		assertThat(categoriaRepository.findById(categoria.id())).isPresent();
 	}
 
 	@Test

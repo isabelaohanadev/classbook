@@ -33,7 +33,9 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.classbook.dto.AutorRequest;
 import br.com.classbook.dto.CategoriaRequest;
+import br.com.classbook.dto.LivroRequest;
 import br.com.classbook.model.TipoCategoria;
 
 /**
@@ -173,6 +175,20 @@ class CategoriaControllerTests {
 	@Test
 	void exclusaoComIdInexistenteRespondeNotFound() throws Exception {
 		mockMvc.perform(delete("/api/categorias/{id}", -1)).andExpect(status().isNotFound());
+	}
+
+	@Test
+	void exclusaoDeCategoriaComLivrosVinculadosRespondeConflict() throws Exception {
+		Long categoriaId = cadastrar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+		Long autorId = ((Number) JsonPath.read(
+				enviar(post("/api/autores"), new AutorRequest("Machado de Assis", null, null, null))
+						.andReturn().getResponse().getContentAsString(),
+				"$.id")).longValue();
+		enviar(post("/api/livros"),
+				new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, categoriaId));
+
+		mockMvc.perform(delete("/api/categorias/{id}", categoriaId)).andExpect(status().isConflict());
+		mockMvc.perform(get("/api/categorias/{id}", categoriaId)).andExpect(status().isOk());
 	}
 
 	@Test

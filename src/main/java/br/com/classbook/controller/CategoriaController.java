@@ -83,6 +83,7 @@ public class CategoriaController {
 	@ApiResponse(responseCode = "204", description = "Categoria excluída")
 	@ApiResponse(responseCode = "400", description = "ID que não é número")
 	@ApiResponse(responseCode = "404", description = "Categoria não encontrada")
+	@ApiResponse(responseCode = "409", description = "Categoria possui livros vinculados")
 	public void excluir(@PathVariable Long id) {
 		categoriaService.excluir(id);
 	}
