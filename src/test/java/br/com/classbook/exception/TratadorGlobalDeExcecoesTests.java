@@ -1,13 +1,10 @@
 package br.com.classbook.exception;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -21,6 +18,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -97,20 +95,22 @@ class TratadorGlobalDeExcecoesTests {
 	}
 
 	@Test
-	void violacaoDeIntegridadeResponde409SemExporOBanco() throws Exception {
-		Number autorId = cadastrarAutor();
-		String isbn = isbnAleatorio();
-		cadastrarLivro(autorId, isbn);
+	void violacaoDeIntegridadeResponde409SemExporOBanco() {
+		// A partir da Issue #46, o service confere o ISBN antes de chegar ao banco: a violação de
+		// integridade é simulada diretamente aqui para confirmar que o tratador global continua sendo
+		// a rede de segurança (docs/MODELAGEM.md#regras-comuns-às-relações), sem expor detalhes do SQL.
+		DataIntegrityViolationException ex = new DataIntegrityViolationException(
+				"ERROR: duplicate key value violates unique constraint \"uk_livro_isbn\"\n"
+						+ "  Detail: Key (isbn)=(9780306406157) already exists.\n"
+						+ "insert into livro (isbn, titulo) values ($1, $2)");
 
-		// O service ainda não confere ISBN repetido (Issue #46): é o índice único do banco que barra.
-		enviarJson(post("/api/livros"), """
-				{"titulo": "Outro título", "isbn": "%s", "autorId": %d}
-				""".formatted(isbn, autorId.longValue()))
-				.andExpect(status().isConflict())
-				.andExpect(jsonPath("$.mensagem").value(
-						"A operação conflita com um registro existente: dado duplicado ou registro ainda em uso."))
-				.andExpect(content().string(not(containsString("uk_livro_isbn"))))
-				.andExpect(content().string(not(containsString("insert"))));
+		ResponseEntity<ErroResponse> resposta = new TratadorGlobalDeExcecoes().violacaoDeIntegridade(ex,
+				new MockHttpServletRequest("POST", "/api/livros"));
+
+		assertThat(resposta.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+		assertThat(resposta.getBody().mensagem())
+				.isEqualTo("A operação conflita com um registro existente: dado duplicado ou registro ainda em uso.")
+				.doesNotContain("uk_livro_isbn", "insert");
 	}
 
 	@Test
