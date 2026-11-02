@@ -37,35 +37,35 @@ class LivroRequestTests {
 	@Test
 	void requestCompletoEhValido() {
 		LivroRequest request = new LivroRequest("Dom Casmurro", "978-0-306-40615-7", 1899, "Descrição",
-				"Editora Exemplo", 1L);
+				"Editora Exemplo", 1L, null);
 
 		assertThat(camposInvalidos(request)).isEmpty();
 	}
 
 	@Test
 	void apenasTituloIsbnEAutorIdSaoObrigatorios() {
-		LivroRequest request = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, 1L);
+		LivroRequest request = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, 1L, null);
 
 		assertThat(camposInvalidos(request)).isEmpty();
 	}
 
 	@Test
 	void tituloIsbnEAutorIdAusentesSaoInvalidos() {
-		LivroRequest request = new LivroRequest(null, null, null, null, null, null);
+		LivroRequest request = new LivroRequest(null, null, null, null, null, null, null);
 
 		assertThat(camposInvalidos(request)).containsExactlyInAnyOrder("titulo", "isbn", "autorId");
 	}
 
 	@Test
 	void isbnEhNormalizadoSemHifensEEmMaiusculas() {
-		LivroRequest request = new LivroRequest("Título", "978-0-306-40615-x", null, null, null, 1L);
+		LivroRequest request = new LivroRequest("Título", "978-0-306-40615-x", null, null, null, 1L, null);
 
 		assertThat(request.isbn()).isEqualTo("978030640615X");
 	}
 
 	@Test
 	void isbnForaDoFormatoEhInvalido() {
-		LivroRequest request = new LivroRequest("Título", "123", null, null, null, 1L);
+		LivroRequest request = new LivroRequest("Título", "123", null, null, null, 1L, null);
 
 		assertThat(camposInvalidos(request)).containsExactly("isbn");
 	}
@@ -73,14 +73,14 @@ class LivroRequestTests {
 	@Test
 	void aceitaOsTamanhosMaximosDasColunas() {
 		LivroRequest request = new LivroRequest("a".repeat(200), "9780306406157", null, "a".repeat(2000),
-				"a".repeat(120), 1L);
+				"a".repeat(120), 1L, null);
 
 		assertThat(camposInvalidos(request)).isEmpty();
 	}
 
 	@Test
 	void rejeitaTextoMaiorQueAColuna() {
-		LivroRequest request = new LivroRequest("a".repeat(201), "9780306406157", null, null, "a".repeat(121), 1L);
+		LivroRequest request = new LivroRequest("a".repeat(201), "9780306406157", null, null, "a".repeat(121), 1L, null);
 
 		assertThat(camposInvalidos(request)).containsExactlyInAnyOrder("titulo", "editora");
 	}

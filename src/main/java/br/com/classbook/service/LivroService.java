@@ -12,8 +12,10 @@ import br.com.classbook.dto.LivroResponse;
 import br.com.classbook.exception.DadosInvalidosException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
 import br.com.classbook.model.Autor;
+import br.com.classbook.model.Categoria;
 import br.com.classbook.model.Livro;
 import br.com.classbook.repository.AutorRepository;
+import br.com.classbook.repository.CategoriaRepository;
 import br.com.classbook.repository.LivroRepository;
 
 @Service
@@ -23,9 +25,13 @@ public class LivroService {
 
 	private final AutorRepository autorRepository;
 
-	public LivroService(LivroRepository livroRepository, AutorRepository autorRepository) {
+	private final CategoriaRepository categoriaRepository;
+
+	public LivroService(LivroRepository livroRepository, AutorRepository autorRepository,
+			CategoriaRepository categoriaRepository) {
 		this.livroRepository = livroRepository;
 		this.autorRepository = autorRepository;
+		this.categoriaRepository = categoriaRepository;
 	}
 
 	@Transactional
@@ -74,12 +80,18 @@ public class LivroService {
 		}
 		Autor autor = autorRepository.findById(request.autorId())
 				.orElseThrow(() -> new DadosInvalidosException("Autor " + request.autorId() + " não existe."));
+		Categoria categoria = null;
+		if (request.categoriaId() != null) {
+			categoria = categoriaRepository.findById(request.categoriaId()).orElseThrow(
+					() -> new DadosInvalidosException("Categoria " + request.categoriaId() + " não existe."));
+		}
 		livro.setTitulo(request.titulo());
 		livro.setIsbn(request.isbn());
 		livro.setAnoPublicacao(request.anoPublicacao());
 		livro.setDescricao(request.descricao());
 		livro.setEditora(request.editora());
 		livro.setAutor(autor);
+		livro.setCategoria(categoria);
 	}
 
 }
