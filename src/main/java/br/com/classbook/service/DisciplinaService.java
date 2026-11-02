@@ -8,21 +8,30 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.DisciplinaRequest;
 import br.com.classbook.dto.DisciplinaResponse;
+import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
 import br.com.classbook.model.Disciplina;
 import br.com.classbook.repository.DisciplinaRepository;
+import br.com.classbook.repository.MaterialDigitalRepository;
 
 @Service
 public class DisciplinaService {
 
 	private final DisciplinaRepository disciplinaRepository;
 
-	public DisciplinaService(DisciplinaRepository disciplinaRepository) {
+	private final MaterialDigitalRepository materialDigitalRepository;
+
+	public DisciplinaService(DisciplinaRepository disciplinaRepository,
+			MaterialDigitalRepository materialDigitalRepository) {
 		this.disciplinaRepository = disciplinaRepository;
+		this.materialDigitalRepository = materialDigitalRepository;
 	}
 
 	@Transactional
 	public DisciplinaResponse criar(DisciplinaRequest request) {
+		if (disciplinaRepository.existsByCodigo(request.codigo())) {
+			throw new ConflitoException("Já existe uma disciplina com o código " + request.codigo() + ".");
+		}
 		Disciplina disciplina = new Disciplina();
 		preencher(disciplina, request);
 		return DisciplinaResponse.de(disciplinaRepository.save(disciplina));
@@ -41,6 +50,9 @@ public class DisciplinaService {
 	@Transactional
 	public DisciplinaResponse atualizar(Long id, DisciplinaRequest request) {
 		Disciplina disciplina = buscarOuLancar(id);
+		if (disciplinaRepository.existsByCodigoAndIdNot(request.codigo(), id)) {
+			throw new ConflitoException("Já existe uma disciplina com o código " + request.codigo() + ".");
+		}
 		preencher(disciplina, request);
 		return DisciplinaResponse.de(disciplinaRepository.save(disciplina));
 	}
@@ -48,6 +60,9 @@ public class DisciplinaService {
 	@Transactional
 	public void excluir(Long id) {
 		Disciplina disciplina = buscarOuLancar(id);
+		if (materialDigitalRepository.existsByDisciplinaId(id)) {
+			throw new ConflitoException("Disciplina " + id + " possui materiais vinculados.");
+		}
 		disciplinaRepository.delete(disciplina);
 	}
 

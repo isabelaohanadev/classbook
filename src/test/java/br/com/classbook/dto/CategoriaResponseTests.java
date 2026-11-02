@@ -1,5 +1,6 @@
 package br.com.classbook.dto;
 
+import static br.com.classbook.Unico.nome;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.persistence.EntityManager;
@@ -26,7 +27,7 @@ class CategoriaResponseTests {
 	@Test
 	void deCopiaTodosOsCamposDaEntidade() {
 		Categoria categoria = new Categoria();
-		categoria.setNome("Literatura");
+		categoria.setNome(nome("Literatura"));
 		categoria.setDescricao("Romances, contos e poesia");
 		categoria.setFaixaEtaria("14 a 17 anos");
 		categoria.setTipo(TipoCategoria.LITERATURA);
@@ -35,7 +36,7 @@ class CategoriaResponseTests {
 		CategoriaResponse response = CategoriaResponse.de(categoria);
 
 		assertThat(response.id()).isNotNull();
-		assertThat(response).isEqualTo(new CategoriaResponse(categoria.getId(), "Literatura",
+		assertThat(response).isEqualTo(new CategoriaResponse(categoria.getId(), nome("Literatura"),
 				"Romances, contos e poesia", "14 a 17 anos", TipoCategoria.LITERATURA));
 	}
 
