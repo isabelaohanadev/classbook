@@ -18,16 +18,15 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
 	boolean existsByAutorId(Long autorId);
 
 	/**
-	 * Sobrescrito para carregar {@code autor} (e, a partir da Issue #26, a categoria) na mesma
-	 * consulta: evita uma consulta extra por livro ao converter a listagem para DTO (ver
-	 * docs/MODELAGEM.md#regras-comuns-às-relações).
+	 * Sobrescrito para carregar {@code autor} e {@code categoria} na mesma consulta: evita uma consulta
+	 * extra por livro ao converter a listagem para DTO (ver docs/MODELAGEM.md#regras-comuns-às-relações).
 	 */
 	@Override
-	@EntityGraph(attributePaths = "autor")
+	@EntityGraph(attributePaths = {"autor", "categoria"})
 	List<Livro> findAll(Sort sort);
 
 	/** Pesquisa por título (Issue #27): contém o texto, sem diferenciar maiúsculas de minúsculas. */
-	@EntityGraph(attributePaths = "autor")
+	@EntityGraph(attributePaths = {"autor", "categoria"})
 	List<Livro> findByTituloContainingIgnoreCase(String titulo, Sort sort);
 
 }

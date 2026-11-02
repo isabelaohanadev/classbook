@@ -1,5 +1,7 @@
 package br.com.classbook.controller;
 
+import static br.com.classbook.Unico.nome;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -23,7 +25,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.AutorRequest;
+import br.com.classbook.dto.CategoriaRequest;
 import br.com.classbook.dto.LivroRequest;
+import br.com.classbook.model.TipoCategoria;
 
 /**
  * Confere as rotas de {@code /api/livros} de ponta a ponta, com o contexto Spring completo e o
@@ -43,7 +47,7 @@ class LivroControllerTests {
 	@Test
 	void cadastroValidoRespondeCreatedComLocationEOAutorResumido() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		LivroRequest request = new LivroRequest("Dom Casmurro", "9780306406157", 1899, null, null, autorId);
+		LivroRequest request = new LivroRequest("Dom Casmurro", "9780306406157", 1899, null, null, autorId, null);
 
 		mockMvc.perform(post("/api/livros").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
@@ -56,7 +60,7 @@ class LivroControllerTests {
 
 	@Test
 	void cadastroComAutorIdAusenteRespondeBadRequest() throws Exception {
-		LivroRequest request = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, null);
+		LivroRequest request = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, null, null);
 
 		mockMvc.perform(post("/api/livros").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
@@ -67,7 +71,7 @@ class LivroControllerTests {
 	void cadastroComAnoDePublicacaoNoFuturoRespondeBadRequest() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
 		LivroRequest request = new LivroRequest("Livro do Futuro", "9780306406157", Year.now().getValue() + 1, null,
-				null, autorId);
+				null, autorId, null);
 
 		mockMvc.perform(post("/api/livros").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
@@ -76,7 +80,7 @@ class LivroControllerTests {
 
 	@Test
 	void cadastroComAutorInexistenteRespondeBadRequest() throws Exception {
-		LivroRequest request = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, -1L);
+		LivroRequest request = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, -1L, null);
 
 		mockMvc.perform(post("/api/livros").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(request)))
@@ -97,8 +101,8 @@ class LivroControllerTests {
 	@Test
 	void listagemRespondeOkComLivrosOrdenadosPorTitulo() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		cadastrarLivro(new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId));
-		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780316000000", null, null, null, autorId));
+		cadastrarLivro(new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId, null));
+		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780316000000", null, null, null, autorId, null));
 
 		mockMvc.perform(get("/api/livros"))
 				.andExpect(status().isOk())
@@ -109,8 +113,8 @@ class LivroControllerTests {
 	@Test
 	void pesquisaPorTituloRetornaCorrespondentesIgnorandoCaixa() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		cadastrarLivro(new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId));
-		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780316000000", null, null, null, autorId));
+		cadastrarLivro(new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId, null));
+		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780316000000", null, null, null, autorId, null));
 
 		mockMvc.perform(get("/api/livros").param("titulo", "casmurro"))
 				.andExpect(status().isOk())
@@ -121,7 +125,7 @@ class LivroControllerTests {
 	@Test
 	void pesquisaSemCorrespondenciaRespondeOkComListaVazia() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId));
+		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null));
 
 		mockMvc.perform(get("/api/livros").param("titulo", "inexistente"))
 				.andExpect(status().isOk())
@@ -139,7 +143,7 @@ class LivroControllerTests {
 	@Test
 	void consultaPorIdExistenteRespondeOkComOLivro() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		Long id = cadastrarLivro(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId));
+		Long id = cadastrarLivro(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null));
 
 		mockMvc.perform(get("/api/livros/{id}", id))
 				.andExpect(status().isOk())
@@ -154,8 +158,8 @@ class LivroControllerTests {
 	@Test
 	void edicaoValidaRespondeOkComOLivroAtualizado() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		Long id = cadastrarLivro(new LivroRequest("Título Antigo", "9780306406157", null, null, null, autorId));
-		LivroRequest edicao = new LivroRequest("Título Novo", "9780316000000", 2020, null, null, autorId);
+		Long id = cadastrarLivro(new LivroRequest("Título Antigo", "9780306406157", null, null, null, autorId, null));
+		LivroRequest edicao = new LivroRequest("Título Novo", "9780316000000", 2020, null, null, autorId, null);
 
 		mockMvc.perform(put("/api/livros/{id}", id).contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(edicao)))
@@ -167,7 +171,7 @@ class LivroControllerTests {
 	@Test
 	void edicaoComIdInexistenteRespondeNotFound() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		LivroRequest edicao = new LivroRequest("Título", "9780306406157", null, null, null, autorId);
+		LivroRequest edicao = new LivroRequest("Título", "9780306406157", null, null, null, autorId, null);
 
 		mockMvc.perform(put("/api/livros/{id}", -1).contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(edicao)))
@@ -189,8 +193,8 @@ class LivroControllerTests {
 	@Test
 	void edicaoComDadosInvalidosRespondeBadRequest() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId));
-		LivroRequest edicao = new LivroRequest("   ", "9780306406157", null, null, null, autorId);
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null));
+		LivroRequest edicao = new LivroRequest("   ", "9780306406157", null, null, null, autorId, null);
 
 		mockMvc.perform(put("/api/livros/{id}", id).contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(edicao)))
@@ -200,7 +204,7 @@ class LivroControllerTests {
 	@Test
 	void exclusaoDeLivroExistenteRespondeNoContent() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId));
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null));
 
 		mockMvc.perform(delete("/api/livros/{id}", id)).andExpect(status().isNoContent());
 		mockMvc.perform(get("/api/livros/{id}", id)).andExpect(status().isNotFound());
@@ -214,16 +218,62 @@ class LivroControllerTests {
 	@Test
 	void exclusaoDeLivroMantemOAutor() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		Long livroId = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId));
+		Long livroId = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null));
 
 		mockMvc.perform(delete("/api/livros/{id}", livroId)).andExpect(status().isNoContent());
 
 		mockMvc.perform(get("/api/autores/{id}", autorId)).andExpect(status().isOk());
 	}
 
+	@Test
+	void cadastroComCategoriaValidaRespondeCreatedComACategoriaResumida() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long categoriaId = cadastrarCategoria(nome("Literatura"));
+		LivroRequest request = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId,
+				categoriaId);
+
+		mockMvc.perform(post("/api/livros").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+				.andExpect(status().isCreated())
+				.andExpect(jsonPath("$.categoria.id").value(categoriaId))
+				.andExpect(jsonPath("$.categoria.nome").value(nome("Literatura")));
+	}
+
+	@Test
+	void cadastroComCategoriaInexistenteRespondeBadRequest() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		LivroRequest request = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, -1L);
+
+		mockMvc.perform(post("/api/livros").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(request)))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void edicaoSemCategoriaIdRemoveACategoriaDoLivro() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long categoriaId = cadastrarCategoria(nome("Literatura"));
+		Long id = cadastrarLivro(
+				new LivroRequest("Título", "9780306406157", null, null, null, autorId, categoriaId));
+		LivroRequest edicao = new LivroRequest("Título", "9780306406157", null, null, null, autorId, null);
+
+		mockMvc.perform(put("/api/livros/{id}", id).contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper.writeValueAsString(edicao)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.categoria").value(nullValue()));
+	}
+
 	private Long cadastrarAutor(String nome) throws Exception {
 		MvcResult resultado = mockMvc.perform(post("/api/autores").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(new AutorRequest(nome, null, null, null))))
+				.andReturn();
+		return corpoComoJson(resultado).get("id").asLong();
+	}
+
+	private Long cadastrarCategoria(String nome) throws Exception {
+		MvcResult resultado = mockMvc.perform(post("/api/categorias").contentType(MediaType.APPLICATION_JSON)
+				.content(objectMapper
+						.writeValueAsString(new CategoriaRequest(nome, null, null, TipoCategoria.LITERATURA))))
 				.andReturn();
 		return corpoComoJson(resultado).get("id").asLong();
 	}

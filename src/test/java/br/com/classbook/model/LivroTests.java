@@ -11,7 +11,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Confere o mapeamento de {@link Livro} para a tabela {@code livro} da migration inicial, inclusive o
- * relacionamento obrigatório com {@link Autor}. A transação é desfeita ao final.
+ * relacionamento obrigatório com {@link Autor} e o opcional com {@link Categoria}. A transação é
+ * desfeita ao final.
  */
 @SpringBootTest
 @Transactional
@@ -64,6 +65,31 @@ class LivroTests {
 		assertThat(lido.getAnoPublicacao()).isNull();
 		assertThat(lido.getDescricao()).isNull();
 		assertThat(lido.getEditora()).isNull();
+		assertThat(lido.getCategoria()).isNull();
+	}
+
+	@Test
+	void gravaELeORelacionamentoComCategoria() {
+		Autor autor = new Autor();
+		autor.setNome("Machado de Assis");
+		entityManager.persist(autor);
+
+		Categoria categoria = new Categoria();
+		categoria.setNome("Literatura");
+		categoria.setTipo(TipoCategoria.LITERATURA);
+		entityManager.persist(categoria);
+
+		Livro livro = new Livro();
+		livro.setTitulo("Dom Casmurro");
+		livro.setIsbn("9780306406157");
+		livro.setAutor(autor);
+		livro.setCategoria(categoria);
+		entityManager.persist(livro);
+		entityManager.clear();
+
+		Livro lido = entityManager.find(Livro.class, livro.getId());
+
+		assertThat(lido.getCategoria().getId()).isEqualTo(categoria.getId());
 	}
 
 }

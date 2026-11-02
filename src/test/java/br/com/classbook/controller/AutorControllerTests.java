@@ -142,7 +142,7 @@ class AutorControllerTests {
 	@Test
 	void exclusaoDeAutorComLivrosVinculadosRespondeConflict() throws Exception {
 		Long id = cadastrar(new AutorRequest("Machado de Assis", null, null, null));
-		LivroRequest livro = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, id);
+		LivroRequest livro = new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, id, null);
 		mockMvc.perform(post("/api/livros").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(livro)));
 
