@@ -50,7 +50,7 @@ Sobre o ISBN:
 
 - O valor recebido é normalizado (remove hífens e espaços, converte para maiúsculas) e validado pelo formato `^(\d{9}[\dX]|\d{13})$`. O dígito verificador **não** é conferido, para manter o escopo simples.
 - A unicidade vale para o texto guardado: o mesmo livro cadastrado uma vez com ISBN-10 e outra com ISBN-13 não é detectado como duplicado.
-- O tratamento do erro de duplicidade (409) é implementado na Issue #46.
+- Duplicidade (ISBN já cadastrado em outro livro) responde **409**: o `LivroService` confere antes de gravar (`existsByIsbn` no cadastro, `existsByIsbnAndIdNot` na edição, mesmo padrão de `Categoria.nome` e `Disciplina.codigo`), com o `UNIQUE` do banco como rede de segurança (Issue #46).
 
 O ano de publicação "não futuro" não cabe numa anotação do Bean Validation para `Integer`; a regra é conferida no `service` (ou em um validador próprio).
 

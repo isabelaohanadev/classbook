@@ -12,6 +12,9 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
 
 	boolean existsByIsbn(String isbn);
 
+	/** Para o {@code PUT}: o ISBN do próprio livro não conta como conflito. */
+	boolean existsByIsbnAndIdNot(String isbn, Long id);
+
 	boolean existsByAutorId(Long autorId);
 
 	/**

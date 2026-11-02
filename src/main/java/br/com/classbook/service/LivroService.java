@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.LivroRequest;
 import br.com.classbook.dto.LivroResponse;
+import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.DadosInvalidosException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
 import br.com.classbook.model.Autor;
@@ -30,6 +31,9 @@ public class LivroService {
 
 	@Transactional
 	public LivroResponse criar(LivroRequest request) {
+		if (livroRepository.existsByIsbn(request.isbn())) {
+			throw new ConflitoException("Já existe um livro com o ISBN " + request.isbn() + ".");
+		}
 		Livro livro = new Livro();
 		preencher(livro, request);
 		return LivroResponse.de(livroRepository.save(livro));
@@ -52,6 +56,9 @@ public class LivroService {
 	@Transactional
 	public LivroResponse atualizar(Long id, LivroRequest request) {
 		Livro livro = buscarOuLancar(id);
+		if (livroRepository.existsByIsbnAndIdNot(request.isbn(), id)) {
+			throw new ConflitoException("Já existe um livro com o ISBN " + request.isbn() + ".");
+		}
 		preencher(livro, request);
 		return LivroResponse.de(livroRepository.save(livro));
 	}
