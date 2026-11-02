@@ -1,5 +1,7 @@
 package br.com.classbook;
 
+import static br.com.classbook.Unico.codigo;
+import static br.com.classbook.Unico.nome;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -76,18 +78,18 @@ class MigrationInicialTests {
 
 	@Test
 	void nomeDeCategoriaEhUnicoSemDiferenciarMaiusculas() {
-		inserirCategoria("Literatura");
+		inserirCategoria(nome("Literatura"));
 
-		assertThatThrownBy(() -> inserirCategoria("literatura"))
+		assertThatThrownBy(() -> inserirCategoria(nome("literatura")))
 				.isInstanceOf(DuplicateKeyException.class)
 				.hasMessageContaining("uk_categoria_nome");
 	}
 
 	@Test
 	void codigoDeDisciplinaEhUnico() {
-		inserirDisciplina("Matemática", "MAT-1");
+		inserirDisciplina("Matemática", codigo("MAT-1"));
 
-		assertThatThrownBy(() -> inserirDisciplina("Matemática avançada", "MAT-1"))
+		assertThatThrownBy(() -> inserirDisciplina("Matemática avançada", codigo("MAT-1")))
 				.isInstanceOf(DuplicateKeyException.class)
 				.hasMessageContaining("uk_disciplina_codigo");
 	}
@@ -95,10 +97,10 @@ class MigrationInicialTests {
 	@Test
 	void nomesDeAutorEDeDisciplinaPodemSeRepetir() {
 		inserirAutor("Machado de Assis");
-		inserirDisciplina("Matemática", "MAT-1");
+		inserirDisciplina("Matemática", codigo("MAT-1"));
 
 		assertThatCode(() -> inserirAutor("Machado de Assis")).doesNotThrowAnyException();
-		assertThatCode(() -> inserirDisciplina("Matemática", "MAT-2")).doesNotThrowAnyException();
+		assertThatCode(() -> inserirDisciplina("Matemática", codigo("MAT-2"))).doesNotThrowAnyException();
 	}
 
 	@Test
@@ -127,7 +129,7 @@ class MigrationInicialTests {
 
 	@Test
 	void naoExcluiCategoriaComLivros() {
-		long categoriaId = inserirCategoria("Literatura");
+		long categoriaId = inserirCategoria(nome("Literatura"));
 		inserirLivro("0306406152", inserirAutor("Autor"), categoriaId);
 
 		assertThatThrownBy(() -> jdbc.update("DELETE FROM categoria WHERE id = ?", categoriaId))
@@ -137,7 +139,7 @@ class MigrationInicialTests {
 
 	@Test
 	void naoExcluiDisciplinaComMateriais() {
-		long disciplinaId = inserirDisciplina("Matemática", "MAT-1");
+		long disciplinaId = inserirDisciplina("Matemática", codigo("MAT-1"));
 		jdbc.update("""
 				INSERT INTO material_digital (titulo, formato, url, disciplina_id)
 				VALUES ('Lista de exercícios', 'PDF', 'https://exemplo.com/lista.pdf', ?)
