@@ -1,5 +1,6 @@
 package br.com.classbook.dto;
 
+import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.persistence.EntityManager;
@@ -27,7 +28,7 @@ class DisciplinaResponseTests {
 	void deCopiaTodosOsCamposDaEntidade() {
 		Disciplina disciplina = new Disciplina();
 		disciplina.setNome("Matemática");
-		disciplina.setCodigo("MAT-1");
+		disciplina.setCodigo(codigo("MAT-1"));
 		disciplina.setDescricao("Matemática da 1ª série");
 		disciplina.setSerieEscolar(SerieEscolar.PRIMEIRA_SERIE);
 		entityManager.persist(disciplina);
@@ -35,7 +36,7 @@ class DisciplinaResponseTests {
 		DisciplinaResponse response = DisciplinaResponse.de(disciplina);
 
 		assertThat(response.id()).isNotNull();
-		assertThat(response).isEqualTo(new DisciplinaResponse(disciplina.getId(), "Matemática", "MAT-1",
+		assertThat(response).isEqualTo(new DisciplinaResponse(disciplina.getId(), "Matemática", codigo("MAT-1"),
 				"Matemática da 1ª série", SerieEscolar.PRIMEIRA_SERIE));
 	}
 
