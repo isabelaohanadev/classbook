@@ -214,6 +214,17 @@ public class LivroController {
 }
 ```
 
+### Documentação no Swagger
+
+Cada controller documenta as próprias rotas (Issue #48), e o springdoc monta o `/v3/api-docs` e o Swagger UI a partir delas:
+
+- **`@Tag(name = "...", description = "...")` na classe,** com o nome do recurso no plural (por exemplo, `"Disciplinas"`). Sem ela, o Swagger agrupa a rota como `disciplina-controller`.
+- **`@Operation(summary = "...")` em cada método,** com o verbo no presente (`"Cadastra uma disciplina"`). Uma regra que o cliente precisa conhecer vai em `description`.
+- **Um `@ApiResponse(responseCode = "...", description = "...")` por código possível,** inclusive o de sucesso. No `POST`, o `201` documentado substitui o `200` que o springdoc mostraria.
+- **Os erros não declaram corpo:** o `OpenApiConfig` põe o esquema do [`ErroResponse`](#formato-de-erro) em toda resposta 4xx.
+
+O `OpenApiConfigTests` confere que as rotas documentadas têm tag, resumo e descrição em todas as respostas. Ao documentar um novo controller, acrescente a rota à lista `ROTAS_DOCUMENTADAS` do teste.
+
 ## Validação
 
 A validação acontece em dois lugares, conforme a regra precise ou não do banco:
@@ -283,3 +294,4 @@ Ao revisar um PR de CRUD, confira:
 - As regras de formato estão no `Request` (com `@Valid` no controller), e as que dependem do banco, no service.
 - Erros saem como as exceções de `exception`, nunca como `null` ou como uma resposta de erro montada no controller.
 - Os nomes de classes, métodos e rotas seguem a tabela de [Nomes](#nomes).
+- Cada rota tem resumo e as respostas possíveis no Swagger, como em [Documentação no Swagger](#documentação-no-swagger).
