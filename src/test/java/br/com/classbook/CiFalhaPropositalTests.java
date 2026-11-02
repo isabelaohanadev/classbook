@@ -8,8 +8,8 @@ import org.junit.jupiter.api.Test;
 class CiFalhaPropositalTests {
 
 	@Test
-	void somaComErroDeProposito() {
-		assertThat(1 + 1).isEqualTo(3);
+	void somaCorrigida() {
+		assertThat(1 + 1).isEqualTo(2);
 	}
 
 }
