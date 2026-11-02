@@ -115,8 +115,8 @@ class LivroServiceTests {
 	@Test
 	void criarComIsbnJaCadastradoLancaConflito() {
 		autorId = criarAutor();
-		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId));
-		LivroRequest duplicado = new LivroRequest("Outro Título", "9780306406157", null, null, null, autorId);
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null));
+		LivroRequest duplicado = new LivroRequest("Outro Título", "9780306406157", null, null, null, autorId, null);
 
 		assertThatThrownBy(() -> livroService.criar(duplicado)).isInstanceOf(ConflitoException.class)
 				.hasMessage("Já existe um livro com o ISBN 9780306406157.");
@@ -125,8 +125,8 @@ class LivroServiceTests {
 	@Test
 	void criarComIsbnJaCadastradoComHifensDiferentesLancaConflito() {
 		autorId = criarAutor();
-		livroService.criar(new LivroRequest("Dom Casmurro", "978-0-306-40615-7", null, null, null, autorId));
-		LivroRequest duplicado = new LivroRequest("Outro Título", "9780306406157", null, null, null, autorId);
+		livroService.criar(new LivroRequest("Dom Casmurro", "978-0-306-40615-7", null, null, null, autorId, null));
+		LivroRequest duplicado = new LivroRequest("Outro Título", "9780306406157", null, null, null, autorId, null);
 
 		assertThatThrownBy(() -> livroService.criar(duplicado)).isInstanceOf(ConflitoException.class);
 	}
@@ -212,10 +212,10 @@ class LivroServiceTests {
 	@Test
 	void atualizarComIsbnDeOutroLivroLancaConflito() {
 		autorId = criarAutor();
-		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId));
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null));
 		LivroResponse outro = livroService
-				.criar(new LivroRequest("Memórias Póstumas", "9780316000000", null, null, null, autorId));
-		LivroRequest edicao = new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId);
+				.criar(new LivroRequest("Memórias Póstumas", "9780316000000", null, null, null, autorId, null));
+		LivroRequest edicao = new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId, null);
 
 		assertThatThrownBy(() -> livroService.atualizar(outro.id(), edicao)).isInstanceOf(ConflitoException.class)
 				.hasMessage("Já existe um livro com o ISBN 9780306406157.");
@@ -225,8 +225,8 @@ class LivroServiceTests {
 	void atualizarMantendoOProprioIsbnNaoEhConflito() {
 		autorId = criarAutor();
 		LivroResponse criado = livroService
-				.criar(new LivroRequest("Título Antigo", "9780306406157", null, null, null, autorId));
-		LivroRequest edicao = new LivroRequest("Título Novo", "9780306406157", null, null, null, autorId);
+				.criar(new LivroRequest("Título Antigo", "9780306406157", null, null, null, autorId, null));
+		LivroRequest edicao = new LivroRequest("Título Novo", "9780306406157", null, null, null, autorId, null);
 
 		LivroResponse atualizado = livroService.atualizar(criado.id(), edicao);
 
