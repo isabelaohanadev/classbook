@@ -17,7 +17,7 @@ O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, aut
 | Persistência | Spring Data JPA, PostgreSQL 16+ |
 | Migrations | Flyway |
 | Validação | Bean Validation |
-| Documentação da API | Swagger/OpenAPI (a configurar — Issue #47) |
+| Documentação da API | Swagger/OpenAPI (springdoc), em `/swagger-ui.html` |
 | Interface | JavaFX, consumindo a API REST — opcional, pós-avaliação (a criar — Issue #54; decisão da Issue #93) |
 | Build | Maven (wrapper incluso) |
 | CI | GitHub Actions |
