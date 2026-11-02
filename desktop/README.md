@@ -36,9 +36,14 @@ Primeira execução baixa o Maven, o JavaFX e o plugin (`org.openjfx:javafx-mave
 
 **O módulo `desktop` não entra no CI.** O workflow em `.github/workflows/ci.yml` continua rodando só `mvn -B verify` na raiz (o backend Spring Boot). Testar uma aplicação JavaFX de forma automática exigiria um display virtual (Xvfb ou similar) e testes de UI, o que foge do escopo acadêmico ("manter simples", ver `docs/REQUISITOS.md`). A verificação deste módulo é manual: compilar e abrir a aplicação antes de abrir o PR.
 
-## Planejado (Issues #55 a #61)
+## Implementado
 
-- Tela principal com navegação simples entre catálogo, cadastros e materiais (Issue #55).
+- Tela principal com navegação simples entre catálogo, autores, categorias, disciplinas e materiais
+  (Issue #55). Cada seção ainda mostra um texto de espaço reservado — as telas de verdade entram nas
+  próximas Issues. A navegação não faz nenhuma chamada HTTP, então funciona com o backend fora do ar.
+
+## Planejado (Issues #56 a #61)
+
 - Catálogo de livros com busca e filtros (Issues #56 e #57).
 - Formulários de cadastro e edição dos cinco recursos (Issue #58).
 - Detalhes do livro e links dos materiais digitais (Issue #60).
