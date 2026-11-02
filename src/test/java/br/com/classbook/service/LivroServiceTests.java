@@ -47,9 +47,13 @@ class LivroServiceTests {
 	private Long autorId;
 
 	private Long criarAutor() {
+		return autorRepository.save(autorEntidade("Machado de Assis")).getId();
+	}
+
+	private Autor autorEntidade(String nome) {
 		Autor autor = new Autor();
-		autor.setNome("Machado de Assis");
-		return autorRepository.save(autor).getId();
+		autor.setNome(nome);
+		return autor;
 	}
 
 	private Long criarCategoria(String nome) {
@@ -137,7 +141,7 @@ class LivroServiceTests {
 		livroService.criar(new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId, null));
 		livroService.criar(new LivroRequest("Dom Casmurro", "9780316000000", null, null, null, autorId, null));
 
-		List<LivroResponse> livros = livroService.listar(null);
+		List<LivroResponse> livros = livroService.listar(null, null, null);
 
 		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro", "Memórias Póstumas");
 	}
@@ -148,7 +152,7 @@ class LivroServiceTests {
 		livroService.criar(new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId, null));
 		livroService.criar(new LivroRequest("Dom Casmurro", "9780316000000", null, null, null, autorId, null));
 
-		List<LivroResponse> livros = livroService.listar("casmurro");
+		List<LivroResponse> livros = livroService.listar("casmurro", null, null);
 
 		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
 	}
@@ -158,7 +162,68 @@ class LivroServiceTests {
 		autorId = criarAutor();
 		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null));
 
-		assertThat(livroService.listar("inexistente")).isEmpty();
+		assertThat(livroService.listar("inexistente", null, null)).isEmpty();
+	}
+
+	@Test
+	void listarComAutorIdFiltraSomenteOsLivrosDesseAutor() {
+		Long machado = criarAutor();
+		Long outroAutor = autorRepository.save(autorEntidade("José de Alencar")).getId();
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, machado, null));
+		livroService.criar(new LivroRequest("Senhora", "9780316000000", null, null, null, outroAutor, null));
+
+		List<LivroResponse> livros = livroService.listar(null, machado, null);
+
+		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
+	}
+
+	@Test
+	void listarComAutorIdInexistenteRetornaListaVazia() {
+		autorId = criarAutor();
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null));
+
+		assertThat(livroService.listar(null, -1L, null)).isEmpty();
+	}
+
+	@Test
+	void listarComCategoriaIdFiltraSomenteOsLivrosDessaCategoria() {
+		autorId = criarAutor();
+		Long literatura = criarCategoria(nome("Literatura"));
+		Long referencia = criarCategoria(nome("Referência"));
+		livroService
+				.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, literatura));
+		livroService
+				.criar(new LivroRequest("Dicionário", "9780316000000", null, null, null, autorId, referencia));
+
+		List<LivroResponse> livros = livroService.listar(null, null, literatura);
+
+		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
+	}
+
+	@Test
+	void listarComAutorIdECategoriaIdCombinaOsFiltros() {
+		Long machado = criarAutor();
+		Long outroAutor = autorRepository.save(autorEntidade("José de Alencar")).getId();
+		Long literatura = criarCategoria(nome("Literatura"));
+		livroService
+				.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, machado, literatura));
+		livroService
+				.criar(new LivroRequest("Senhora", "9780316000000", null, null, null, outroAutor, literatura));
+		livroService.criar(new LivroRequest("Memórias Póstumas", "9780321000000", null, null, null, machado, null));
+
+		List<LivroResponse> livros = livroService.listar(null, machado, literatura);
+
+		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
+	}
+
+	@Test
+	void listarComTituloAutorIdECategoriaIdCombinadosSemCorrespondenciaRetornaListaVazia() {
+		autorId = criarAutor();
+		Long literatura = criarCategoria(nome("Literatura"));
+		livroService
+				.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, literatura));
+
+		assertThat(livroService.listar("Senhora", autorId, literatura)).isEmpty();
 	}
 
 	@Test

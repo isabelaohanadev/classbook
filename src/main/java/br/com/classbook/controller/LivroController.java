@@ -42,8 +42,9 @@ public class LivroController {
 	}
 
 	@GetMapping
-	public List<LivroResponse> listar(@RequestParam(required = false) String titulo) {
-		return livroService.listar(titulo);
+	public List<LivroResponse> listar(@RequestParam(required = false) String titulo,
+			@RequestParam(required = false) Long autorId, @RequestParam(required = false) Long categoriaId) {
+		return livroService.listar(titulo, autorId, categoriaId);
 	}
 
 	@GetMapping("/{id}")

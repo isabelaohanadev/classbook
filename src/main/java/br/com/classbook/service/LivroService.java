@@ -46,11 +46,10 @@ public class LivroService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<LivroResponse> listar(String titulo) {
-		Sort porTitulo = Sort.by("titulo");
-		List<Livro> livros = titulo == null || titulo.isBlank()
-				? livroRepository.findAll(porTitulo)
-				: livroRepository.findByTituloContainingIgnoreCase(titulo, porTitulo);
+	public List<LivroResponse> listar(String titulo, Long autorId, Long categoriaId) {
+		// "" (nunca null) para o PostgreSQL conseguir tipar o lower(concat(...)) do repository.
+		String tituloFiltro = titulo == null || titulo.isBlank() ? "" : titulo;
+		List<Livro> livros = livroRepository.pesquisar(tituloFiltro, autorId, categoriaId, Sort.by("titulo"));
 		return livros.stream().map(LivroResponse::de).toList();
 	}
 

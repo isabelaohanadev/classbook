@@ -133,6 +133,73 @@ class LivroControllerTests {
 	}
 
 	@Test
+	void pesquisaPorAutorIdRetornaSomenteOsLivrosDesseAutor() throws Exception {
+		Long machado = cadastrarAutor("Machado de Assis");
+		Long alencar = cadastrarAutor("José de Alencar");
+		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, machado, null));
+		cadastrarLivro(new LivroRequest("Senhora", "9780316000000", null, null, null, alencar, null));
+
+		mockMvc.perform(get("/api/livros").param("autorId", String.valueOf(machado)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].titulo").value("Dom Casmurro"));
+	}
+
+	@Test
+	void pesquisaPorAutorIdInexistenteRespondeOkComListaVazia() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null));
+
+		mockMvc.perform(get("/api/livros").param("autorId", "-1"))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$").isEmpty());
+	}
+
+	@Test
+	void pesquisaComAutorIdQueNaoEhNumeroRespondeBadRequest() throws Exception {
+		mockMvc.perform(get("/api/livros").param("autorId", "abc")).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void pesquisaPorCategoriaIdRetornaSomenteOsLivrosDessaCategoria() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long literatura = cadastrarCategoria(nome("Literatura"));
+		Long referencia = cadastrarCategoria(nome("Referência"));
+		cadastrarLivro(
+				new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, literatura));
+		cadastrarLivro(new LivroRequest("Dicionário", "9780316000000", null, null, null, autorId, referencia));
+
+		mockMvc.perform(get("/api/livros").param("categoriaId", String.valueOf(literatura)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].titulo").value("Dom Casmurro"));
+	}
+
+	@Test
+	void pesquisaComCategoriaIdQueNaoEhNumeroRespondeBadRequest() throws Exception {
+		mockMvc.perform(get("/api/livros").param("categoriaId", "abc")).andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void pesquisaComTituloAutorIdECategoriaIdCombinadosRespeitaTodosOsFiltros() throws Exception {
+		Long machado = cadastrarAutor("Machado de Assis");
+		Long alencar = cadastrarAutor("José de Alencar");
+		Long literatura = cadastrarCategoria(nome("Literatura"));
+		cadastrarLivro(
+				new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, machado, literatura));
+		cadastrarLivro(
+				new LivroRequest("Dom Sebastião", "9780316000000", null, null, null, alencar, literatura));
+		cadastrarLivro(
+				new LivroRequest("Memórias Póstumas", "9780321000000", null, null, null, machado, null));
+
+		mockMvc.perform(get("/api/livros").param("titulo", "dom").param("autorId", String.valueOf(machado))
+				.param("categoriaId", String.valueOf(literatura)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].titulo").value("Dom Casmurro"));
+	}
+
+	@Test
 	void listagemSemLivrosRespondeOkComListaVazia() throws Exception {
 		mockMvc.perform(get("/api/livros"))
 				.andExpect(status().isOk())
