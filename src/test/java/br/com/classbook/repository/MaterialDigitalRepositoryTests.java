@@ -1,5 +1,6 @@
 package br.com.classbook.repository;
 
+import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
@@ -60,7 +61,7 @@ class MaterialDigitalRepositoryTests {
 	private Disciplina novaDisciplina() {
 		Disciplina disciplina = new Disciplina();
 		disciplina.setNome("Matemática");
-		disciplina.setCodigo("MAT-1");
+		disciplina.setCodigo(codigo("MAT-1"));
 		disciplina.setSerieEscolar(SerieEscolar.PRIMEIRA_SERIE);
 		return disciplinaRepository.save(disciplina);
 	}

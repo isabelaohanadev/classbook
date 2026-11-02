@@ -1,5 +1,6 @@
 package br.com.classbook.dto;
 
+import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
@@ -32,7 +33,7 @@ class MaterialDigitalResponseTests {
 	void deCopiaTodosOsCamposDaEntidadeEOResumoDaDisciplina() {
 		Disciplina disciplina = new Disciplina();
 		disciplina.setNome("Matemática");
-		disciplina.setCodigo("MAT-1");
+		disciplina.setCodigo(codigo("MAT-1"));
 		disciplina.setSerieEscolar(SerieEscolar.PRIMEIRA_SERIE);
 		entityManager.persist(disciplina);
 
@@ -50,7 +51,7 @@ class MaterialDigitalResponseTests {
 		assertThat(response.id()).isNotNull();
 		assertThat(response).isEqualTo(new MaterialDigitalResponse(material.getId(), "Lista de funções",
 				FormatoMaterial.PDF, "https://exemplo.com/funcoes.pdf", "Texto opcional", LocalDate.of(2026, 3, 10),
-				new DisciplinaResumo(disciplina.getId(), "Matemática", "MAT-1")));
+				new DisciplinaResumo(disciplina.getId(), "Matemática", codigo("MAT-1"))));
 	}
 
 }
