@@ -224,12 +224,33 @@ A validação acontece em dois lugares, conforme a regra precise ou não do banc
 | `service` | O que depende do banco ou não cabe numa anotação | ISBN, nome de categoria ou código de disciplina já usados; `autorId`, `categoriaId` ou `disciplinaId` inexistente; registro em uso na exclusão; ano de publicação no futuro | Exceção de domínio (`400` ou `409`) |
 
 - **A normalização da entrada fica no construtor compacto do `Request`:** tirar hífens e espaços do ISBN e passá-lo para maiúsculas, tirar os espaços das pontas do nome da categoria, deixar o código da disciplina sem espaços nas pontas e em maiúsculas. Ele roda antes do `@Valid`, então a validação, o service e o banco recebem o valor já normalizado (exemplo em [DTOs](#dtos)).
-- **As mensagens de validação ficam em português** e seguem o formato de erro padronizado na Issue #44.
+- **As mensagens de validação ficam em português,** em `src/main/resources/ValidationMessages.properties`, e chegam ao cliente no campo `campos` do [formato de erro](#formato-de-erro).
 - **A entidade não repete as regras do `Request`** ([Entidades](#entidades)).
 
 ## Erros e exceções
 
-O service lança exceções de domínio, e o controller não as trata. O tratador global (`@RestControllerAdvice` em `exception`, Issue #43) as transforma em resposta HTTP, no formato padronizado na Issue #44, com mensagem em português e sem stack trace.
+O service lança exceções de domínio, e o controller não as trata. O tratador global (`TratadorGlobalDeExcecoes`, um `@RestControllerAdvice` em `exception`, Issue #43) as transforma em resposta HTTP, no formato padronizado na Issue #44, com mensagem em português e sem stack trace.
+
+### Formato de erro
+
+Todo erro da API sai como `ErroResponse`, com os mesmos campos em todas as rotas:
+
+```json
+{
+  "horario": "2026-11-01T03:07:19.637Z",
+  "status": 400,
+  "erro": "Requisição inválida",
+  "mensagem": "Há campos inválidos na requisição.",
+  "caminho": "/api/autores",
+  "campos": [
+    { "campo": "nome", "mensagem": "é obrigatório e não pode ficar em branco" }
+  ]
+}
+```
+
+- `erro` é a descrição curta do status, em português, e `mensagem` explica o caso: a mensagem da exceção de domínio ou um texto fixo para os erros do Spring.
+- `campos` lista os campos inválidos de um `400` (do `@Valid`, de um enum fora da lista ou de um valor com tipo errado) e vem vazio nos demais erros.
+- O `500` nunca mostra a mensagem da exceção: ela vai só para o log.
 
 | Exceção (pacote `exception`) | Status | Quando |
 | --- | --- | --- |
@@ -246,10 +267,11 @@ O tratador global também cobre erros que o próprio Spring lança, sem exceçã
 | Campo inválido no `Request` (`@Valid`) | `MethodArgumentNotValidException` | `400`, listando os campos com erro |
 | JSON malformado ou enum fora da lista | `HttpMessageNotReadableException` | `400` |
 | Filtro que não é número (`?autorId=abc`) | `MethodArgumentTypeMismatchException` | `400` |
-| Restrição do banco violada que escapou do service | `DataIntegrityViolationException` | `409` |
+| Restrição do banco violada que escapou do service | `DataIntegrityViolationException` | `409`, sem detalhes do banco |
+| Rota inexistente, método não suportado, corpo que não é JSON | `NoResourceFoundException`, `HttpRequestMethodNotSupportedException`, `HttpMediaTypeNotSupportedException` | `404`, `405`, `415` |
 | Qualquer outro erro | `Exception` | `500`, com mensagem genérica |
 
-**Quem cria as exceções:** os nomes ficam combinados aqui para as duas frentes usarem as mesmas classes. Cada exceção é criada pela primeira Issue que precisar dela (`RecursoNaoEncontradoException`, por exemplo, já no primeiro service, #13 ou #31), sem mudar o nome nem o status. A #43 cria o tratador global. Até ela ser integrada, as exceções de domínio chegam ao cliente como `500`, e os testes dos services conferem a exceção lançada, não o status HTTP.
+**Quem cria as exceções:** os nomes ficam combinados aqui para as duas frentes usarem as mesmas classes. Cada exceção é criada pela primeira Issue que precisar dela (`RecursoNaoEncontradoException`, por exemplo, já no primeiro service, #13 ou #31), sem mudar o nome. As exceções não carregam status HTTP (sem `@ResponseStatus`): quem decide o código é o tratador global, criado na #43. Os testes dos services conferem a exceção lançada, e os dos controllers, o status e o corpo.
 
 ## Checklist de revisão
 
