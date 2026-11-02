@@ -1,5 +1,6 @@
 package br.com.classbook.service;
 
+import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
@@ -36,30 +37,32 @@ class DisciplinaServiceTests {
 
 	@Test
 	void criarGravaERetornaADisciplinaComOCodigoNormalizado() {
-		DisciplinaResponse response = disciplinaService.criar(new DisciplinaRequest("Matemática", " mat-1 ",
+		DisciplinaResponse response = disciplinaService.criar(new DisciplinaRequest("Matemática",
+				" " + codigo("mat-1") + " ",
 				"Matemática da 1ª série", SerieEscolar.PRIMEIRA_SERIE));
 
 		assertThat(response.id()).isNotNull();
-		assertThat(response).isEqualTo(new DisciplinaResponse(response.id(), "Matemática", "MAT-1",
+		assertThat(response).isEqualTo(new DisciplinaResponse(response.id(), "Matemática", codigo("MAT-1"),
 				"Matemática da 1ª série", SerieEscolar.PRIMEIRA_SERIE));
 		assertThat(disciplinaRepository.findById(response.id())).isPresent();
 	}
 
 	@Test
 	void listarRetornaOrdenadasPorCodigo() {
-		disciplinaService.criar(new DisciplinaRequest("Química", "QUI-2", null, SerieEscolar.SEGUNDA_SERIE));
-		disciplinaService.criar(new DisciplinaRequest("Física", "FIS-1", null, SerieEscolar.PRIMEIRA_SERIE));
-		disciplinaService.criar(new DisciplinaRequest("Matemática", "MAT-3", null, SerieEscolar.TERCEIRA_SERIE));
+		disciplinaService.criar(new DisciplinaRequest("Química", codigo("QUI-2"), null, SerieEscolar.SEGUNDA_SERIE));
+		disciplinaService.criar(new DisciplinaRequest("Física", codigo("FIS-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+		disciplinaService.criar(new DisciplinaRequest("Matemática", codigo("MAT-3"), null,
+				SerieEscolar.TERCEIRA_SERIE));
 
 		// Confere a ordem relativa, sem supor que o banco de teste começa vazio.
 		assertThat(disciplinaService.listar()).extracting(DisciplinaResponse::codigo)
-				.containsSubsequence("FIS-1", "MAT-3", "QUI-2");
+				.containsSubsequence(codigo("FIS-1"), codigo("MAT-3"), codigo("QUI-2"));
 	}
 
 	@Test
 	void buscarPorIdRetornaADisciplinaExistente() {
 		DisciplinaResponse criada = disciplinaService
-				.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+				.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
 		assertThat(disciplinaService.buscarPorId(criada.id())).isEqualTo(criada);
 	}
@@ -72,19 +75,19 @@ class DisciplinaServiceTests {
 
 	@Test
 	void atualizarSubstituiOsCamposDaDisciplina() {
-		DisciplinaResponse criada = disciplinaService.criar(new DisciplinaRequest("Nome Antigo", "ANT-1",
+		DisciplinaResponse criada = disciplinaService.criar(new DisciplinaRequest("Nome Antigo", codigo("ANT-1"),
 				"Descrição antiga", SerieEscolar.PRIMEIRA_SERIE));
 
 		DisciplinaResponse atualizada = disciplinaService.atualizar(criada.id(),
-				new DisciplinaRequest("Nome Novo", "nov-2", null, SerieEscolar.SEGUNDA_SERIE));
+				new DisciplinaRequest("Nome Novo", codigo("nov-2"), null, SerieEscolar.SEGUNDA_SERIE));
 
-		assertThat(atualizada).isEqualTo(new DisciplinaResponse(criada.id(), "Nome Novo", "NOV-2", null,
+		assertThat(atualizada).isEqualTo(new DisciplinaResponse(criada.id(), "Nome Novo", codigo("NOV-2"), null,
 				SerieEscolar.SEGUNDA_SERIE));
 	}
 
 	@Test
 	void atualizarIdInexistenteLancaExcecao() {
-		DisciplinaRequest request = new DisciplinaRequest("Nome", "COD-1", null, SerieEscolar.PRIMEIRA_SERIE);
+		DisciplinaRequest request = new DisciplinaRequest("Nome", codigo("COD-1"), null, SerieEscolar.PRIMEIRA_SERIE);
 
 		assertThatThrownBy(() -> disciplinaService.atualizar(-1L, request))
 				.isInstanceOf(RecursoNaoEncontradoException.class);
@@ -93,7 +96,7 @@ class DisciplinaServiceTests {
 	@Test
 	void excluirRemoveADisciplina() {
 		DisciplinaResponse criada = disciplinaService
-				.criar(new DisciplinaRequest("Descartável", "DESC-1", null, SerieEscolar.PRIMEIRA_SERIE));
+				.criar(new DisciplinaRequest("Descartável", codigo("DESC-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
 		disciplinaService.excluir(criada.id());
 
@@ -108,7 +111,7 @@ class DisciplinaServiceTests {
 	@Test
 	void excluirDisciplinaComMateriaisVinculadosLancaConflito() {
 		DisciplinaResponse disciplina = disciplinaService
-				.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+				.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 		materialDigitalService.criar(new MaterialDigitalRequest("Lista de funções", FormatoMaterial.PDF,
 				"https://exemplo.com/funcoes.pdf", null, null, disciplina.id()));
 
@@ -119,28 +122,32 @@ class DisciplinaServiceTests {
 
 	@Test
 	void criarComCodigoJaUsadoLancaConflitoDepoisDaNormalizacao() {
-		disciplinaService.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
-		DisciplinaRequest duplicada = new DisciplinaRequest("Outra", " mat-1 ", null, SerieEscolar.SEGUNDA_SERIE);
+		disciplinaService.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null,
+				SerieEscolar.PRIMEIRA_SERIE));
+		DisciplinaRequest duplicada = new DisciplinaRequest("Outra", " " + codigo("mat-1") + " ", null,
+				SerieEscolar.SEGUNDA_SERIE);
 
 		assertThatThrownBy(() -> disciplinaService.criar(duplicada)).isInstanceOf(ConflitoException.class);
 	}
 
 	@Test
 	void mesmoNomeComCodigosDiferentesNaoEhConflito() {
-		disciplinaService.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		disciplinaService.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null,
+				SerieEscolar.PRIMEIRA_SERIE));
 
 		DisciplinaResponse outraSerie = disciplinaService
-				.criar(new DisciplinaRequest("Matemática", "MAT-2", null, SerieEscolar.SEGUNDA_SERIE));
+				.criar(new DisciplinaRequest("Matemática", codigo("MAT-2"), null, SerieEscolar.SEGUNDA_SERIE));
 
 		assertThat(outraSerie.id()).isNotNull();
 	}
 
 	@Test
 	void atualizarComCodigoDeOutraDisciplinaLancaConflito() {
-		disciplinaService.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+		disciplinaService.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null,
+				SerieEscolar.PRIMEIRA_SERIE));
 		DisciplinaResponse outra = disciplinaService
-				.criar(new DisciplinaRequest("Física", "FIS-1", null, SerieEscolar.PRIMEIRA_SERIE));
-		DisciplinaRequest edicao = new DisciplinaRequest("Física", "mat-1", null, SerieEscolar.PRIMEIRA_SERIE);
+				.criar(new DisciplinaRequest("Física", codigo("FIS-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+		DisciplinaRequest edicao = new DisciplinaRequest("Física", codigo("mat-1"), null, SerieEscolar.PRIMEIRA_SERIE);
 
 		assertThatThrownBy(() -> disciplinaService.atualizar(outra.id(), edicao))
 				.isInstanceOf(ConflitoException.class);
@@ -149,10 +156,10 @@ class DisciplinaServiceTests {
 	@Test
 	void atualizarMantendoOProprioCodigoNaoEhConflito() {
 		DisciplinaResponse criada = disciplinaService
-				.criar(new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+				.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
 		DisciplinaResponse atualizada = disciplinaService.atualizar(criada.id(),
-				new DisciplinaRequest("Matemática Básica", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+				new DisciplinaRequest("Matemática Básica", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
 		assertThat(atualizada.nome()).isEqualTo("Matemática Básica");
 	}

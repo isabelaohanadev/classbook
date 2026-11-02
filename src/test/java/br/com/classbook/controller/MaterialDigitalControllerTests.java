@@ -1,5 +1,6 @@
 package br.com.classbook.controller;
 
+import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -10,14 +11,19 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import com.jayway.jsonpath.JsonPath;
 import tools.jackson.databind.ObjectMapper;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
@@ -54,7 +60,7 @@ class MaterialDigitalControllerTests {
 	@BeforeEach
 	void cadastrarDisciplina() throws Exception {
 		disciplinaId = cadastrar("/api/disciplinas",
-				new DisciplinaRequest("Matemática", "MAT-1", null, SerieEscolar.PRIMEIRA_SERIE));
+				new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 	}
 
 	@Test
@@ -70,7 +76,7 @@ class MaterialDigitalControllerTests {
 				.andExpect(jsonPath("$.dataPublicacao").value("2026-03-10"))
 				.andExpect(jsonPath("$.disciplina.id").value(disciplinaId))
 				.andExpect(jsonPath("$.disciplina.nome").value("Matemática"))
-				.andExpect(jsonPath("$.disciplina.codigo").value("MAT-1"))
+				.andExpect(jsonPath("$.disciplina.codigo").value(codigo("MAT-1")))
 				.andReturn();
 
 		Number id = JsonPath.read(resultado.getResponse().getContentAsString(), "$.id");
@@ -123,7 +129,7 @@ class MaterialDigitalControllerTests {
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.id").value(id))
 				.andExpect(jsonPath("$.titulo").value("Lista de funções"))
-				.andExpect(jsonPath("$.disciplina.codigo").value("MAT-1"));
+				.andExpect(jsonPath("$.disciplina.codigo").value(codigo("MAT-1")));
 	}
 
 	@Test
@@ -200,6 +206,50 @@ class MaterialDigitalControllerTests {
 		mockMvc.perform(delete("/api/materiais/{id}", id)).andExpect(status().isNoContent());
 
 		mockMvc.perform(get("/api/disciplinas/{id}", disciplinaId)).andExpect(status().isOk());
+	}
+
+	@Test
+	void corpoBaseDaMatrizDeValidacaoEhValido() throws Exception {
+		enviar(post("/api/materiais"), corpoValido()).andExpect(status().isCreated());
+	}
+
+	@ParameterizedTest(name = "{0}")
+	@MethodSource("camposInvalidos")
+	void cadastroEEdicaoComCampoInvalidoRespondemBadRequest(String caso, String campo, Object valor)
+			throws Exception {
+		Long id = cadastrar("/api/materiais", material("Lista", "https://exemplo.com/a.pdf", disciplinaId));
+		Map<String, Object> corpo = corpoValido();
+		corpo.put(campo, valor);
+
+		enviar(post("/api/materiais"), corpo).andExpect(status().isBadRequest());
+		enviar(put("/api/materiais/{id}", id), corpo).andExpect(status().isBadRequest());
+	}
+
+	static Stream<Arguments> camposInvalidos() {
+		return Stream.of(
+				Arguments.of("título ausente", "titulo", null),
+				Arguments.of("título em branco", "titulo", "   "),
+				Arguments.of("título maior que a coluna", "titulo", "a".repeat(201)),
+				Arguments.of("formato ausente", "formato", null),
+				Arguments.of("formato fora da lista", "formato", "DOCX"),
+				Arguments.of("formato em minúsculas", "formato", "pdf"),
+				Arguments.of("URL ausente", "url", null),
+				Arguments.of("URL em branco", "url", "   "),
+				Arguments.of("URL ftp", "url", "ftp://exemplo.com/a.pdf"),
+				Arguments.of("URL sem esquema", "url", "exemplo.com/a.pdf"),
+				Arguments.of("URL com espaço", "url", "https://exemplo.com/a b.pdf"),
+				Arguments.of("URL maior que a coluna", "url", "https://exemplo.com/" + "a".repeat(481)),
+				Arguments.of("data de publicação fora do formato ISO", "dataPublicacao", "10/03/2026"),
+				Arguments.of("disciplinaId ausente", "disciplinaId", null),
+				Arguments.of("disciplinaId que não é número", "disciplinaId", "abc"),
+				Arguments.of("disciplina inexistente", "disciplinaId", -1));
+	}
+
+	/** Corpo válido em que cada caso da matriz troca um único campo. */
+	private Map<String, Object> corpoValido() {
+		return new HashMap<>(Map.of("titulo", "Lista de funções", "formato", "PDF",
+				"url", "https://exemplo.com/funcoes.pdf", "dataPublicacao", "2026-03-10",
+				"disciplinaId", disciplinaId));
 	}
 
 	private static MaterialDigitalRequest material(String titulo, String url, Long disciplinaId) {

@@ -1,5 +1,6 @@
 package br.com.classbook.model;
 
+import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.LocalDate;
@@ -75,7 +76,7 @@ class MaterialDigitalTests {
 	private Disciplina persistirDisciplina() {
 		Disciplina disciplina = new Disciplina();
 		disciplina.setNome("Matemática");
-		disciplina.setCodigo("MAT-1");
+		disciplina.setCodigo(codigo("MAT-1"));
 		disciplina.setSerieEscolar(SerieEscolar.PRIMEIRA_SERIE);
 		entityManager.persist(disciplina);
 		return disciplina;
