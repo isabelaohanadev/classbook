@@ -1,5 +1,6 @@
 package br.com.classbook.service;
 
+import java.time.Year;
 import java.util.List;
 
 import org.springframework.data.domain.Sort;
@@ -67,6 +68,10 @@ public class LivroService {
 	}
 
 	private void preencher(Livro livro, LivroRequest request) {
+		// O @Past não serve para um Integer: o "não futuro" do ano é conferido aqui (docs/MODELAGEM.md).
+		if (request.anoPublicacao() != null && request.anoPublicacao() > Year.now().getValue()) {
+			throw new DadosInvalidosException("O ano de publicação " + request.anoPublicacao() + " está no futuro.");
+		}
 		Autor autor = autorRepository.findById(request.autorId())
 				.orElseThrow(() -> new DadosInvalidosException("Autor " + request.autorId() + " não existe."));
 		livro.setTitulo(request.titulo());

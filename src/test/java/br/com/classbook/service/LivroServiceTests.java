@@ -3,6 +3,7 @@ package br.com.classbook.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.Year;
 import java.util.List;
 
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,39 @@ class LivroServiceTests {
 		assertThat(response.titulo()).isEqualTo("Dom Casmurro");
 		assertThat(response.autor().id()).isEqualTo(autorId);
 		assertThat(livroRepository.findById(response.id())).isPresent();
+	}
+
+	@Test
+	void criarComAnoDePublicacaoNoFuturoLancaDadosInvalidos() {
+		autorId = criarAutor();
+		int anoQueVem = Year.now().getValue() + 1;
+		LivroRequest request = new LivroRequest("Livro do Futuro", "9780306406157", anoQueVem, null, null, autorId);
+
+		assertThatThrownBy(() -> livroService.criar(request)).isInstanceOf(DadosInvalidosException.class)
+				.hasMessage("O ano de publicação " + anoQueVem + " está no futuro.");
+	}
+
+	@Test
+	void anoDePublicacaoAtualEhAceito() {
+		autorId = criarAutor();
+		int anoAtual = Year.now().getValue();
+
+		LivroResponse response = livroService
+				.criar(new LivroRequest("Lançamento", "9780306406157", anoAtual, null, null, autorId));
+
+		assertThat(response.anoPublicacao()).isEqualTo(anoAtual);
+	}
+
+	@Test
+	void atualizarComAnoDePublicacaoNoFuturoLancaDadosInvalidos() {
+		autorId = criarAutor();
+		LivroResponse criado = livroService
+				.criar(new LivroRequest("Título", "9780306406157", null, null, null, autorId));
+		LivroRequest edicao = new LivroRequest("Título", "9780306406157", Year.now().getValue() + 1, null, null,
+				autorId);
+
+		assertThatThrownBy(() -> livroService.atualizar(criado.id(), edicao))
+				.isInstanceOf(DadosInvalidosException.class);
 	}
 
 	@Test

@@ -11,7 +11,9 @@ import jakarta.validation.constraints.Size;
  */
 public record LivroRequest(
 		@NotBlank @Size(max = 200) String titulo,
-		@NotBlank @Pattern(regexp = "^(\\d{9}[\\dX]|\\d{13})$") String isbn,
+		@NotBlank @Pattern(regexp = "^(\\d{9}[\\dX]|\\d{13})$",
+				message = "deve ter 10 ou 13 dígitos, sem contar hífens e espaços (o ISBN-10 pode terminar em X)")
+		String isbn,
 		Integer anoPublicacao,
 		String descricao,
 		@Size(max = 120) String editora,
