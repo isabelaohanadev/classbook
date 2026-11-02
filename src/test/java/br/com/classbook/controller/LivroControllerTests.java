@@ -90,8 +90,8 @@ class LivroControllerTests {
 	@Test
 	void cadastroComIsbnJaCadastradoRespondeConflict() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		cadastrarLivro(new LivroRequest("Dom Casmurro", "978-0-306-40615-7", null, null, null, autorId));
-		LivroRequest duplicado = new LivroRequest("Outro Título", "9780306406157", null, null, null, autorId);
+		cadastrarLivro(new LivroRequest("Dom Casmurro", "978-0-306-40615-7", null, null, null, autorId, null));
+		LivroRequest duplicado = new LivroRequest("Outro Título", "9780306406157", null, null, null, autorId, null);
 
 		mockMvc.perform(post("/api/livros").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(duplicado)))
@@ -181,9 +181,10 @@ class LivroControllerTests {
 	@Test
 	void edicaoComIsbnDeOutroLivroRespondeConflict() throws Exception {
 		Long autorId = cadastrarAutor("Machado de Assis");
-		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId));
-		Long id = cadastrarLivro(new LivroRequest("Memórias Póstumas", "9780316000000", null, null, null, autorId));
-		LivroRequest edicao = new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId);
+		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null));
+		Long id = cadastrarLivro(
+				new LivroRequest("Memórias Póstumas", "9780316000000", null, null, null, autorId, null));
+		LivroRequest edicao = new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId, null);
 
 		mockMvc.perform(put("/api/livros/{id}", id).contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(edicao)))
