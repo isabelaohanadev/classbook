@@ -217,6 +217,33 @@ class LivroServiceTests {
 	}
 
 	@Test
+	void listarComTituloEAutorIdCombinaOsFiltrosSemCategoriaId() {
+		Long machado = criarAutor();
+		Long outroAutor = autorRepository.save(autorEntidade("José de Alencar")).getId();
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, machado, null));
+		livroService.criar(new LivroRequest("Dom Sebastião", "9780316000000", null, null, null, outroAutor, null));
+
+		List<LivroResponse> livros = livroService.listar("dom", machado, null);
+
+		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
+	}
+
+	@Test
+	void listarComTituloECategoriaIdCombinaOsFiltrosSemAutorId() {
+		autorId = criarAutor();
+		Long literatura = criarCategoria(nome("Literatura"));
+		Long referencia = criarCategoria(nome("Referência"));
+		livroService
+				.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, literatura));
+		livroService
+				.criar(new LivroRequest("Dom Dicionário", "9780316000000", null, null, null, autorId, referencia));
+
+		List<LivroResponse> livros = livroService.listar("dom", null, literatura);
+
+		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
+	}
+
+	@Test
 	void listarComTituloAutorIdECategoriaIdCombinadosSemCorrespondenciaRetornaListaVazia() {
 		autorId = criarAutor();
 		Long literatura = criarCategoria(nome("Literatura"));
