@@ -27,16 +27,24 @@ Este plano organiza o desenvolvimento do ClassBook em etapas, com responsáveis 
 
 ### Período previsto por etapa
 
-| Etapa (marco) | Período previsto | Termina quando |
-| --- | --- | --- |
-| 1 — Planejamento e configuração | A definir | #1 a #10 concluídas |
-| 2 — CRUD de Autor e Livro | A definir | #11 a #29 concluídas |
-| 3 — CRUD de Categoria, Disciplina e MaterialDigital | A definir | #30 a #41 concluídas |
-| 4 — Qualidade e integração | A definir | #42 a #53 e #71 a #75 concluídas |
-| 5 — Interface gráfica JavaFX | A definir (opcional, depois dos itens avaliados: Issue #93) | #54 a #62 concluídas |
-| 6 — Entrega e apresentação | A definir | #63 a #70 concluídas |
+| Etapa (marco) | Período previsto | Período realizado | Termina quando |
+| --- | --- | --- | --- |
+| 1 — Planejamento e configuração | A definir | — | #1 a #10 concluídas |
+| 2 — CRUD de Autor e Livro | A definir | — | #11 a #29 concluídas |
+| 3 — CRUD de Categoria, Disciplina e MaterialDigital | A definir | 28/10/2026 a 02/11/2026 | #30 a #41 concluídas |
+| 4 — Qualidade e integração | A definir | Desde 18/10/2026, em andamento | #42 a #53 e #71 a #75 concluídas |
+| 5 — Interface gráfica JavaFX | A definir (opcional, depois dos itens avaliados: Issue #93) | — | #54 a #62 concluídas |
+| 6 — Entrega e apresentação | A definir | — | #63 a #70 concluídas |
 
-Os períodos são combinados pelos dois integrantes depois que as datas do professor forem informadas, de modo que o trabalho avaliado fique pronto antes da data de entrega. A ordem das tarefas e as dependências continuam na seção [Ordem sugerida de execução](#ordem-sugerida-de-execução).
+Os períodos previstos são combinados pelos dois integrantes depois que as datas do professor forem informadas, de modo que o trabalho avaliado fique pronto antes da data de entrega.
+
+O **período realizado** não é presumido: sai do histórico do GitHub, no horário de Brasília. Começa quando o primeiro PR de uma Issue da etapa foi aberto e termina no merge do último PR que fecha uma Issue da etapa. Registrado em 03/11/2026:
+
+- **Etapa 3:** o PR #96 (#30) foi aberto em 28/10/2026, e o PR #122, o último da etapa (#34 a #39 e #41), foi mesclado em 02/11/2026. As 12 Issues estão fechadas.
+- **Etapa 4:** o PR #76, que entregou o CI da #71 e o `CONTRIBUTING.md` da #73, foi aberto em 18/10/2026. Seguem abertas a #50, a #51, a #53, a #71, a #73 e a #74.
+- **Demais etapas:** a preencher pelo responsável de cada uma, com o mesmo critério.
+
+A ordem das tarefas e as dependências continuam na seção [Ordem sugerida de execução](#ordem-sugerida-de-execução).
 
 ### Como registrar uma data
 
