@@ -48,7 +48,7 @@ public class LivroService {
 	@Transactional(readOnly = true)
 	public List<LivroResponse> listar(String titulo, Long autorId, Long categoriaId) {
 		// "" (nunca null) para o PostgreSQL conseguir tipar o lower(concat(...)) do repository.
-		String tituloFiltro = titulo == null || titulo.isBlank() ? "" : titulo;
+		String tituloFiltro = titulo == null || titulo.isBlank() ? "" : semCuringas(titulo);
 		List<Livro> livros = livroRepository.pesquisar(tituloFiltro, autorId, categoriaId, Sort.by("titulo"));
 		return livros.stream().map(LivroResponse::de).toList();
 	}
@@ -72,6 +72,14 @@ public class LivroService {
 	public void excluir(Long id) {
 		Livro livro = buscarOuLancar(id);
 		livroRepository.delete(livro);
+	}
+
+	/**
+	 * Escapa os curingas do {@code LIKE} ({@code %} e {@code _}) e o próprio caractere de escape, para o
+	 * título ser procurado como texto: "100%" acha "100% Jovem", e não todos os livros.
+	 */
+	private static String semCuringas(String titulo) {
+		return titulo.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_");
 	}
 
 	private Livro buscarOuLancar(Long id) {
