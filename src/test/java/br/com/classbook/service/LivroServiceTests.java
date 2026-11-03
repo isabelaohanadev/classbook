@@ -166,6 +166,21 @@ class LivroServiceTests {
 	}
 
 	@Test
+	void listarComCuringaDoLikeNoTituloProcuraOCaractereComoTexto() {
+		autorId = criarAutor();
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null));
+		livroService.criar(new LivroRequest("100% Jovem", "9780316000000", null, null, null, autorId, null));
+		livroService.criar(new LivroRequest("Guia_de_Estudos", "8535910654", null, null, null, autorId, null));
+
+		// O autorId restringe a pesquisa aos livros deste teste, qualquer que seja o conteúdo do banco.
+		assertThat(livroService.listar("%", autorId, null)).extracting(LivroResponse::titulo)
+				.containsExactly("100% Jovem");
+		assertThat(livroService.listar("_", autorId, null)).extracting(LivroResponse::titulo)
+				.containsExactly("Guia_de_Estudos");
+		assertThat(livroService.listar("\\", autorId, null)).isEmpty();
+	}
+
+	@Test
 	void listarComAutorIdFiltraSomenteOsLivrosDesseAutor() {
 		Long machado = criarAutor();
 		Long outroAutor = autorRepository.save(autorEntidade("José de Alencar")).getId();
