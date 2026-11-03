@@ -124,6 +124,36 @@ DB_URL=jdbc:postgresql://localhost:5432/classbook_test ./mvnw verify
 
 É o mesmo comando que o CI executa (`mvn -B verify`), contra um PostgreSQL temporário criado pelo próprio workflow.
 
+### Migrations em um banco vazio
+
+O CI começa sempre com um banco vazio: a cada execução, o Flyway cria as tabelas do zero, e o `MigrationsTests` confere que todas as migrations foram aplicadas sem erro. Para repetir isso localmente, por exemplo depois de criar uma migration:
+
+1. Crie um banco novo, conectado como superusuário (`psql -U postgres`), ou com o Docker:
+
+   ```sql
+   CREATE DATABASE classbook_vazio OWNER classbook;
+   ```
+
+   ```bash
+   docker exec classbook-db createdb -U classbook classbook_vazio
+   ```
+
+2. Suba a aplicação apontando para ele:
+
+   ```bash
+   DB_URL=jdbc:postgresql://localhost:5432/classbook_vazio ./mvnw spring-boot:run
+   ```
+
+   O log deve mostrar `Successfully applied N migrations` e depois `Started ClassbookApplication`. Se uma entidade não bater com as tabelas, a aplicação não sobe: o `ddl-auto=validate` falha com `Schema-validation` e o nome da coluna ou da tabela.
+
+3. Em outro terminal, confira o histórico do Flyway. Cada migration de `src/main/resources/db/migration/` aparece uma vez, com `success` igual a `t`:
+
+   ```bash
+   psql -U classbook -d classbook_vazio -c "SELECT version, script, success FROM flyway_schema_history ORDER BY installed_rank;"
+   ```
+
+4. Pare a aplicação e apague o banco (`DROP DATABASE classbook_vazio;` como superusuário, ou `docker exec classbook-db dropdb -U classbook classbook_vazio`).
+
 ## Erros da API
 
 Todo erro sai no mesmo formato JSON (`horario`, `status`, `erro`, `mensagem`, `caminho` e `campos`), com mensagem em português; o detalhe está em [Arquitetura, Erros e exceções](docs/ARQUITETURA.md#erros-e-exceções).
