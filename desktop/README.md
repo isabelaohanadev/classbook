@@ -10,37 +10,57 @@ Projeto Maven **independente** do backend: `desktop/pom.xml` próprio, com `grou
 desktop/
 ├── pom.xml                 # projeto Maven próprio (Java 21, JavaFX 21)
 ├── mvnw, mvnw.cmd, .mvn/   # wrapper do Maven, igual ao da raiz
-└── src/main/
-    ├── java/br/com/classbook/desktop/
-    │   ├── app/            # ponto de entrada (Application)
-    │   └── view/           # controllers das telas
-    └── resources/br/com/classbook/desktop/view/
-        └── *.fxml          # FXML de cada tela, ao lado do controller correspondente
+├── src/main/
+│   ├── java/br/com/classbook/desktop/
+│   │   ├── app/            # ponto de entrada (Application)
+│   │   ├── api/            # cliente HTTP da API REST (Issue #59)
+│   │   ├── modelo/         # Request e Response da API, espelhando os DTOs do backend
+│   │   └── view/           # controllers das telas
+│   └── resources/br/com/classbook/desktop/view/
+│       └── *.fxml          # FXML de cada tela, ao lado do controller correspondente
+└── src/test/java/          # testes do cliente HTTP, sem abrir janela
 ```
 
 - **FXML:** cada tela tem um `.fxml` (em `resources`, no mesmo pacote do controller) carregado por `FXMLLoader`. Sem Scene Builder nem `module-info.java`: o projeto roda em classpath simples (sem JPMS), para manter o setup enxuto.
 - **Navegação:** a tela principal (Issue #55) usa um `BorderPane` raiz — menu lateral à esquerda, conteúdo no centro — e troca o `center` ao clicar em cada seção. Sem roteador à parte: é pouca coisa para justificar uma abstração própria.
-- **Cliente HTTP (Issue #59, responsabilidade do Juan):** `java.net.http.HttpClient` com Jackson para (des)serializar `Request`/`Response`, chamando a API em `http://localhost:8080/api` (URL base configurável). Nenhuma classe desse cliente existe ainda neste módulo — entra só na Issue #59, para o pacote `view` não ficar esperando uma dependência que ainda não existe.
+- **Cliente HTTP (Issue #59):** o `ClienteApi` (pacote `api`) usa o `java.net.http.HttpClient` com Jackson. Para cada recurso, ele tem as cinco operações (`api.autores().listar()`, `buscar(id)`, `cadastrar(request)`, `editar(id, request)` e `excluir(id)`), e para os livros tem também `pesquisarLivros(titulo, autorId, categoriaId)`. Os `Request` e `Response` ficam no pacote `modelo`, com os mesmos campos dos DTOs do backend.
+- **Erros da API:** uma resposta `4xx` ou `5xx` vira `ErroDaApiException`, com o código e a mensagem que a API mandou, seguida dos campos inválidos. Se a API não responde (backend fora do ar ou URL errada), o cliente lança `ApiIndisponivelException`, com uma mensagem que pode ir direto para a tela.
+- **Fora da thread da interface:** as chamadas do `ClienteApi` esperam a resposta, então as telas as fazem por `EmSegundoPlano` (pacote `view`). Ele roda a chamada numa thread separada e devolve o resultado, ou o erro, na thread do JavaFX:
+
+  ```java
+  EmSegundoPlano.executar(() -> api.autores().listar(), tabela.getItems()::setAll, this::mostrarErro);
+  ```
 
 ## Como compilar e rodar
 
 ```bash
 cd desktop
 ./mvnw -B compile      # só compila
+./mvnw -B test         # roda os testes do cliente HTTP (não abre janela nem precisa do backend)
 ./mvnw javafx:run      # compila e abre a aplicação
 ```
 
 Primeira execução baixa o Maven, o JavaFX e o plugin (`org.openjfx:javafx-maven-plugin`); pode levar alguns minutos.
 
+A aplicação chama a API em `http://localhost:8080/api`, então suba o backend antes (veja o README da raiz). Para usar outro endereço, defina a variável de ambiente `CLASSBOOK_API_URL`:
+
+```bash
+CLASSBOOK_API_URL=http://192.168.0.10:8080/api ./mvnw javafx:run
+```
+
+Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplicação, ela tem prioridade sobre a variável.
+
 ## Integração contínua (CI)
 
-**O módulo `desktop` não entra no CI.** O workflow em `.github/workflows/ci.yml` continua rodando só `mvn -B verify` na raiz (o backend Spring Boot). Testar uma aplicação JavaFX de forma automática exigiria um display virtual (Xvfb ou similar) e testes de UI, o que foge do escopo acadêmico ("manter simples", ver `docs/REQUISITOS.md`). A verificação deste módulo é manual: compilar e abrir a aplicação antes de abrir o PR.
+**O módulo `desktop` não entra no CI.** O workflow em `.github/workflows/ci.yml` continua rodando só `mvn -B verify` na raiz (o backend Spring Boot). Testar uma aplicação JavaFX de forma automática exigiria um display virtual (Xvfb ou similar) e testes de UI, o que foge do escopo acadêmico ("manter simples", ver `docs/REQUISITOS.md`). A verificação deste módulo é manual: compilar e abrir a aplicação antes de abrir o PR. Rode também o `./mvnw -B test`. Os testes do cliente HTTP usam um servidor HTTP local no lugar da API e não precisam de display nem do backend.
 
 ## Implementado
 
 - Tela principal com navegação simples entre catálogo, autores, categorias, disciplinas e materiais
   (Issue #55). Cada seção ainda mostra um texto de espaço reservado — as telas de verdade entram nas
   próximas Issues. A navegação não faz nenhuma chamada HTTP, então funciona com o backend fora do ar.
+- Cliente HTTP dos cinco recursos e da pesquisa de livros, com os erros da API convertidos em exceções
+  e as chamadas fora da thread da interface (Issue #59).
 
 ## Planejado (Issues #56 a #61)
 
