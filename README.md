@@ -173,6 +173,7 @@ Todo erro sai no mesmo formato JSON (`horario`, `status`, `erro`, `mensagem`, `c
 - [Arquitetura e convenções do backend](docs/ARQUITETURA.md)
 - [Plano de trabalho](docs/PLANO_DE_TRABALHO.md)
 - [Contribuições](docs/CONTRIBUICOES.md)
+- [Roteiro da apresentação](docs/APRESENTACAO.md)
 - [Como contribuir (GitHub Flow)](CONTRIBUTING.md)
 
 ## Equipe
