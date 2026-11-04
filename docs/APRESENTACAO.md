@@ -45,15 +45,15 @@ Pelo Swagger UI (`/swagger-ui.html`):
 
 ### 4. Demo — Categoria, Disciplina, MaterialDigital e erros (Juan, 2min30)
 
-1. `POST /api/categorias`, `POST /api/disciplinas`, `POST /api/materiais-digitais` — cadastro rápido dos três.
-2. `GET /api/materiais-digitais` — lista com o link do material.
-3. Provocar um erro de validação (campo obrigatório ausente) e mostrar o corpo padrão (`horario`, `status`, `erro`, `mensagem`, `caminho`, `campos`).
-4. `DELETE /api/categorias/{id}` de uma categoria com livro vinculado — mostrar o 409.
+1. `POST /api/categorias`, `POST /api/disciplinas` e `POST /api/materiais`: cadastro rápido dos três. O material leva o `disciplinaId` da disciplina recém-criada, e o código ` mat-1 ` volta como `MAT-1`.
+2. `GET /api/materiais`: a lista traz cada material com a disciplina resumida (`id`, `nome`, `codigo`).
+3. Provocar um erro de validação, com `POST /api/materiais` sem `titulo` e com `url` sem `http`, e mostrar o corpo padrão (`horario`, `status`, `erro`, `mensagem`, `caminho`, `campos`), com os dois campos listados.
+4. `DELETE /api/disciplinas/{id}` da disciplina que tem o material: mostrar o `409` ("Disciplina X possui materiais vinculados."). Depois, excluir o material e repetir: agora responde `204`.
 
 ### 5. Qualidade (1 min)
 
 - CI roda em todo PR e todo push na `main`: checkout, Java 21, `mvn -B verify`, PostgreSQL temporário — mostrar a aba *Actions* com o badge verde.
-- GitHub Flow: branch curta por Issue, PR com `Closes #N`, revisão cruzada obrigatória, CI verde antes de integrar.
+- GitHub Flow: branch curta por Issue, PR com `Closes #N` e CI verde antes de integrar. A proteção da `main` exige o check "Build e testes" e, desde 04/11, uma aprovação do outro integrante (#74). Antes disso, vários PRs entraram sem revisão formal, e a auditoria está registrada na #51. Se perguntarem, responder assim, sem dizer que a revisão sempre foi obrigatória.
 
 ### 6. Participação de cada um (1min30)
 
@@ -84,8 +84,35 @@ Cada integrante precisa saber explicar o projeto inteiro, inclusive a parte do o
 
 **Proibido na apresentação e nas perguntas:** consultar ferramentas de IA ou responder pela parte do colega.
 
+### Guia de estudo do Juan (Issue #69)
+
+O que o Juan precisa saber explicar sozinho, inclusive da frente da Isabela, com o arquivo para conferir no código durante o estudo. No dia, só o próprio código pode ser consultado.
+
+- **Uma rota de ponta a ponta (`POST /api/livros`):**
+  1. `LivroController.criar` recebe o `LivroRequest` com `@Valid`. O construtor do record tira hífens e espaços do ISBN antes da validação, e o `@Pattern` exige 10 ou 13 dígitos.
+  2. `LivroService.criar` confere o ISBN repetido (`409`). Depois, em `preencher`, confere o ano no futuro, o autor inexistente e a categoria inexistente (`400`).
+  3. O `LivroRepository` grava, e o `LivroResponse.de` monta a resposta com o autor e a categoria resumidos.
+  4. O controller responde `201` com o header `Location`. Qualquer exceção vai para o `TratadorGlobalDeExcecoes`, que monta o `ErroResponse`.
+- **Relacionamentos do Livro (`model/Livro.java`):** o autor é obrigatório (`optional = false`), e a categoria é opcional. Os dois usam `LAZY`, e o `@EntityGraph` do `LivroRepository` carrega autor e categoria na mesma consulta da listagem, para não fazer uma consulta por livro (o problema N+1). No `PUT`, um `categoriaId` nulo tira o livro da categoria.
+- **Pesquisa avançada (`LivroRepository.pesquisar`):**
+  - Os três filtros (`titulo`, `autorId` e `categoriaId`) são opcionais e se combinam com E lógico, e o resultado vem ordenado por título.
+  - Um `autorId` inexistente devolve lista vazia, e não erro.
+  - O título vazio vira `""`, porque o PostgreSQL não consegue tipar um parâmetro nulo dentro do `lower(concat(...))`.
+  - `%` e `_` são escapados no `LivroService`, para serem procurados como texto (#148).
+- **Exclusões bloqueadas (`409`):** cada uma é conferida no service antes de excluir, com a chave estrangeira `RESTRICT` da V1 como rede de segurança.
+  - Autor com livros: `AutorService.excluir`, com `existsByAutorId`.
+  - Categoria com livros: `CategoriaService.excluir`.
+  - Disciplina com materiais: `DisciplinaService.excluir`.
+- **Migrations:** só existe a `V1__criar_tabelas_iniciais.sql`. O Hibernate roda com `ddl-auto=validate`: se uma entidade não bater com a tabela, a aplicação não sobe. Uma migration integrada nunca é editada, porque o Flyway confere o checksum. O `MigrationsTests` garante que todas as migrations foram aplicadas (#49).
+- **CI e proteção da `main`:**
+  - O `.github/workflows/ci.yml` roda `mvn -B verify` com um PostgreSQL 16 temporário em todo PR para a `main` e em todo push nela.
+  - A proteção exige o check "Build e testes" e uma aprovação (#74).
+  - A `main` já ficou vermelha uma vez: o #136 e o #140 passaram no CI separados, mas juntos quebraram a compilação dos testes. O #145 corrigiu.
+- **GitHub Flow:** são os sete passos do `CONTRIBUTING.md`, seção *Fluxo de trabalho*. Os nomes de branch são `feature/`, `fix/`, `docs/`, `test/` e `chore/`, e os commits seguem `tipo: descrição` (Conventional Commits).
+
 ## Pendente antes do dia 06/11
 
 - [ ] **Ensaiar em voz alta, cronometrando cada bloco** — isto não pode ser feito por este documento; exige os dois integrantes. Ajustar os tempos acima pelo que o ensaio mostrar.
 - [ ] Confirmar quem apresenta primeiro, o notebook usado e o acesso à rede/projetor no local.
 - [ ] Cadastrar os dados de exemplo no banco da demo antes do ensaio final.
+- [ ] Ensaio de perguntas (#69): cada um pergunta ao outro sobre a própria frente, usando a lista acima e o guia de estudo, sem consultar nada além do código.
