@@ -57,14 +57,18 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
 ## Implementado
 
 - Tela principal com navegação simples entre catálogo, autores, categorias, disciplinas e materiais
-  (Issue #55). Cada seção ainda mostra um texto de espaço reservado — as telas de verdade entram nas
-  próximas Issues. A navegação não faz nenhuma chamada HTTP, então funciona com o backend fora do ar.
+  (Issue #55). As seções de autores, categorias, disciplinas e materiais ainda mostram um texto de
+  espaço reservado — as telas de verdade entram nas próximas Issues. A navegação não faz nenhuma
+  chamada HTTP, então funciona com o backend fora do ar.
 - Cliente HTTP dos cinco recursos e da pesquisa de livros, com os erros da API convertidos em exceções
   e as chamadas fora da thread da interface (Issue #59).
+- Catálogo de livros: lista título, autor, categoria e ano com `GET /api/livros`, chamado por
+  `EmSegundoPlano` (Issue #56). Lista vazia ou erro da API mostram uma mensagem no lugar da tabela.
+  Ainda sem busca nem filtros (Issue #57).
 
-## Planejado (Issues #56 a #61)
+## Planejado (Issues #57 a #61)
 
-- Catálogo de livros com busca e filtros (Issues #56 e #57).
+- Busca e filtros no catálogo de livros (Issue #57).
 - Formulários de cadastro e edição dos cinco recursos (Issue #58).
 - Detalhes do livro e links dos materiais digitais (Issue #60).
 - Mensagens de sucesso e de erro (Issue #61).
