@@ -200,6 +200,6 @@ Da primeira à última tarefa, respeitando todas as dependências. É a mesma or
 
 ## Informações pendentes (não inventar)
 
-- Datas de entrega, de avaliação e do acompanhamento semanal: o enunciado não as traz; o registro é acompanhado na Issue #94.
+- Datas de entrega e do acompanhamento semanal: o enunciado não as traz; o registro é acompanhado na Issue #94. A data da apresentação já foi registrada (06/11/2026 — ver [Cronograma](#cronograma)).
 - Acesso do professor ao Project. O enunciado exige só o acesso ao repositório, que é público (conferido na Issue #78).
 - Regras de proteção da `main`: o estado real de ativação é acompanhado na Issue #74.
