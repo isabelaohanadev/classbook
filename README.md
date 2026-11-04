@@ -6,7 +6,7 @@ Biblioteca Escolar Digital desenvolvida em Java e Spring Boot para projeto acad�
 
 O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, autores, categorias, disciplinas e materiais digitais** de uma escola de ensino médio, com pesquisa avançada de livros. O backend expõe uma API REST; a interface desktop (JavaFX) consome essa API e é opcional, construída depois dos itens avaliados (decisão da Issue #93).
 
-> **Status:** em planejamento. O backlog completo está nas [Issues](../../issues) e no GitHub Project **ClassBook — Planejamento e Desenvolvimento**. Nenhum CRUD foi implementado ainda.
+> **Status:** backend concluído, com os cinco CRUDs, a pesquisa avançada de livros (título, autor e categoria), validações, erros padronizados, migrations, documentação Swagger e CI. A interface desktop, que é opcional, está em andamento: a navegação, o catálogo de livros e o cliente HTTP estão prontos, e a busca, os formulários, os detalhes e as mensagens estão nas Issues #57, #58, #60 e #61. O backlog está nas [Issues](../../issues) e no GitHub Project **ClassBook — Planejamento e Desenvolvimento**.
 
 ## Tecnologias
 
@@ -18,7 +18,7 @@ O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, aut
 | Migrations | Flyway |
 | Validação | Bean Validation |
 | Documentação da API | Swagger/OpenAPI (springdoc), em `/swagger-ui.html` |
-| Interface | JavaFX, consumindo a API REST — opcional, pós-avaliação (a criar — Issue #54; decisão da Issue #93) |
+| Interface | JavaFX 21, consumindo a API REST (projeto Maven próprio em `desktop/`), opcional e pós-avaliação (decisão da Issue #93) |
 | Build | Maven (wrapper incluso) |
 | CI | GitHub Actions |
 
@@ -28,7 +28,7 @@ O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, aut
 .
 ├── .github/workflows/ci.yml      # CI: mvn -B verify em PRs e na main
 ├── docs/                         # requisitos, modelagem, arquitetura, plano de trabalho, contribuições
-├── desktop/                      # interface JavaFX (estrutura a definir — Issue #54)
+├── desktop/                      # interface JavaFX: projeto Maven próprio (ver desktop/README.md)
 ├── src/main/java/br/com/classbook/
 │   ├── model/                    # entidades JPA
 │   ├── dto/                      # records de entrada (Request) e de saída (Response)
@@ -113,6 +113,29 @@ Com a aplicação no ar, a documentação das rotas fica disponível no navegado
 
 - **Swagger UI:** `http://localhost:8080/swagger-ui.html`, para ver e testar cada rota
 - **OpenAPI (JSON):** `http://localhost:8080/v3/api-docs`
+
+### Rotas da API
+
+Os cinco recursos têm as mesmas cinco operações: `POST` (cadastro, responde `201` com `Location`), `GET` (listagem), `GET /{id}` (consulta), `PUT /{id}` (edição) e `DELETE /{id}` (exclusão, responde `204`).
+
+| Recurso | Rota | Observações |
+| --- | --- | --- |
+| Autores | `/api/autores` | Não exclui autor com livros (`409`) |
+| Livros | `/api/livros` | Pesquisa com `?titulo=`, `?autorId=` e `?categoriaId=`, combináveis. ISBN único (`409`) |
+| Categorias | `/api/categorias` | Nome único, sem diferenciar maiúsculas. Não exclui categoria com livros (`409`) |
+| Disciplinas | `/api/disciplinas` | Código único, gravado em maiúsculas. Não exclui disciplina com materiais (`409`) |
+| Materiais digitais | `/api/materiais` | Cada material pertence a uma disciplina (`disciplinaId`) |
+
+### Interface desktop (opcional)
+
+Com o backend no ar, em outro terminal:
+
+```bash
+cd desktop
+./mvnw javafx:run
+```
+
+A interface chama a API em `http://localhost:8080/api`. Para trocar o endereço, para os testes do módulo e para o que já está pronto, veja o [README do desktop](desktop/README.md).
 
 ## Como testar
 
