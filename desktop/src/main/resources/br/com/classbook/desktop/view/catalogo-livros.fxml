@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TableColumn?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.layout.BorderPane?>
+
+<!-- Tela de catálogo de livros (Issue #56): lista GET /api/livros. Busca e filtros são da Issue #57. -->
+<BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+	fx:controller="br.com.classbook.desktop.view.CatalogoLivrosController">
+	<center>
+		<TableView fx:id="tabela">
+			<placeholder>
+				<Label fx:id="mensagemVazia" text="Carregando livros..."/>
+			</placeholder>
+			<columns>
+				<TableColumn fx:id="colunaTitulo" text="Título" prefWidth="280"/>
+				<TableColumn fx:id="colunaAutor" text="Autor" prefWidth="200"/>
+				<TableColumn fx:id="colunaCategoria" text="Categoria" prefWidth="160"/>
+				<TableColumn fx:id="colunaAno" text="Ano" prefWidth="80"/>
+			</columns>
+		</TableView>
+	</center>
+</BorderPane>

@@ -8,7 +8,7 @@
 
 <!-- Tela principal e navegação (Issue #55): menu à esquerda troca o conteúdo do center. -->
 <BorderPane xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" prefWidth="900"
-	prefHeight="600" fx:controller="br.com.classbook.desktop.view.TelaPrincipalController">
+	prefHeight="600" fx:id="raiz" fx:controller="br.com.classbook.desktop.view.TelaPrincipalController">
 	<left>
 		<VBox spacing="8" fx:id="menu">
 			<padding>
