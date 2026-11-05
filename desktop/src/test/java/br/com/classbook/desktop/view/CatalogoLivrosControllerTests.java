@@ -208,6 +208,26 @@ class CatalogoLivrosControllerTests {
 		assertThat(naThread(() -> texto("#subtitulo"))).isEqualTo("Nenhum livro encontrado.");
 	}
 
+	@Test
+	void botaoDetalhesAbreUmDialogoComOsDadosDoLivroSelecionado() throws Exception {
+		api.responder("GET /api/livros", 200, TRES_LIVROS);
+		api.responder("GET /api/disciplinas", 200, "[]");
+		api.responder("GET /api/materiais", 200, "[]");
+		abrir(new ClienteApi(api.url()));
+		esperarAte("os três livros chegarem", () -> tabela().getItems().size() == 3);
+
+		naThread(() -> {
+			tabela().getSelectionModel().select(0);
+			controlador.detalhes();
+			return null;
+		});
+
+		assertThat(naThread(() -> controlador.ultimoDialogoDeDetalhes)).isNotNull();
+		assertThat(naThread(
+				() -> ((Label) controlador.ultimoDialogoDeDetalhes.getDialogPane().lookup("#titulo")).getText()))
+				.isEqualTo("Dom Casmurro");
+	}
+
 	private void abrir(ClienteApi cliente) throws Exception {
 		naThread(() -> {
 			FXMLLoader carregador =
