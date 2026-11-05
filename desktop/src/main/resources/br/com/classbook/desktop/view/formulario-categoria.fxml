@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+
+<!-- Campos da categoria (Issue #58). Os botões Salvar e Cancelar ficam na JanelaDeFormulario. -->
+<GridPane hgap="8" vgap="8" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
+	fx:controller="br.com.classbook.desktop.view.FormularioCategoriaController">
+	<columnConstraints>
+		<ColumnConstraints minWidth="140"/>
+		<ColumnConstraints prefWidth="340" hgrow="ALWAYS"/>
+	</columnConstraints>
+	<Label text="Nome *" GridPane.rowIndex="0"/>
+	<TextField fx:id="nome" GridPane.columnIndex="1" GridPane.rowIndex="0"/>
+	<Label text="Tipo *" GridPane.rowIndex="1"/>
+	<ComboBox fx:id="tipo" maxWidth="Infinity" GridPane.columnIndex="1" GridPane.rowIndex="1"/>
+	<Label text="Faixa etária" GridPane.rowIndex="2"/>
+	<TextField fx:id="faixaEtaria" promptText="por exemplo, 14 a 17 anos" GridPane.columnIndex="1"
+		GridPane.rowIndex="2"/>
+	<Label text="Descrição" GridPane.rowIndex="3"/>
+	<TextArea fx:id="descricao" prefRowCount="3" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="3"/>
+</GridPane>

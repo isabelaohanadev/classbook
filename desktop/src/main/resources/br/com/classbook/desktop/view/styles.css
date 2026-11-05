@@ -188,3 +188,30 @@
 .table-row-cell:selected .text {
 	-fx-fill: -color-navy-deep;
 }
+
+/* Telas de cadastro e formulários (Issues #58 e #61) */
+
+.barra-de-acoes {
+	-fx-spacing: 8;
+	-fx-alignment: CENTER_LEFT;
+}
+
+.aviso-sucesso {
+	-fx-text-fill: #2E6B3F;
+	-fx-font-weight: bold;
+}
+
+.aviso-erro {
+	-fx-text-fill: -color-danger;
+	-fx-font-weight: bold;
+}
+
+.formulario .legenda {
+	-fx-text-fill: -color-ink-muted;
+	-fx-font-size: 12px;
+}
+
+.campo-obrigatorio-vazio {
+	-fx-border-color: -color-danger;
+	-fx-border-radius: 3;
+}

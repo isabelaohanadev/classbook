@@ -23,6 +23,15 @@ class CatalogoLivrosControllerTests {
 	}
 
 	@Test
+	void anoUsaUmTracoQuandoOLivroNaoTemAno() {
+		LivroResponse semAno = new LivroResponse(2L, "A Hora da Estrela", "9788532508120", null, null, null,
+				new AutorResumo(2L, "Clarice Lispector"), null);
+
+		assertThat(CatalogoLivrosController.ano(livro(null))).isEqualTo("1899");
+		assertThat(CatalogoLivrosController.ano(semAno)).isEqualTo("—");
+	}
+
+	@Test
 	void mensagemDeErroUsaAMensagemDaExcecao() {
 		ErroDaApiException erroDaApi = new ErroDaApiException(500, "A API respondeu com o código 500.", List.of());
 		ApiIndisponivelException apiIndisponivel =
