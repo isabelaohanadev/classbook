@@ -18,8 +18,11 @@ import com.sun.net.httpserver.HttpServer;
  */
 public class ApiFalsa implements AutoCloseable {
 
-	/** Uma requisição recebida; {@code rota} é o método e o caminho, como em "POST /api/autores". */
-	public record Requisicao(String rota, String corpo) {
+	/**
+	 * Uma requisição recebida; {@code rota} é o método e o caminho, como em "POST /api/autores", e
+	 * {@code consulta} é a query string crua (sem o {@code ?}), ou {@code null} sem parâmetros.
+	 */
+	public record Requisicao(String rota, String consulta, String corpo) {
 	}
 
 	private record Resposta(int status, String corpo) {
@@ -44,7 +47,7 @@ public class ApiFalsa implements AutoCloseable {
 			consulta = troca.getRequestURI().getRawQuery();
 			tipoDoConteudo = troca.getRequestHeaders().getFirst("Content-Type");
 			corpoRecebido = new String(troca.getRequestBody().readAllBytes(), UTF_8);
-			recebidas.add(new Requisicao(metodo + " " + caminho, corpoRecebido));
+			recebidas.add(new Requisicao(metodo + " " + caminho, consulta, corpoRecebido));
 			Resposta resposta = respostasPorRota.getOrDefault(metodo + " " + caminho, respostaPadrao);
 			byte[] corpo = resposta.corpo().getBytes(UTF_8);
 			troca.getResponseHeaders().add("Content-Type", "application/json");

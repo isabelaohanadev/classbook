@@ -1,13 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<!-- Tela de catálogo de livros (Issue #56): lista GET /api/livros. Busca e filtros são da Issue #57. -->
+<!-- Tela de catálogo de livros (Issue #56): lista GET /api/livros. Busca e filtros da Issue #57 usam
+	GET /api/livros?titulo=&autorId=&categoriaId= (ClienteApi.pesquisarLivros). -->
 <VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" spacing="16"
 	fx:controller="br.com.classbook.desktop.view.CatalogoLivrosController">
 	<VBox styleClass="cabecalho-pagina" spacing="2">
@@ -15,6 +18,12 @@
 		<Label fx:id="subtitulo" text="Carregando livros..." styleClass="subtitulo"/>
 		<Label fx:id="aviso" styleClass="subtitulo" wrapText="true"/>
 	</VBox>
+	<HBox styleClass="barra-de-filtros" alignment="CENTER_LEFT">
+		<TextField fx:id="campoTitulo" promptText="Buscar por título..." HBox.hgrow="ALWAYS"/>
+		<ComboBox fx:id="comboAutor" promptText="Todos os autores"/>
+		<ComboBox fx:id="comboCategoria" promptText="Todas as categorias"/>
+		<Button text="Limpar filtros" onAction="#limparFiltros"/>
+	</HBox>
 	<HBox styleClass="barra-de-acoes">
 		<Button text="Novo livro" onAction="#novo"/>
 		<Button fx:id="editar" text="Editar" onAction="#editar"/>
