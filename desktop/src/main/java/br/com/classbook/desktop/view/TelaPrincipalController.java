@@ -5,21 +5,18 @@ import java.util.List;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.control.Button;
-import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 
 import br.com.classbook.desktop.api.ClienteApi;
 
 /**
  * Controller de {@code tela-principal.fxml} (Issue #55). Cada botão do menu troca o conteúdo de
- * {@code areaConteudo} e destaca o item correspondente; as telas de verdade entram nas Issues #56 a
- * #61, as demais seções seguem com um estado "em construção". A navegação em si não depende de o
- * backend estar no ar.
+ * {@code areaConteudo} e destaca o item correspondente: o catálogo de livros (Issue #56) e as telas de
+ * cadastro de autores, categorias, disciplinas e materiais (Issue #58). A navegação em si não depende de o
+ * backend estar no ar; cada tela carrega os dados da API em segundo plano.
  */
 public class TelaPrincipalController {
 
@@ -61,38 +58,32 @@ public class TelaPrincipalController {
 	}
 
 	@FXML
-	private void mostrarAutores() {
-		mostrarEmConstrucao(botaoAutores, "Autores");
+	private void mostrarAutores() throws IOException {
+		mostrarCadastro(botaoAutores, Cadastro.autores());
 	}
 
 	@FXML
-	private void mostrarCategorias() {
-		mostrarEmConstrucao(botaoCategorias, "Categorias");
+	private void mostrarCategorias() throws IOException {
+		mostrarCadastro(botaoCategorias, Cadastro.categorias());
 	}
 
 	@FXML
-	private void mostrarDisciplinas() {
-		mostrarEmConstrucao(botaoDisciplinas, "Disciplinas");
+	private void mostrarDisciplinas() throws IOException {
+		mostrarCadastro(botaoDisciplinas, Cadastro.disciplinas());
 	}
 
 	@FXML
-	private void mostrarMateriais() {
-		mostrarEmConstrucao(botaoMateriais, "Materiais digitais");
+	private void mostrarMateriais() throws IOException {
+		mostrarCadastro(botaoMateriais, Cadastro.materiais());
 	}
 
-	private void mostrarEmConstrucao(Button botao, String secao) {
-		Label icone = new Label("🛠");
-		icone.getStyleClass().add("icone");
-		Label titulo = new Label(secao);
-		titulo.getStyleClass().add("titulo");
-		Label descricao = new Label("Esta seção ainda não foi implementada.");
-		descricao.getStyleClass().add("descricao");
-
-		VBox estado = new VBox(icone, titulo, descricao);
-		estado.getStyleClass().add("estado-vazio");
-		estado.setAlignment(Pos.CENTER);
-
-		exibir(botao, estado);
+	private <Q, R> void mostrarCadastro(Button botao, Cadastro<Q, R> cadastro) throws IOException {
+		FXMLLoader carregador = new FXMLLoader(
+				getClass().getResource("/br/com/classbook/desktop/view/tela-de-cadastro.fxml"));
+		Parent tela = carregador.load();
+		TelaDeCadastroController<Q, R> controlador = carregador.getController();
+		controlador.configurar(cadastro, api);
+		exibir(botao, tela);
 	}
 
 	private void exibir(Button botaoAtivo, Node tela) {

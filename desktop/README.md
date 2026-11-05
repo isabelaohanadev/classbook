@@ -18,7 +18,7 @@ desktop/
 │   │   └── view/           # controllers das telas
 │   └── resources/br/com/classbook/desktop/view/
 │       └── *.fxml          # FXML de cada tela, ao lado do controller correspondente
-└── src/test/java/          # testes do cliente HTTP, sem abrir janela
+└── src/test/java/          # testes do cliente HTTP e das telas, sem abrir janela
 ```
 
 - **FXML:** cada tela tem um `.fxml` (em `resources`, no mesmo pacote do controller) carregado por `FXMLLoader`. Sem Scene Builder nem `module-info.java`: o projeto roda em classpath simples (sem JPMS), para manter o setup enxuto.
@@ -36,7 +36,7 @@ desktop/
 ```bash
 cd desktop
 ./mvnw -B compile      # só compila
-./mvnw -B test         # roda os testes do cliente HTTP (não abre janela nem precisa do backend)
+./mvnw -B test         # roda os testes do cliente HTTP e das telas (não abre janela nem precisa do backend)
 ./mvnw javafx:run      # compila e abre a aplicação
 ```
 
@@ -52,30 +52,40 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
 
 ## Integração contínua (CI)
 
-**O módulo `desktop` não entra no CI.** O workflow em `.github/workflows/ci.yml` continua rodando só `mvn -B verify` na raiz (o backend Spring Boot). Testar uma aplicação JavaFX de forma automática exigiria um display virtual (Xvfb ou similar) e testes de UI, o que foge do escopo acadêmico ("manter simples", ver `docs/REQUISITOS.md`). A verificação deste módulo é manual: compilar e abrir a aplicação antes de abrir o PR. Rode também o `./mvnw -B test`. Os testes do cliente HTTP usam um servidor HTTP local no lugar da API e não precisam de display nem do backend.
+**O módulo `desktop` não entra no CI.** O workflow em `.github/workflows/ci.yml` continua rodando só `mvn -B verify` na raiz (o backend Spring Boot). Testar uma aplicação JavaFX de forma automática exigiria um display virtual (Xvfb ou similar) e testes de UI, o que foge do escopo acadêmico ("manter simples", ver `docs/REQUISITOS.md`). A verificação deste módulo é manual: compilar e abrir a aplicação antes de abrir o PR. Rode também o `./mvnw -B test`. Os testes usam um servidor HTTP local no lugar da API. Os das telas rodam o JavaFX sem janela (Monocle Headless, configurado no `pom.xml`), então nenhum precisa de display nem do backend.
 
 ## Implementado
 
 - Tela principal com navegação simples entre catálogo, autores, categorias, disciplinas e materiais
-  (Issue #55). As seções de autores, categorias, disciplinas e materiais ainda mostram um texto de
-  espaço reservado — as telas de verdade entram nas próximas Issues. A navegação não faz nenhuma
-  chamada HTTP, então funciona com o backend fora do ar.
+  (Issue #55). A navegação em si não depende do backend: cada tela carrega os dados em segundo plano.
 - Cliente HTTP dos cinco recursos e da pesquisa de livros, com os erros da API convertidos em exceções
   e as chamadas fora da thread da interface (Issue #59).
 - Catálogo de livros: lista título, autor, categoria e ano com `GET /api/livros`, chamado por
   `EmSegundoPlano` (Issue #56). Lista vazia ou erro da API mostram uma mensagem no lugar da tabela.
-  Ainda sem busca nem filtros (Issue #57).
+  Ainda sem busca nem filtros (Issue #57). Os botões Novo livro, Editar e Excluir usam o formulário de
+  livro (Issue #58), e um livro sem categoria ou sem ano mostra "—".
 - Identidade visual: paleta de cores, tipografia e a marca ClassBook na barra lateral, em
   `styles.css`. Item ativo do menu destacado, estados de carregando/vazio/erro do catálogo
   diferenciados visualmente, e placeholder "em construção" nas seções ainda não implementadas.
   Polimento das Issues #55 e #56, sem Issue própria.
+- Cadastro e edição dos cinco recursos (Issue #58). Autores, Categorias, Disciplinas e Materiais usam a
+  mesma `tela-de-cadastro.fxml` (`TelaDeCadastroController`), configurada em `Cadastro` com as colunas,
+  a rota e o formulário de cada recurso. Os livros usam o catálogo. Cada formulário é um FXML
+  (`formulario-*.fxml`) aberto pela `JanelaDeFormulario`:
+  - Os campos obrigatórios têm `*` e ficam marcados se estiverem vazios, sem chamar a API.
+  - As listas de autor, categoria e disciplina vêm da API.
+  - Cancelar descarta tudo sem chamar a API.
+- Mensagens de sucesso e de erro (Issue #61):
+  - Cadastro, edição e exclusão bem-sucedidos mostram o aviso no cabeçalho ("Disciplina cadastrada.").
+  - Os erros `400`, `404` e `409` mostram a mensagem da API: no formulário, que continua aberto com o que
+    foi digitado, ou no aviso.
+  - Com o backend fora do ar, aparece "Não foi possível falar com a API em ...". Um erro inesperado
+    mostra uma mensagem genérica, sem stack trace (`Mensagens`).
 
-## Planejado (Issues #57 a #61)
+## Planejado (Issues #57 e #60)
 
 - Busca e filtros no catálogo de livros (Issue #57).
-- Formulários de cadastro e edição dos cinco recursos (Issue #58).
 - Detalhes do livro e links dos materiais digitais (Issue #60).
-- Mensagens de sucesso e de erro (Issue #61).
 - Sem telas de login nem dashboards.
 
 ## Divisão inicial
