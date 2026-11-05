@@ -23,7 +23,7 @@ desktop/
 
 - **FXML:** cada tela tem um `.fxml` (em `resources`, no mesmo pacote do controller) carregado por `FXMLLoader`. Sem Scene Builder nem `module-info.java`: o projeto roda em classpath simples (sem JPMS), para manter o setup enxuto.
 - **Navegação:** a tela principal (Issue #55) usa um `BorderPane` raiz — menu lateral à esquerda, conteúdo no centro — e troca o `center` ao clicar em cada seção. Sem roteador à parte: é pouca coisa para justificar uma abstração própria.
-- **Cliente HTTP (Issue #59):** o `ClienteApi` (pacote `api`) usa o `java.net.http.HttpClient` com Jackson. Para cada recurso, ele tem as cinco operações (`api.autores().listar()`, `buscar(id)`, `cadastrar(request)`, `editar(id, request)` e `excluir(id)`), e para os livros tem também `pesquisarLivros(titulo, autorId, categoriaId)`. Os `Request` e `Response` ficam no pacote `modelo`, com os mesmos campos dos DTOs do backend.
+- **Cliente HTTP (Issue #59):** o `ClienteApi` (pacote `api`) usa o `java.net.http.HttpClient` com Jackson. Para cada recurso, ele tem as cinco operações (`api.autores().listar()`, `buscar(id)`, `cadastrar(request)`, `editar(id, request)` e `excluir(id)`), e para os livros tem também `pesquisarLivros(busca, autorId, categoriaId)`. Os `Request` e `Response` ficam no pacote `modelo`, com os mesmos campos dos DTOs do backend.
 - **Erros da API:** uma resposta `4xx` ou `5xx` vira `ErroDaApiException`, com o código e a mensagem que a API mandou, seguida dos campos inválidos. Se a API não responde (backend fora do ar ou URL errada), o cliente lança `ApiIndisponivelException`, com uma mensagem que pode ir direto para a tela.
 - **Fora da thread da interface:** as chamadas do `ClienteApi` esperam a resposta, então as telas as fazem por `EmSegundoPlano` (pacote `view`). Ele roda a chamada numa thread separada e devolve o resultado, ou o erro, na thread do JavaFX:
 
@@ -64,8 +64,10 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
   `EmSegundoPlano` (Issue #56). Lista vazia ou erro da API mostram uma mensagem no lugar da tabela. Os
   botões Novo livro, Editar e Excluir usam o formulário de livro (Issue #58), e um livro sem categoria,
   disciplina ou ano mostra "—".
-- Busca e filtros no catálogo (Issue #57): o campo de título e os combos de autor e categoria disparam
-  `ClienteApi.pesquisarLivros(titulo, autorId, categoriaId)` a cada mudança, e os três são combináveis.
+- Busca e filtros no catálogo (Issue #57): o campo de busca e os combos de autor e categoria disparam
+  `ClienteApi.pesquisarLivros(busca, autorId, categoriaId)` a cada mudança, e os três são combináveis. O campo
+  de busca procura o texto no título, no nome do autor, no nome da categoria e no ano de publicação (por
+  exemplo, `1899` ou `machado`); os combos continuam filtrando exatamente por autor e por categoria.
   "Limpar filtros" volta a mostrar todos os livros. Sem resultado, a mensagem e a contagem deixam claro
   que é a pesquisa que não achou nada, não que o acervo está vazio ("Nenhum livro encontrado com esses
   filtros."). Como cada mudança nos filtros chama a API de novo, um contador (`ultimaPesquisa`) garante

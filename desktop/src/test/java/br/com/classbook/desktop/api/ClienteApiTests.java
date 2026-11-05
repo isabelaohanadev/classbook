@@ -125,7 +125,7 @@ class ClienteApiTests {
 
 		cliente.pesquisarLivros(" Memórias póstumas ", 3L, null);
 		assertThat(api.caminho).isEqualTo("/api/livros");
-		assertThat(api.consulta).isEqualTo("titulo=Mem%C3%B3rias%20p%C3%B3stumas&autorId=3");
+		assertThat(api.consulta).isEqualTo("busca=Mem%C3%B3rias%20p%C3%B3stumas&autorId=3");
 
 		cliente.pesquisarLivros(null, null, 4L);
 		assertThat(api.consulta).isEqualTo("categoriaId=4");

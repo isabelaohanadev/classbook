@@ -31,7 +31,7 @@ Autenticação e autorização, empréstimo ou reserva de livros, upload de arqu
 | RF03 | Cadastrar, editar, listar, consultar por ID e excluir **categorias**. |
 | RF04 | Cadastrar, editar, listar, consultar por ID e excluir **disciplinas**. |
 | RF05 | Cadastrar, editar, listar, consultar por ID e excluir **materiais digitais**, cada um vinculado a uma disciplina. |
-| RF06 | Pesquisar livros por título, autor e categoria, com filtros combináveis (ver *Funcionalidade extra*). |
+| RF06 | Pesquisar livros por texto livre (título, autor, categoria ou ano) e por título, autor e categoria, com filtros combináveis (ver *Funcionalidade extra*). |
 | RF07 | Validar os dados de entrada e responder com mensagens claras em caso de erro. |
 | RF08 | Responder erros com códigos HTTP coerentes: 400 (dados inválidos, inclusive o ID de autor, categoria ou disciplina inexistente no corpo), 404 (ID inexistente na rota), 409 (conflito) e 500 (erro inesperado), em formato padronizado. |
 | RF09 | Impedir duplicidades relevantes: ISBN do livro, código da disciplina e nome da categoria (decisão da Issue #3, ver [MODELAGEM](MODELAGEM.md#enums-e-unicidade)). |
@@ -58,6 +58,7 @@ Autenticação e autorização, empréstimo ou reserva de livros, upload de arqu
 
 Pesquisa de livros combinando filtros opcionais:
 
+- **busca livre**: o texto informado pode estar no título do livro, no nome do autor, no nome da categoria ou no ano de publicação (parcial, sem diferenciar maiúsculas de minúsculas; por exemplo, `189` acha os livros de 1899);
 - **título**: contém o texto informado, sem diferenciar maiúsculas de minúsculas;
 - **autor**: livros de um autor específico;
 - **categoria**: livros de uma categoria específica.

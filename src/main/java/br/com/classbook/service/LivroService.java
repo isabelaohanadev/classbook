@@ -51,10 +51,12 @@ public class LivroService {
 	}
 
 	@Transactional(readOnly = true)
-	public List<LivroResponse> listar(String titulo, Long autorId, Long categoriaId) {
+	public List<LivroResponse> listar(String titulo, String busca, Long autorId, Long categoriaId) {
 		// "" (nunca null) para o PostgreSQL conseguir tipar o lower(concat(...)) do repository.
 		String tituloFiltro = titulo == null || titulo.isBlank() ? "" : semCuringas(titulo);
-		List<Livro> livros = livroRepository.pesquisar(tituloFiltro, autorId, categoriaId, Sort.by("titulo"));
+		String buscaFiltro = busca == null || busca.isBlank() ? "" : semCuringas(busca.strip());
+		List<Livro> livros = livroRepository.pesquisar(tituloFiltro, buscaFiltro, autorId, categoriaId,
+				Sort.by("titulo"));
 		return livros.stream().map(LivroResponse::de).toList();
 	}
 

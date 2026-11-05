@@ -94,11 +94,15 @@ public class ClienteApi {
 		return new Recurso<>(this, "/materiais", MaterialDigitalResponse.class);
 	}
 
-	/** {@code GET /livros} com os filtros informados; {@code null} ou em branco fica de fora da pesquisa. */
-	public List<LivroResponse> pesquisarLivros(String titulo, Long autorId, Long categoriaId) {
+	/**
+	 * {@code GET /livros} com os filtros informados; {@code null} ou em branco fica de fora da pesquisa. A
+	 * {@code busca} é o texto livre: o backend a procura no título, no nome do autor, no nome da categoria e
+	 * no ano de publicação.
+	 */
+	public List<LivroResponse> pesquisarLivros(String busca, Long autorId, Long categoriaId) {
 		List<String> filtros = new ArrayList<>();
-		if (titulo != null && !titulo.isBlank()) {
-			filtros.add("titulo=" + URLEncoder.encode(titulo.strip(), StandardCharsets.UTF_8).replace("+", "%20"));
+		if (busca != null && !busca.isBlank()) {
+			filtros.add("busca=" + URLEncoder.encode(busca.strip(), StandardCharsets.UTF_8).replace("+", "%20"));
 		}
 		if (autorId != null) {
 			filtros.add("autorId=" + autorId);

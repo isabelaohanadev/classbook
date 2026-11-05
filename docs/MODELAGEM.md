@@ -237,7 +237,7 @@ Serve para o backend e a interface JavaFX avançarem em paralelo. Validado na Is
 | Disciplina | `GET/POST /api/disciplinas`, `GET/PUT/DELETE /api/disciplinas/{id}` |
 | MaterialDigital | `GET/POST /api/materiais`, `GET/PUT/DELETE /api/materiais/{id}` |
 
-- **Pesquisa avançada:** `GET /api/livros?titulo=&autorId=&categoriaId=` (filtros opcionais e combináveis; o filtro de autor usa só o ID). Detalhes em [Livros e autores](#livros-e-autores).
+- **Pesquisa avançada:** `GET /api/livros?busca=&titulo=&autorId=&categoriaId=` (filtros opcionais e combináveis; o filtro de autor usa só o ID, e `busca` é o texto livre). Detalhes em [Livros e autores](#livros-e-autores).
 - **Códigos HTTP:** `200` (consulta, edição), `201` com `Location` (cadastro), `204` (exclusão), `400` (dados inválidos), `404` (ID da rota inexistente), `409` (duplicidade ou registro em uso). O que cada operação pode devolver está na tabela abaixo.
 
 ### Códigos HTTP
@@ -292,7 +292,8 @@ Corpo de `LivroRequest` (entrada de `POST` e `PUT`):
 - **`PUT` substitui o registro inteiro.** Campo opcional ausente ou `null` limpa o valor; um `PUT` sem `categoriaId` remove a categoria do livro, e um `PUT` sem `disciplinaId` remove a disciplina. `autorId` ausente responde `400`.
 - **Campos opcionais sem valor** vêm como `null` na resposta (`anoPublicacao`, `descricao`, `editora`, `categoria`, `disciplina`).
 - **Pesquisa em `GET /api/livros`:**
-  - `titulo`: contém o texto, sem diferenciar maiúsculas de minúsculas; vazio ou em branco equivale a não informar.
+  - `busca`: texto livre. O livro entra se o texto estiver no **título**, no **nome do autor**, no **nome da categoria** ou no **ano de publicação**. É parcial e não diferencia maiúsculas de minúsculas; o ano é comparado como texto, então `189` acha 1899. Espaços nas pontas são ignorados, `%` e `_` são procurados como texto, e vazio ou em branco equivale a não informar. Um livro sem categoria ou sem ano continua aparecendo quando o título ou o autor bate. É um único trecho de texto: `machado 1899` não separa os dois termos.
+  - `titulo`: contém o texto só no título, sem diferenciar maiúsculas de minúsculas; vazio ou em branco equivale a não informar.
   - `autorId` e `categoriaId`: IDs numéricos. Um ID que não existe não é erro: a resposta é `200` com lista vazia. Valor que não é número responde `400`.
   - Filtros informados juntos precisam ser todos satisfeitos (E lógico). Sem filtros, devolve todos os livros, ordenados por título.
   - Livros sem categoria só aparecem quando o filtro de categoria não é usado.

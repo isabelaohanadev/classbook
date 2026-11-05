@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.VBox?>
 
 <!-- Tela de catálogo de livros (Issue #56): lista GET /api/livros. Busca e filtros da Issue #57 usam
-	GET /api/livros?titulo=&autorId=&categoriaId= (ClienteApi.pesquisarLivros). -->
+	GET /api/livros?busca=&autorId=&categoriaId= (ClienteApi.pesquisarLivros). -->
 <VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" spacing="16"
 	fx:controller="br.com.classbook.desktop.view.CatalogoLivrosController">
 	<VBox styleClass="cabecalho-pagina" spacing="2">
@@ -19,7 +19,7 @@
 		<Label fx:id="aviso" styleClass="subtitulo" wrapText="true"/>
 	</VBox>
 	<HBox styleClass="barra-de-filtros" alignment="CENTER_LEFT">
-		<TextField fx:id="campoTitulo" promptText="Buscar por título..." HBox.hgrow="ALWAYS"/>
+		<TextField fx:id="campoBusca" promptText="Buscar por título, autor, categoria ou ano..." HBox.hgrow="ALWAYS"/>
 		<ComboBox fx:id="comboAutor" promptText="Todos os autores"/>
 		<ComboBox fx:id="comboCategoria" promptText="Todas as categorias"/>
 		<Button text="Limpar filtros" onAction="#limparFiltros"/>

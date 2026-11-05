@@ -121,7 +121,7 @@ Cada recurso tem as cinco operações: `POST` (cadastra e responde `201` com `Lo
 | Recurso | Rota | Observações |
 | --- | --- | --- |
 | Autores | `/api/autores` | Um autor com livros não pode ser excluído (`409`). |
-| Livros | `/api/livros` | Pesquisa avançada no `GET`: `?titulo=`, `?autorId=` e `?categoriaId=`, opcionais e combináveis. O ISBN é único (`409`), e a categoria e a disciplina são opcionais. |
+| Livros | `/api/livros` | Pesquisa avançada no `GET`: `?busca=` (texto livre: título, autor, categoria ou ano), `?titulo=`, `?autorId=` e `?categoriaId=`, opcionais e combináveis. O ISBN é único (`409`), e a categoria e a disciplina são opcionais. |
 | Categorias | `/api/categorias` | Nome único, sem diferenciar maiúsculas (`409`). Uma categoria com livros não pode ser excluída (`409`). |
 | Disciplinas | `/api/disciplinas` | Código único, gravado em maiúsculas (`409`). Uma disciplina com materiais não pode ser excluída (`409`). |
 | Materiais digitais | `/api/materiais` | Cada material pertence a uma disciplina (`disciplinaId`), e a URL precisa ser `http` ou `https`. |

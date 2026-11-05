@@ -14,7 +14,7 @@ Este documento cobre os critérios possíveis sem a presença dos dois integrant
 | --- | --- | --- |
 | 0:00–0:30 | Abertura: o que é o ClassBook, objetivo e stack (Java 21, Spring Boot, PostgreSQL, Flyway) | Isabela |
 | 0:30–1:30 | Arquitetura e modelagem: camadas (`controller → service → repository → model`), as 5 entidades e os 4 relacionamentos | Juan |
-| 1:30–4:00 | Demo: CRUD de Autor e de Livro, relacionamento Livro–Autor e pesquisa avançada (título, autor, categoria) | Isabela |
+| 1:30–4:00 | Demo: CRUD de Autor e de Livro, relacionamento Livro–Autor e pesquisa avançada (busca livre por título, autor, categoria ou ano, mais filtros) | Isabela |
 | 4:00–6:30 | Demo: CRUD de Categoria, Disciplina e MaterialDigital, relacionamento Material–Disciplina e tratamento de erros padronizado | Juan |
 | 6:30–7:30 | Qualidade: migrations, CI (GitHub Actions) e GitHub Flow | Isabela ou Juan (combinar) |
 | 7:30–9:00 | Participação de cada um (contribuições reais — ver [CONTRIBUICOES](CONTRIBUICOES.md)) | os dois, ~45s cada |
@@ -39,7 +39,7 @@ Pelo Swagger UI (`/swagger-ui.html`):
 1. `POST /api/autores` — cadastra um autor.
 2. `POST /api/livros` — cadastra um livro vinculado ao autor (e opcionalmente a uma categoria).
 3. `GET /api/livros` — lista todos.
-4. `GET /api/livros?titulo=...` — pesquisa por título (parcial, sem diferenciar maiúsculas).
+4. `GET /api/livros?busca=...` — busca livre (parcial, sem diferenciar maiúsculas): o texto pode estar no título, no nome do autor, no nome da categoria ou no ano (`busca=1899`). `?titulo=...` procura só no título.
 5. `GET /api/livros?autorId=...&categoriaId=...` — combina filtros por autor e categoria.
 6. `PUT /api/livros/{id}` e `DELETE /api/autores/{id}` — edição e exclusão; mostrar o erro 409 ao excluir um autor com livro vinculado.
 
@@ -93,12 +93,13 @@ O que o Juan precisa saber explicar sozinho, inclusive da frente da Isabela, com
   2. `LivroService.criar` confere o ISBN repetido (`409`). Depois, em `preencher`, confere o ano no futuro, o autor inexistente e a categoria inexistente (`400`).
   3. O `LivroRepository` grava, e o `LivroResponse.de` monta a resposta com o autor, a categoria e a disciplina resumidos.
   4. O controller responde `201` com o header `Location`. Qualquer exceção vai para o `TratadorGlobalDeExcecoes`, que monta o `ErroResponse`.
-- **Relacionamentos do Livro (`model/Livro.java`):** o autor é obrigatório (`optional = false`), e a categoria e a disciplina são opcionais. Os três usam `LAZY`, e o `@EntityGraph` do `LivroRepository` carrega autor, categoria e disciplina na mesma consulta da listagem, para não fazer uma consulta por livro (o problema N+1). No `PUT`, um `categoriaId` ou `disciplinaId` nulo tira o livro da categoria ou da disciplina. A disciplina entrou depois, pela migration `V202611051836__adiciona_disciplina_em_livro.sql` (a `V1` não muda depois de integrada).
+- **Relacionamentos do Livro (`model/Livro.java`):** o autor é obrigatório (`optional = false`), e a categoria e a disciplina são opcionais. Os três usam `LAZY`, e o `LivroRepository.pesquisar` carrega autor, categoria e disciplina na mesma consulta da listagem (`join fetch`, com `left` nos opcionais), para não fazer uma consulta por livro (o problema N+1). No `PUT`, um `categoriaId` ou `disciplinaId` nulo tira o livro da categoria ou da disciplina. A disciplina entrou depois, pela migration `V202611051836__adiciona_disciplina_em_livro.sql` (a `V1` não muda depois de integrada).
 - **Pesquisa avançada (`LivroRepository.pesquisar`):**
-  - Os três filtros (`titulo`, `autorId` e `categoriaId`) são opcionais e se combinam com E lógico, e o resultado vem ordenado por título.
+  - Os quatro filtros (`busca`, `titulo`, `autorId` e `categoriaId`) são opcionais e se combinam com E lógico, e o resultado vem ordenado por título. A `busca` procura o texto no título, no nome do autor, no nome da categoria e no ano (comparado como texto); dentro dela os campos se combinam com OU.
   - Um `autorId` inexistente devolve lista vazia, e não erro.
-  - O título vazio vira `""`, porque o PostgreSQL não consegue tipar um parâmetro nulo dentro do `lower(concat(...))`.
+  - O título e a busca vazios viram `""`, porque o PostgreSQL não consegue tipar um parâmetro nulo dentro do `lower(concat(...))`.
   - `%` e `_` são escapados no `LivroService`, para serem procurados como texto (#148).
+  - A categoria é opcional, então o join dela é `left`: com um `join` simples (ou `l.categoria.nome` direto na condição, que vira `inner join`), os livros sem categoria sumiriam da busca mesmo quando o título bate.
 - **Exclusões bloqueadas (`409`):** cada uma é conferida no service antes de excluir, com a chave estrangeira `RESTRICT` da V1 como rede de segurança.
   - Autor com livros: `AutorService.excluir`, com `existsByAutorId`.
   - Categoria com livros: `CategoriaService.excluir`.
