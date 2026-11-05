@@ -2,7 +2,9 @@ package br.com.classbook.desktop.view;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URI;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import javafx.beans.property.SimpleStringProperty;
@@ -97,6 +99,12 @@ public class CatalogoLivrosController {
 	/** O último formulário aberto, para os testes. */
 	JanelaDeFormulario<LivroRequest, LivroResponse> ultimoFormulario;
 
+	/**
+	 * Abre um link no navegador padrão (a tela principal liga ao {@code HostServices}); repassado ao diálogo
+	 * de detalhes.
+	 */
+	Consumer<URI> abrirNoNavegador = DetalhesLivroController.SEM_NAVEGADOR;
+
 	/** O último diálogo de detalhes aberto, e o controller dele, para os testes. */
 	Dialog<Void> ultimoDialogoDeDetalhes;
 	DetalhesLivroController ultimoControladorDeDetalhes;
@@ -182,6 +190,7 @@ public class CatalogoLivrosController {
 			throw new UncheckedIOException(falha);
 		}
 		DetalhesLivroController controlador = carregador.getController();
+		controlador.abrirNoNavegador = abrirNoNavegador;
 		controlador.preencher(selecionado);
 		controlador.carregar(api);
 

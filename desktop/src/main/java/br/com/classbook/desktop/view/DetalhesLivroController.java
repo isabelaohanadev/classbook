@@ -1,7 +1,5 @@
 package br.com.classbook.desktop.view;
 
-import java.awt.Desktop;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -26,11 +24,22 @@ import br.com.classbook.desktop.modelo.MaterialDigitalResponse;
  * essa área não é filtrada pelo livro — é um jeito de navegar os materiais a partir da mesma tela.
  *
  * <p>Cada material tem um link que abre no navegador padrão (Issue #60); um link ausente ou inválido só
- * mostra um aviso, sem derrubar a aplicação.
+ * mostra um aviso, sem derrubar a aplicação. Quem abre o link é o {@link #abrirNoNavegador}, que a
+ * {@code AplicacaoDesktop} liga ao {@code HostServices} do JavaFX. Como o {@code HostServices} não avisa
+ * quando falha, o controller só entrega a ele um link {@code http} ou {@code https} completo (o mesmo que a
+ * API aceita no cadastro do material).
  */
 public class DetalhesLivroController {
 
 	private static final String TRACO = "—";
+
+	/**
+	 * O que vale enquanto ninguém configurou um navegador: falha de forma visível (o aviso de "não foi
+	 * possível abrir o link") em vez de deixar o clique no link sem efeito algum.
+	 */
+	static final Consumer<URI> SEM_NAVEGADOR = uri -> {
+		throw new IllegalStateException("Nenhum navegador foi configurado.");
+	};
 
 	@FXML
 	private Label titulo;
@@ -67,12 +76,17 @@ public class DetalhesLivroController {
 
 	private List<MaterialDigitalResponse> todosOsMateriais = List.of();
 
-	/** Abre o link no navegador padrão; os testes trocam para não abrir de verdade. */
-	Consumer<URI> abrirNoNavegador = DetalhesLivroController::abrirDeVerdade;
+	/**
+	 * Abre o link no navegador padrão. Quem monta a tela troca pelo {@code HostServices}; os testes trocam
+	 * para não abrir de verdade.
+	 */
+	Consumer<URI> abrirNoNavegador = SEM_NAVEGADOR;
 
 	@FXML
 	private void initialize() {
-		comboDisciplina.setConverter(Campos.exibicao(DisciplinaResponse::nome));
+		// Código e nome, como no formulário de material: a API só exige que o código seja único, então duas
+		// disciplinas podem ter o mesmo nome.
+		comboDisciplina.setConverter(Campos.exibicao(item -> item.codigo() + " — " + item.nome()));
 		comboDisciplina.valueProperty().addListener((observavel, anterior, atual) -> filtrarMateriais());
 		listaDeMateriais.setCellFactory(lista -> new CelulaDeMaterial());
 	}
@@ -126,6 +140,10 @@ public class DetalhesLivroController {
 			avisoDeLink.setText("Link inválido: " + url);
 			return;
 		}
+		if (!ehLinkWeb(uri)) {
+			avisoDeLink.setText("Link inválido: " + url);
+			return;
+		}
 		try {
 			abrirNoNavegador.accept(uri);
 		} catch (RuntimeException falhaAoAbrir) {
@@ -133,12 +151,14 @@ public class DetalhesLivroController {
 		}
 	}
 
-	private static void abrirDeVerdade(URI uri) {
-		try {
-			Desktop.getDesktop().browse(uri);
-		} catch (IOException | UnsupportedOperationException erro) {
-			throw new IllegalStateException(erro);
-		}
+	/**
+	 * Só {@code http} e {@code https}, com endereço: "www.exemplo.com" (sem o esquema) é uma URI de sintaxe
+	 * válida, mas o sistema não saberia abri-la, e esquemas como {@code file:} não são links de material.
+	 */
+	private static boolean ehLinkWeb(URI uri) {
+		String esquema = uri.getScheme();
+		boolean web = "http".equalsIgnoreCase(esquema) || "https".equalsIgnoreCase(esquema);
+		return web && uri.getAuthority() != null;
 	}
 
 	/** Uma linha da lista de materiais: título, formato e disciplina como um link clicável. */

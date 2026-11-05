@@ -19,6 +19,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import br.com.classbook.desktop.api.ApiFalsa;
 import br.com.classbook.desktop.api.ClienteApi;
@@ -142,6 +144,38 @@ class DetalhesLivroControllerTests {
 	}
 
 	@Test
+	void disciplinasComOMesmoNomeAparecemComCodigoEFiltramPelaEscolhida() throws Exception {
+		api.responder("GET /api/disciplinas", 200, """
+				[{"id": 4, "nome": "Matemática", "codigo": "MAT-1", "descricao": null, "serieEscolar": "PRIMEIRA_SERIE"},
+				 {"id": 5, "nome": "Matemática", "codigo": "MAT-2", "descricao": null, "serieEscolar": "SEGUNDA_SERIE"}]""");
+		api.responder("GET /api/materiais", 200, """
+				[{"id": 10, "titulo": "Lista da 1ª série", "formato": "PDF", "url": "https://exemplo.com/1.pdf",
+				  "descricao": null, "dataPublicacao": null,
+				  "disciplina": {"id": 4, "nome": "Matemática", "codigo": "MAT-1"}},
+				 {"id": 11, "titulo": "Lista da 2ª série", "formato": "PDF", "url": "https://exemplo.com/2.pdf",
+				  "descricao": null, "dataPublicacao": null,
+				  "disciplina": {"id": 5, "nome": "Matemática", "codigo": "MAT-2"}}]""");
+		abrir();
+		naThread(() -> {
+			controlador.carregar(new ClienteApi(api.url()));
+			return null;
+		});
+		esperarAte("os materiais chegarem", () -> lista().getItems().size() == 2);
+
+		assertThat(naThread(() -> comboDisciplina().getItems().stream()
+				.map(disciplina -> comboDisciplina().getConverter().toString(disciplina)).toList()))
+				.containsExactly("MAT-1 — Matemática", "MAT-2 — Matemática");
+
+		naThread(() -> {
+			comboDisciplina().setValue(comboDisciplina().getItems().get(1));
+			return null;
+		});
+
+		esperarAte("o filtro de disciplina aplicar", () -> lista().getItems().size() == 1);
+		assertThat(naThread(() -> lista().getItems().getFirst().titulo())).isEqualTo("Lista da 2ª série");
+	}
+
+	@Test
 	void semMateriaisCadastradosMostraMensagem() throws Exception {
 		api.responder("GET /api/materiais", 200, "[]");
 		abrir();
@@ -199,6 +233,58 @@ class DetalhesLivroControllerTests {
 
 		assertThat(naThread(() -> texto("#avisoDeLink"))).startsWith("Link inválido");
 		assertThat(abertos).isEmpty();
+	}
+
+	/**
+	 * Estes passam na sintaxe de {@code URI}, mas o {@code HostServices} não avisa quando falha: sem esquema
+	 * {@code http(s)} e endereço, o clique ficaria sem efeito nenhum em vez de mostrar o aviso.
+	 */
+	@ParameterizedTest
+	@ValueSource(strings = { "www.exemplo.com/lista1.pdf", "/lista1.pdf", "file:///etc/passwd",
+			"javascript:alert(1)", "ftp://exemplo.com/lista1.pdf", "https:///lista1.pdf" })
+	void linkQueNaoEHttpCompletoMostraAvisoSemChamarONavegador(String url) throws Exception {
+		List<URI> abertos = new CopyOnWriteArrayList<>();
+		MaterialDigitalResponse naoEhLinkWeb = material(url);
+		abrir();
+
+		naThread(() -> {
+			controlador.abrirNoNavegador = abertos::add;
+			controlador.abrirLink(naoEhLinkWeb);
+			return null;
+		});
+
+		assertThat(naThread(() -> texto("#avisoDeLink"))).isEqualTo("Link inválido: " + url);
+		assertThat(abertos).isEmpty();
+	}
+
+	@Test
+	void linkHttpEmMaiusculasEComEspacosNasPontasAbre() throws Exception {
+		List<URI> abertos = new CopyOnWriteArrayList<>();
+		MaterialDigitalResponse comLink = material("  HTTPS://Exemplo.com/lista1.pdf ");
+		abrir();
+
+		naThread(() -> {
+			controlador.abrirNoNavegador = abertos::add;
+			controlador.abrirLink(comLink);
+			return null;
+		});
+
+		assertThat(abertos).containsExactly(URI.create("HTTPS://Exemplo.com/lista1.pdf"));
+		assertThat(naThread(() -> texto("#avisoDeLink"))).isEmpty();
+	}
+
+	@Test
+	void semNavegadorConfiguradoMostraAvisoEmVezDeNaoFazerNada() throws Exception {
+		MaterialDigitalResponse comLink = material("https://exemplo.com/lista1.pdf");
+		abrir();
+
+		naThread(() -> {
+			controlador.abrirLink(comLink);
+			return null;
+		});
+
+		assertThat(naThread(() -> texto("#avisoDeLink")))
+				.isEqualTo("Não foi possível abrir o link: https://exemplo.com/lista1.pdf");
 	}
 
 	@Test

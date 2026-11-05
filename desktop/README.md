@@ -91,14 +91,17 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
   (`DetalhesLivroController`) num diálogo com todos os dados do livro selecionado (incluindo autor e
   categoria) e uma área de materiais digitais filtrável por disciplina. Pela modelagem, materiais se ligam
   a disciplinas, não a livros, então essa área não depende do livro aberto — é um jeito de navegar os
-  materiais a partir da mesma tela. Cada material tem um link que abre no navegador padrão
-  (`java.awt.Desktop`); um link ausente ou com formato inválido só mostra um aviso, sem derrubar a
-  aplicação.
+  materiais a partir da mesma tela. A lista de disciplinas mostra `código — nome`, porque a API só exige
+  que o código seja único. Cada material tem um link que abre no navegador padrão, pelo `HostServices` do
+  JavaFX (a `AplicacaoDesktop` entrega o `HostServices` à `TelaPrincipalController`, que o repassa ao
+  catálogo e ao diálogo). O `HostServices` não avisa quando falha, então só links `http` ou `https`
+  completos são entregues a ele: um link ausente, com formato inválido ou de outro tipo (como
+  `www.exemplo.com`, sem o `https://`, ou `file:`) só mostra um aviso, sem derrubar a aplicação.
 
 ## Planejado
 
-Nenhuma Issue de interface pendente além das Issues #57 a #61, todas implementadas. Sem telas de login
-nem dashboards.
+Falta só a Issue #62: o roteiro manual com o backend real e o PostgreSQL, que inclui abrir um link de
+material de verdade. Sem telas de login nem dashboards.
 
 ## Divisão inicial
 
