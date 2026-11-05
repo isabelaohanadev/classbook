@@ -45,15 +45,15 @@ Pelo Swagger UI (`/swagger-ui.html`):
 
 ### 4. Demo — Categoria, Disciplina, MaterialDigital e erros (Juan, 2min30)
 
-1. `POST /api/categorias`, `POST /api/disciplinas`, `POST /api/materiais-digitais` — cadastro rápido dos três.
-2. `GET /api/materiais-digitais` — lista com o link do material.
-3. Provocar um erro de validação (campo obrigatório ausente) e mostrar o corpo padrão (`horario`, `status`, `erro`, `mensagem`, `caminho`, `campos`).
-4. `DELETE /api/categorias/{id}` de uma categoria com livro vinculado — mostrar o 409.
+1. `POST /api/categorias`, `POST /api/disciplinas` (com o código ` mat-1 `, que volta como `MAT-1`) e `POST /api/materiais` (com o `disciplinaId` da disciplina recém-criada) — cadastro rápido dos três.
+2. `GET /api/materiais` — lista com o link do material e a disciplina resumida (`id`, `nome`, `codigo`).
+3. Provocar um erro de validação (`POST /api/materiais` sem `disciplinaId` e com `url` sem `https://`) e mostrar o corpo padrão (`horario`, `status`, `erro`, `mensagem`, `caminho`, `campos`), com os dois campos listados em `campos`.
+4. `DELETE /api/disciplinas/{id}` da disciplina que tem o material — mostrar o `409` ("Disciplina X possui materiais vinculados."). Depois, `DELETE /api/materiais/{id}` e de novo o `DELETE` da disciplina, agora `204`.
 
 ### 5. Qualidade (1 min)
 
 - CI roda em todo PR e todo push na `main`: checkout, Java 21, `mvn -B verify`, PostgreSQL temporário — mostrar a aba *Actions* com o badge verde.
-- GitHub Flow: branch curta por Issue, PR com `Closes #N`, revisão cruzada obrigatória, CI verde antes de integrar.
+- GitHub Flow: branch curta por Issue, PR com `Closes #N` e CI verde antes de integrar. A proteção da `main` recusa push direto e PR com CI vermelho, e exige 1 aprovação desde 04/11 (Issue #74). Antes disso, a revisão cruzada era combinada, e a auditoria da Issue #51 registra os PRs que entraram sem ela. Não dizer que a revisão sempre foi obrigatória.
 
 ### 6. Participação de cada um (1min30)
 
@@ -83,6 +83,24 @@ Cada integrante precisa saber explicar o projeto inteiro, inclusive a parte do o
 - O que cada um fez de fato no projeto (sem consultar o CONTRIBUICOES.md na hora)?
 
 **Proibido na apresentação e nas perguntas:** consultar ferramentas de IA ou responder pela parte do colega.
+
+### Respostas de referência, para estudar antes (Issue #69)
+
+Cada resposta aponta para o código ou o documento onde está o detalhe, para cada um conferir a resposta lendo o próprio código, e não decorando este texto. No dia, só o código pode ser consultado.
+
+| Pergunta | Resposta curta | Onde conferir |
+| --- | --- | --- |
+| Camadas | O controller recebe o `Request` com `@Valid` e chama o service. O service aplica as regras que dependem do banco e lança as exceções de domínio. O repository é Spring Data JPA, e a entidade nunca sai da API: a conversão para `Response` acontece dentro da transação. | `docs/ARQUITETURA.md`; `controller/`, `service/`, `repository/`, `dto/` |
+| Uma rota de ponta a ponta: `POST /api/materiais` | O `MaterialDigitalController.criar` valida o `MaterialDigitalRequest` (título, formato, URL `http(s)` e `disciplinaId` obrigatórios). O `MaterialDigitalService.criar` busca a disciplina: se ela não existe, lança `DadosInvalidosException` (`400`). Depois grava, converte para `MaterialDigitalResponse` com a disciplina resumida e o controller responde `201` com `Location`. | `MaterialDigitalController`, `MaterialDigitalService`, `MaterialDigitalResponse` |
+| Por que só migrations? E se Hibernate e Flyway discordarem? | O Flyway cria e altera o schema (`V1__criar_tabelas_iniciais.sql`). O Hibernate roda com `ddl-auto=validate`: se uma entidade não bate com a tabela, a aplicação não sobe (`Schema-validation`). O `MigrationsTests` confere que todas as migrations foram aplicadas. Uma migration integrada nunca é editada: muda o checksum. | `db/migration/`, `application.properties`, `MigrationsTests`, `CONTRIBUTING.md#migrations-flyway` |
+| Como o tratador decide o código HTTP? | O `TratadorGlobalDeExcecoes` (`@RestControllerAdvice`) mapeia cada exceção: `RecursoNaoEncontradoException` → `404`, `DadosInvalidosException` e `@Valid` → `400` (com `campos`), `ConflitoException` e violação de integridade → `409`, rota inexistente → `404`, qualquer outra → `500` com mensagem genérica. Todas saem no `ErroResponse`. | `exception/TratadorGlobalDeExcecoes`, README *Erros da API* |
+| Duplicidades e vínculos | O service confere antes de gravar: ISBN, nome de categoria (sem diferenciar maiúsculas) e código de disciplina repetidos → `409`; excluir autor ou categoria com livros, ou disciplina com materiais → `409`. Os `UNIQUE` e as FKs com `ON DELETE RESTRICT` do banco são a rede de segurança. | `LivroService`, `CategoriaService`, `DisciplinaService`, `AutorService`, `V1__criar_tabelas_iniciais.sql` |
+| Pesquisa avançada (frente da Isabela) | `GET /api/livros` com `titulo`, `autorId` e `categoriaId` opcionais e combinados com E. Sem filtro, devolve todos, ordenados por título. O título é procurado em qualquer posição, sem diferenciar maiúsculas, e `%` e `_` contam como texto (o service escapa os curingas do `LIKE`). Um ID inexistente devolve lista vazia, não erro. | `LivroRepository.pesquisar`, `LivroService.listar` |
+| CI e proteção da `main` | Todo PR para a `main` e todo push nela rodam `mvn -B verify` com um PostgreSQL 16 temporário. A `main` recusa push direto e merge com o check "Build e testes" vermelho, e exige 1 aprovação desde 04/11. O PR #135 mostrou um teste falhando de propósito e o check voltando ao verde depois da correção (Issue #75). | `.github/workflows/ci.yml`, Issues #74 e #75 |
+| GitHub Flow | Uma branch curta por Issue a partir da `main`, commits no padrão Conventional Commits, PR com `Closes #N`, CI verde, revisão do outro integrante, merge e exclusão da branch. | `CONTRIBUTING.md` |
+| Interface JavaFX | É opcional (decisão da Issue #93), porque o enunciado não exige interface. É um projeto Maven separado em `desktop/`, que só fala com a API REST: um cliente HTTP (`ClienteApi`) faz as chamadas fora da thread da tela. | `desktop/README.md`, Issue #93 |
+
+O ensaio das perguntas (critério da #69) continua pendente, junto com o ensaio cronometrado: cada um responde às perguntas acima sem olhar, inclusive as da frente do outro.
 
 ## Pendente antes do dia 06/11
 
