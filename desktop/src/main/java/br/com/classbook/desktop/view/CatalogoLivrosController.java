@@ -1,15 +1,22 @@
 package br.com.classbook.desktop.view;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.URI;
 import java.util.List;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -32,6 +39,9 @@ import br.com.classbook.desktop.modelo.LivroResponse;
  * a cada mudança, com {@link ClienteApi#pesquisarLivros}; os três podem ser combinados. Como cada mudança
  * chama a API de novo, {@link #ultimaPesquisa} garante que só o resultado da pesquisa mais recente chega a
  * aparecer na tabela, mesmo que uma resposta mais antiga volte depois (a chamada roda em segundo plano).
+ *
+ * <p>Botão Detalhes (Issue #60): abre {@code detalhes-livro.fxml} ({@link DetalhesLivroController}) num
+ * diálogo, com todos os dados do livro selecionado e os materiais digitais por disciplina.
  */
 public class CatalogoLivrosController {
 
@@ -51,6 +61,9 @@ public class CatalogoLivrosController {
 
 	@FXML
 	private ComboBox<CategoriaResponse> comboCategoria;
+
+	@FXML
+	private Button detalhes;
 
 	@FXML
 	private Button editar;
@@ -86,12 +99,23 @@ public class CatalogoLivrosController {
 	/** O último formulário aberto, para os testes. */
 	JanelaDeFormulario<LivroRequest, LivroResponse> ultimoFormulario;
 
+	/**
+	 * Abre um link no navegador padrão (a tela principal liga ao {@code HostServices}); repassado ao diálogo
+	 * de detalhes.
+	 */
+	Consumer<URI> abrirNoNavegador = DetalhesLivroController.SEM_NAVEGADOR;
+
+	/** O último diálogo de detalhes aberto, e o controller dele, para os testes. */
+	Dialog<Void> ultimoDialogoDeDetalhes;
+	DetalhesLivroController ultimoControladorDeDetalhes;
+
 	@FXML
 	private void initialize() {
 		colunaTitulo.setCellValueFactory(dados -> new SimpleStringProperty(dados.getValue().titulo()));
 		colunaAutor.setCellValueFactory(dados -> new SimpleStringProperty(dados.getValue().autor().nome()));
 		colunaCategoria.setCellValueFactory(dados -> new SimpleStringProperty(nomeDaCategoria(dados.getValue())));
 		colunaAno.setCellValueFactory(dados -> new SimpleStringProperty(ano(dados.getValue())));
+		detalhes.disableProperty().bind(tabela.getSelectionModel().selectedItemProperty().isNull());
 		editar.disableProperty().bind(tabela.getSelectionModel().selectedItemProperty().isNull());
 		excluir.disableProperty().bind(tabela.getSelectionModel().selectedItemProperty().isNull());
 		tabela.setOnMouseClicked(clique -> {
@@ -150,6 +174,38 @@ public class CatalogoLivrosController {
 	@FXML
 	void novo() {
 		abrirFormulario(null);
+	}
+
+	@FXML
+	void detalhes() {
+		LivroResponse selecionado = tabela.getSelectionModel().getSelectedItem();
+		if (selecionado == null) {
+			return;
+		}
+		FXMLLoader carregador = new FXMLLoader(getClass().getResource("detalhes-livro.fxml"));
+		Parent conteudo;
+		try {
+			conteudo = carregador.load();
+		} catch (IOException falha) {
+			throw new UncheckedIOException(falha);
+		}
+		DetalhesLivroController controlador = carregador.getController();
+		controlador.abrirNoNavegador = abrirNoNavegador;
+		controlador.preencher(selecionado);
+		controlador.carregar(api);
+
+		Dialog<Void> dialogo = new Dialog<>();
+		dialogo.setTitle("Detalhes — " + selecionado.titulo());
+		dialogo.setResizable(true);
+		dialogo.getDialogPane().setContent(conteudo);
+		dialogo.getDialogPane().getStylesheets().add(getClass().getResource("styles.css").toExternalForm());
+		dialogo.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+		if (tabela.getScene() != null) {
+			dialogo.initOwner(tabela.getScene().getWindow());
+		}
+		ultimoDialogoDeDetalhes = dialogo;
+		ultimoControladorDeDetalhes = controlador;
+		dialogo.show();
 	}
 
 	@FXML

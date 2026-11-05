@@ -26,6 +26,7 @@
 	</HBox>
 	<HBox styleClass="barra-de-acoes">
 		<Button text="Novo livro" onAction="#novo"/>
+		<Button fx:id="detalhes" text="Detalhes" onAction="#detalhes"/>
 		<Button fx:id="editar" text="Editar" onAction="#editar"/>
 		<Button fx:id="excluir" text="Excluir" onAction="#excluir"/>
 		<Button text="Atualizar" onAction="#atualizar"/>

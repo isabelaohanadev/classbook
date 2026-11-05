@@ -87,11 +87,21 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
     foi digitado, ou no aviso.
   - Com o backend fora do ar, aparece "Não foi possível falar com a API em ...". Um erro inesperado
     mostra uma mensagem genérica, sem stack trace (`Mensagens`).
+- Detalhes do livro e materiais digitais (Issue #60): o botão Detalhes abre `detalhes-livro.fxml`
+  (`DetalhesLivroController`) num diálogo com todos os dados do livro selecionado (incluindo autor e
+  categoria) e uma área de materiais digitais filtrável por disciplina. Pela modelagem, materiais se ligam
+  a disciplinas, não a livros, então essa área não depende do livro aberto — é um jeito de navegar os
+  materiais a partir da mesma tela. A lista de disciplinas mostra `código — nome`, porque a API só exige
+  que o código seja único. Cada material tem um link que abre no navegador padrão, pelo `HostServices` do
+  JavaFX (a `AplicacaoDesktop` entrega o `HostServices` à `TelaPrincipalController`, que o repassa ao
+  catálogo e ao diálogo). O `HostServices` não avisa quando falha, então só links `http` ou `https`
+  completos são entregues a ele: um link ausente, com formato inválido ou de outro tipo (como
+  `www.exemplo.com`, sem o `https://`, ou `file:`) só mostra um aviso, sem derrubar a aplicação.
 
-## Planejado (Issue #60)
+## Planejado
 
-- Detalhes do livro e links dos materiais digitais (Issue #60).
-- Sem telas de login nem dashboards.
+Falta só a Issue #62: o roteiro manual com o backend real e o PostgreSQL, que inclui abrir um link de
+material de verdade. Sem telas de login nem dashboards.
 
 ## Divisão inicial
 

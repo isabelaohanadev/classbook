@@ -225,3 +225,16 @@
 	-fx-border-color: -color-danger;
 	-fx-border-radius: 3;
 }
+
+/* Detalhes do livro e materiais digitais (Issue #60) */
+
+.rotulo-detalhe {
+	-fx-font-weight: bold;
+	-fx-text-fill: -color-ink-muted;
+}
+
+.subtitulo-secao {
+	-fx-font-size: 13px;
+	-fx-font-weight: bold;
+	-fx-text-fill: -color-navy;
+}

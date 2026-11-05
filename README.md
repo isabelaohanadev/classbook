@@ -6,7 +6,7 @@ Biblioteca Escolar Digital desenvolvida em Java e Spring Boot para projeto acad�
 
 O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, autores, categorias, disciplinas e materiais digitais** de uma escola de ensino médio, com pesquisa avançada de livros. O backend expõe uma API REST; a interface desktop (JavaFX) consome essa API e é opcional, construída depois dos itens avaliados (decisão da Issue #93).
 
-> **Status:** backend concluído. Os cinco CRUDs, os relacionamentos, a pesquisa avançada de livros, as validações, o tratamento padronizado de erros e a documentação Swagger estão implementados e testados, e o CI está verde na `main`. A interface desktop (opcional) já tem o cliente HTTP, a navegação e o catálogo de livros; os formulários de cadastro e as demais telas estão em andamento. O andamento está nas [Issues](../../issues) e no GitHub Project **ClassBook — Planejamento e Desenvolvimento**.
+> **Status:** backend concluído. Os cinco CRUDs, os relacionamentos, a pesquisa avançada de livros, as validações, o tratamento padronizado de erros e a documentação Swagger estão implementados e testados, e o CI está verde na `main`. A interface desktop (opcional) já tem todas as telas implementadas: cliente HTTP, navegação, catálogo com busca e filtros, cadastro e edição dos cinco recursos, mensagens de sucesso e erro, e detalhes do livro com os materiais digitais (ver `desktop/README.md`). Falta o teste com o backend integrado (Issue #62). O andamento está nas [Issues](../../issues) e no GitHub Project **ClassBook — Planejamento e Desenvolvimento**.
 
 ## Tecnologias
 

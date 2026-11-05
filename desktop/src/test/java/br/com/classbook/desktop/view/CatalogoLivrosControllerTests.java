@@ -5,7 +5,9 @@ import static br.com.classbook.desktop.view.Fx.naThread;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -27,9 +29,12 @@ import br.com.classbook.desktop.api.ClienteApi;
 import br.com.classbook.desktop.api.ErroDaApiException;
 import br.com.classbook.desktop.modelo.AutorResponse;
 import br.com.classbook.desktop.modelo.CategoriaResponse;
+import br.com.classbook.desktop.modelo.FormatoMaterial;
 import br.com.classbook.desktop.modelo.LivroResponse;
 import br.com.classbook.desktop.modelo.LivroResponse.AutorResumo;
 import br.com.classbook.desktop.modelo.LivroResponse.CategoriaResumo;
+import br.com.classbook.desktop.modelo.MaterialDigitalResponse;
+import br.com.classbook.desktop.modelo.MaterialDigitalResponse.DisciplinaResumo;
 
 /**
  * {@code catalogo-livros.fxml}: os métodos estáticos de formatação e, com a tela de verdade, a busca por
@@ -206,6 +211,49 @@ class CatalogoLivrosControllerTests {
 		esperarAte("a mensagem de nenhum resultado",
 				() -> placeholder().getText().equals("Nenhum livro encontrado com esses filtros."));
 		assertThat(naThread(() -> texto("#subtitulo"))).isEqualTo("Nenhum livro encontrado.");
+	}
+
+	@Test
+	void botaoDetalhesAbreUmDialogoComOsDadosDoLivroSelecionado() throws Exception {
+		api.responder("GET /api/livros", 200, TRES_LIVROS);
+		api.responder("GET /api/disciplinas", 200, "[]");
+		api.responder("GET /api/materiais", 200, "[]");
+		abrir(new ClienteApi(api.url()));
+		esperarAte("os três livros chegarem", () -> tabela().getItems().size() == 3);
+
+		naThread(() -> {
+			tabela().getSelectionModel().select(0);
+			controlador.detalhes();
+			return null;
+		});
+
+		assertThat(naThread(() -> controlador.ultimoDialogoDeDetalhes)).isNotNull();
+		assertThat(naThread(
+				() -> ((Label) controlador.ultimoDialogoDeDetalhes.getDialogPane().lookup("#titulo")).getText()))
+				.isEqualTo("Dom Casmurro");
+	}
+
+	@Test
+	void dialogoDeDetalhesAbreOsLinksPeloNavegadorConfiguradoNoCatalogo() throws Exception {
+		api.responder("GET /api/livros", 200, TRES_LIVROS);
+		api.responder("GET /api/disciplinas", 200, "[]");
+		api.responder("GET /api/materiais", 200, "[]");
+		abrir(new ClienteApi(api.url()));
+		esperarAte("os três livros chegarem", () -> tabela().getItems().size() == 3);
+		List<URI> abertos = new CopyOnWriteArrayList<>();
+		MaterialDigitalResponse material = new MaterialDigitalResponse(10L, "Lista de exercícios 1",
+				FormatoMaterial.PDF, "https://exemplo.com/lista1.pdf", null, null,
+				new DisciplinaResumo(4L, "Matemática", "MAT-1"));
+
+		naThread(() -> {
+			controlador.abrirNoNavegador = abertos::add;
+			tabela().getSelectionModel().select(0);
+			controlador.detalhes();
+			controlador.ultimoControladorDeDetalhes.abrirLink(material);
+			return null;
+		});
+
+		assertThat(abertos).containsExactly(URI.create("https://exemplo.com/lista1.pdf"));
 	}
 
 	private void abrir(ClienteApi cliente) throws Exception {
