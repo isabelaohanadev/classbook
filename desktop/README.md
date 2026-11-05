@@ -65,6 +65,10 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
 - Catálogo de livros: lista título, autor, categoria e ano com `GET /api/livros`, chamado por
   `EmSegundoPlano` (Issue #56). Lista vazia ou erro da API mostram uma mensagem no lugar da tabela.
   Ainda sem busca nem filtros (Issue #57).
+- Identidade visual: paleta de cores, tipografia e a marca ClassBook na barra lateral, em
+  `styles.css`. Item ativo do menu destacado, estados de carregando/vazio/erro do catálogo
+  diferenciados visualmente, e placeholder "em construção" nas seções ainda não implementadas.
+  Polimento das Issues #55 e #56, sem Issue própria.
 
 ## Planejado (Issues #57 a #61)
 

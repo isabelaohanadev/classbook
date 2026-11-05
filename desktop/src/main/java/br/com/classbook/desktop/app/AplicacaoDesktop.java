@@ -19,8 +19,10 @@ public class AplicacaoDesktop extends Application {
 		FXMLLoader carregador = new FXMLLoader(
 				getClass().getResource("/br/com/classbook/desktop/view/tela-principal.fxml"));
 		Parent raiz = carregador.load();
-		palco.setTitle("ClassBook");
-		palco.setScene(new Scene(raiz));
+		Scene cena = new Scene(raiz);
+		cena.getStylesheets().add(getClass().getResource("/br/com/classbook/desktop/view/styles.css").toExternalForm());
+		palco.setTitle("ClassBook — Biblioteca Digital");
+		palco.setScene(cena);
 		palco.show();
 	}
 

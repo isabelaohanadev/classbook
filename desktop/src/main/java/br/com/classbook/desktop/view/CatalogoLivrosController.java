@@ -23,6 +23,9 @@ public class CatalogoLivrosController {
 	private static final String TRACO = "—";
 
 	@FXML
+	private Label subtitulo;
+
+	@FXML
 	private TableView<LivroResponse> tabela;
 
 	@FXML
@@ -55,12 +58,28 @@ public class CatalogoLivrosController {
 
 	private void exibir(List<LivroResponse> livros) {
 		tabela.getItems().setAll(livros);
+		aplicarEstiloDaMensagem(false);
 		mensagemVazia.setText("Nenhum livro cadastrado.");
+		subtitulo.setText(contagem(livros.size()));
 	}
 
 	private void falhar(Exception erro) {
 		tabela.getItems().clear();
+		aplicarEstiloDaMensagem(true);
 		mensagemVazia.setText(mensagemDeErro(erro));
+		subtitulo.setText("Não foi possível carregar o acervo.");
+	}
+
+	private void aplicarEstiloDaMensagem(boolean erro) {
+		mensagemVazia.getStyleClass().removeAll("mensagem-vazia", "mensagem-erro");
+		mensagemVazia.getStyleClass().add(erro ? "mensagem-erro" : "mensagem-vazia");
+	}
+
+	private static String contagem(int total) {
+		if (total == 0) {
+			return "Nenhum livro no acervo.";
+		}
+		return total == 1 ? "1 livro no acervo." : total + " livros no acervo.";
 	}
 
 	static String mensagemDeErro(Exception erro) {
