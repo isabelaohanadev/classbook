@@ -21,17 +21,19 @@ public interface LivroRepository extends JpaRepository<Livro, Long> {
 
 	boolean existsByCategoriaId(Long categoriaId);
 
+	boolean existsByDisciplinaId(Long disciplinaId);
+
 	/**
 	 * Pesquisa avançada (Issues #27 e #28): {@code titulo}, {@code autorId} e {@code categoriaId} são
 	 * opcionais e combináveis (E lógico). {@code autorId}/{@code categoriaId} nulos não filtram;
 	 * {@code titulo} vazio (nunca {@code null} — ver {@link br.com.classbook.service.LivroService}) também
 	 * não filtra. {@code titulo} nunca é {@code null} aqui porque o PostgreSQL não consegue tipar
 	 * {@code lower(concat(...))} com um parâmetro nulo (ver o service), e chega com {@code %}, {@code _} e
-	 * {@code \} já escapados, para o {@code LIKE} procurá-los como texto. Carrega {@code autor} e
-	 * {@code categoria} na mesma consulta, para não gerar uma consulta extra por livro ao converter a
-	 * listagem para DTO (ver docs/MODELAGEM.md#regras-comuns-às-relações).
+	 * {@code \} já escapados, para o {@code LIKE} procurá-los como texto. Carrega {@code autor},
+	 * {@code categoria} e {@code disciplina} na mesma consulta, para não gerar uma consulta extra por
+	 * livro ao converter a listagem para DTO (ver docs/MODELAGEM.md#regras-comuns-às-relações).
 	 */
-	@EntityGraph(attributePaths = {"autor", "categoria"})
+	@EntityGraph(attributePaths = {"autor", "categoria", "disciplina"})
 	@Query("""
 			select l from Livro l
 			where (:titulo = '' or lower(l.titulo) like lower(concat('%', :titulo, '%')) escape '\\')

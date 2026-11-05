@@ -60,10 +60,10 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
   (Issue #55). A navegação em si não depende do backend: cada tela carrega os dados em segundo plano.
 - Cliente HTTP dos cinco recursos e da pesquisa de livros, com os erros da API convertidos em exceções
   e as chamadas fora da thread da interface (Issue #59).
-- Catálogo de livros: lista título, autor, categoria e ano com `GET /api/livros`, chamado por
+- Catálogo de livros: lista título, autor, categoria, disciplina e ano com `GET /api/livros`, chamado por
   `EmSegundoPlano` (Issue #56). Lista vazia ou erro da API mostram uma mensagem no lugar da tabela. Os
-  botões Novo livro, Editar e Excluir usam o formulário de livro (Issue #58), e um livro sem categoria ou
-  sem ano mostra "—".
+  botões Novo livro, Editar e Excluir usam o formulário de livro (Issue #58), e um livro sem categoria,
+  disciplina ou ano mostra "—".
 - Busca e filtros no catálogo (Issue #57): o campo de título e os combos de autor e categoria disparam
   `ClienteApi.pesquisarLivros(titulo, autorId, categoriaId)` a cada mudança, e os três são combináveis.
   "Limpar filtros" volta a mostrar todos os livros. Sem resultado, a mensagem e a contagem deixam claro
@@ -79,7 +79,7 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
   a rota e o formulário de cada recurso. Os livros usam o catálogo. Cada formulário é um FXML
   (`formulario-*.fxml`) aberto pela `JanelaDeFormulario`:
   - Os campos obrigatórios têm `*` e ficam marcados se estiverem vazios, sem chamar a API.
-  - As listas de autor, categoria e disciplina vêm da API.
+  - As listas de autor, categoria e disciplina vêm da API. No livro, a categoria e a disciplina são opcionais (botão Limpar); editar um livro sem escolher a disciplina a remove, porque o `PUT` substitui o registro inteiro.
   - Cancelar descarta tudo sem chamar a API.
 - Mensagens de sucesso e de erro (Issue #61):
   - Cadastro, edição e exclusão bem-sucedidos mostram o aviso no cabeçalho ("Disciplina cadastrada.").
@@ -88,8 +88,8 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
   - Com o backend fora do ar, aparece "Não foi possível falar com a API em ...". Um erro inesperado
     mostra uma mensagem genérica, sem stack trace (`Mensagens`).
 - Detalhes do livro e materiais digitais (Issue #60): o botão Detalhes abre `detalhes-livro.fxml`
-  (`DetalhesLivroController`) num diálogo com todos os dados do livro selecionado (incluindo autor e
-  categoria) e uma área de materiais digitais filtrável por disciplina. Pela modelagem, materiais se ligam
+  (`DetalhesLivroController`) num diálogo com todos os dados do livro selecionado (incluindo autor,
+  categoria e disciplina) e uma área de materiais digitais filtrável por disciplina. Pela modelagem, materiais se ligam
   a disciplinas, não a livros, então essa área não depende do livro aberto — é um jeito de navegar os
   materiais a partir da mesma tela. A lista de disciplinas mostra `código — nome`, porque a API só exige
   que o código seja único. Cada material tem um link que abre no navegador padrão, pelo `HostServices` do

@@ -11,11 +11,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.DisciplinaRequest;
 import br.com.classbook.dto.DisciplinaResponse;
+import br.com.classbook.dto.LivroRequest;
+import br.com.classbook.dto.LivroResponse;
 import br.com.classbook.dto.MaterialDigitalRequest;
 import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
+import br.com.classbook.model.Autor;
 import br.com.classbook.model.FormatoMaterial;
 import br.com.classbook.model.SerieEscolar;
+import br.com.classbook.repository.AutorRepository;
 import br.com.classbook.repository.DisciplinaRepository;
 
 /**
@@ -34,6 +38,12 @@ class DisciplinaServiceTests {
 
 	@Autowired
 	private MaterialDigitalService materialDigitalService;
+
+	@Autowired
+	private LivroService livroService;
+
+	@Autowired
+	private AutorRepository autorRepository;
 
 	@Test
 	void criarGravaERetornaADisciplinaComOCodigoNormalizado() {
@@ -118,6 +128,38 @@ class DisciplinaServiceTests {
 		assertThatThrownBy(() -> disciplinaService.excluir(disciplina.id())).isInstanceOf(ConflitoException.class)
 				.hasMessage("Disciplina " + disciplina.id() + " possui materiais vinculados.");
 		assertThat(disciplinaRepository.findById(disciplina.id())).isPresent();
+	}
+
+	@Test
+	void excluirDisciplinaComLivrosVinculadosLancaConflito() {
+		DisciplinaResponse disciplina = disciplinaService
+				.criar(new DisciplinaRequest("Língua Portuguesa", codigo("LP-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+		Autor autor = new Autor();
+		autor.setNome("Machado de Assis");
+		Long autorId = autorRepository.save(autor).getId();
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null,
+				disciplina.id()));
+
+		assertThatThrownBy(() -> disciplinaService.excluir(disciplina.id())).isInstanceOf(ConflitoException.class)
+				.hasMessage("Disciplina " + disciplina.id() + " possui livros vinculados.");
+		assertThat(disciplinaRepository.findById(disciplina.id())).isPresent();
+	}
+
+	@Test
+	void excluirDisciplinaDepoisDeTirarOLivroDelaFunciona() {
+		DisciplinaResponse disciplina = disciplinaService
+				.criar(new DisciplinaRequest("Língua Portuguesa", codigo("LP-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+		Autor autor = new Autor();
+		autor.setNome("Machado de Assis");
+		Long autorId = autorRepository.save(autor).getId();
+		LivroResponse livro = livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId,
+				null, disciplina.id()));
+		livroService.atualizar(livro.id(),
+				new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null, null));
+
+		disciplinaService.excluir(disciplina.id());
+
+		assertThat(disciplinaRepository.findById(disciplina.id())).isEmpty();
 	}
 
 	@Test

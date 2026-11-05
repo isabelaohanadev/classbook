@@ -185,7 +185,7 @@ class CategoriaControllerTests {
 						.andReturn().getResponse().getContentAsString(),
 				"$.id")).longValue();
 		enviar(post("/api/livros"),
-				new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, categoriaId));
+				new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, categoriaId, null));
 
 		mockMvc.perform(delete("/api/categorias/{id}", categoriaId)).andExpect(status().isConflict());
 		mockMvc.perform(get("/api/categorias/{id}", categoriaId)).andExpect(status().isOk());

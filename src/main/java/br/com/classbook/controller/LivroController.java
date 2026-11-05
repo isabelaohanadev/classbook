@@ -43,8 +43,8 @@ public class LivroController {
 	@Operation(summary = "Cadastra um livro")
 	@ApiResponse(responseCode = "201", description = "Livro cadastrado; o header Location aponta para ele")
 	@ApiResponse(responseCode = "400",
-			description = "autorId ausente ou inexistente, categoriaId informado e inexistente, "
-					+ "ou demais campos inválidos")
+			description = "autorId ausente ou inexistente, categoriaId ou disciplinaId informado e "
+					+ "inexistente, ou demais campos inválidos")
 	@ApiResponse(responseCode = "409", description = "ISBN já cadastrado em outro livro")
 	public ResponseEntity<LivroResponse> criar(@Valid @RequestBody LivroRequest request) {
 		LivroResponse livro = livroService.criar(request);
@@ -82,8 +82,8 @@ public class LivroController {
 	@Operation(summary = "Edita um livro")
 	@ApiResponse(responseCode = "200", description = "Livro editado")
 	@ApiResponse(responseCode = "400",
-			description = "autorId ausente ou inexistente, categoriaId informado e inexistente, ID que não "
-					+ "é número, ou demais campos inválidos")
+			description = "autorId ausente ou inexistente, categoriaId ou disciplinaId informado e "
+					+ "inexistente, ID que não é número, ou demais campos inválidos")
 	@ApiResponse(responseCode = "404", description = "Livro não encontrado")
 	@ApiResponse(responseCode = "409", description = "ISBN já cadastrado em outro livro")
 	public LivroResponse atualizar(@PathVariable Long id, @Valid @RequestBody LivroRequest request) {

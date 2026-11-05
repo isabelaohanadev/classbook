@@ -40,6 +40,7 @@
 				<TableColumn fx:id="colunaTitulo" text="Título" prefWidth="280"/>
 				<TableColumn fx:id="colunaAutor" text="Autor" prefWidth="200"/>
 				<TableColumn fx:id="colunaCategoria" text="Categoria" prefWidth="160"/>
+				<TableColumn fx:id="colunaDisciplina" text="Disciplina" prefWidth="220"/>
 				<TableColumn fx:id="colunaAno" text="Ano" prefWidth="80"/>
 			</columns>
 		</TableView>

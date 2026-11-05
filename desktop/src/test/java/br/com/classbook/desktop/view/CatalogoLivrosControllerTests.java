@@ -95,9 +95,20 @@ class CatalogoLivrosControllerTests {
 	}
 
 	@Test
+	void nomeDaDisciplinaMostraCodigoENomeOuTracoQuandoOLivroNaoTemDisciplina() {
+		LivroResponse semDisciplina = livro(null);
+		LivroResponse comDisciplina = new LivroResponse(1L, "Dom Casmurro", "978-85-359-0277-5", 1899, null, null,
+				new AutorResumo(1L, "Machado de Assis"), null,
+				new LivroResponse.DisciplinaResumo(3L, "Língua Portuguesa", "LP-1"));
+
+		assertThat(CatalogoLivrosController.nomeDaDisciplina(semDisciplina)).isEqualTo("—");
+		assertThat(CatalogoLivrosController.nomeDaDisciplina(comDisciplina)).isEqualTo("LP-1 — Língua Portuguesa");
+	}
+
+	@Test
 	void anoUsaUmTracoQuandoOLivroNaoTemAno() {
 		LivroResponse semAno = new LivroResponse(2L, "A Hora da Estrela", "9788532508120", null, null, null,
-				new AutorResumo(2L, "Clarice Lispector"), null);
+				new AutorResumo(2L, "Clarice Lispector"), null, null);
 
 		assertThat(CatalogoLivrosController.ano(livro(null))).isEqualTo("1899");
 		assertThat(CatalogoLivrosController.ano(semAno)).isEqualTo("—");
@@ -306,7 +317,7 @@ class CatalogoLivrosControllerTests {
 
 	private static LivroResponse livro(CategoriaResumo categoria) {
 		return new LivroResponse(1L, "Dom Casmurro", "978-85-359-0277-5", 1899, null, null,
-				new AutorResumo(1L, "Machado de Assis"), categoria);
+				new AutorResumo(1L, "Machado de Assis"), categoria, null);
 	}
 
 }

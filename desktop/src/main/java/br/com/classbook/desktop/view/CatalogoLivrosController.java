@@ -87,6 +87,9 @@ public class CatalogoLivrosController {
 	private TableColumn<LivroResponse, String> colunaCategoria;
 
 	@FXML
+	private TableColumn<LivroResponse, String> colunaDisciplina;
+
+	@FXML
 	private TableColumn<LivroResponse, String> colunaAno;
 
 	private final Cadastro<LivroRequest, LivroResponse> cadastro = Cadastro.livros();
@@ -114,6 +117,7 @@ public class CatalogoLivrosController {
 		colunaTitulo.setCellValueFactory(dados -> new SimpleStringProperty(dados.getValue().titulo()));
 		colunaAutor.setCellValueFactory(dados -> new SimpleStringProperty(dados.getValue().autor().nome()));
 		colunaCategoria.setCellValueFactory(dados -> new SimpleStringProperty(nomeDaCategoria(dados.getValue())));
+		colunaDisciplina.setCellValueFactory(dados -> new SimpleStringProperty(nomeDaDisciplina(dados.getValue())));
 		colunaAno.setCellValueFactory(dados -> new SimpleStringProperty(ano(dados.getValue())));
 		detalhes.disableProperty().bind(tabela.getSelectionModel().selectedItemProperty().isNull());
 		editar.disableProperty().bind(tabela.getSelectionModel().selectedItemProperty().isNull());
@@ -292,6 +296,14 @@ public class CatalogoLivrosController {
 	/** O nome da categoria do livro, ou {@value #TRACO} quando o livro não tem categoria. */
 	static String nomeDaCategoria(LivroResponse livro) {
 		return livro.categoria() == null ? TRACO : livro.categoria().nome();
+	}
+
+	/**
+	 * O código e o nome da disciplina do livro, ou {@value #TRACO} quando o livro não tem disciplina. O código
+	 * vem junto porque o nome não é único (a mesma disciplina existe em séries diferentes).
+	 */
+	static String nomeDaDisciplina(LivroResponse livro) {
+		return livro.disciplina() == null ? TRACO : livro.disciplina().codigo() + " — " + livro.disciplina().nome();
 	}
 
 	private static boolean confirmarComAlerta(String pergunta) {

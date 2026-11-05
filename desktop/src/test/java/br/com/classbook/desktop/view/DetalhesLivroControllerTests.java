@@ -74,10 +74,10 @@ class DetalhesLivroControllerTests {
 	}
 
 	@Test
-	void preencherMostraTodosOsDadosDoLivroIncluindoAutorECategoria() throws Exception {
+	void preencherMostraTodosOsDadosDoLivroIncluindoAutorCategoriaEDisciplina() throws Exception {
 		LivroResponse livro = new LivroResponse(1L, "Dom Casmurro", "978-85-359-0277-5", 1899,
 				"Romance narrado por Bentinho.", "Editora Garnier", new AutorResumo(1L, "Machado de Assis"),
-				new CategoriaResumo(2L, "Literatura"));
+				new CategoriaResumo(2L, "Literatura"), new LivroResponse.DisciplinaResumo(3L, "Língua Portuguesa", "LP-1"));
 		abrir();
 
 		naThread(() -> {
@@ -88,6 +88,7 @@ class DetalhesLivroControllerTests {
 		assertThat(naThread(() -> texto("#titulo"))).isEqualTo("Dom Casmurro");
 		assertThat(naThread(() -> texto("#autor"))).isEqualTo("Machado de Assis");
 		assertThat(naThread(() -> texto("#categoria"))).isEqualTo("Literatura");
+		assertThat(naThread(() -> texto("#disciplina"))).isEqualTo("LP-1 — Língua Portuguesa");
 		assertThat(naThread(() -> texto("#isbn"))).isEqualTo("978-85-359-0277-5");
 		assertThat(naThread(() -> texto("#ano"))).isEqualTo("1899");
 		assertThat(naThread(() -> texto("#editora"))).isEqualTo("Editora Garnier");
@@ -95,9 +96,9 @@ class DetalhesLivroControllerTests {
 	}
 
 	@Test
-	void preencherUsaTracoQuandoCategoriaAnoEditoraOuDescricaoFaltam() throws Exception {
+	void preencherUsaTracoQuandoCategoriaDisciplinaAnoEditoraOuDescricaoFaltam() throws Exception {
 		LivroResponse semNada = new LivroResponse(2L, "A Hora da Estrela", "9788532508120", null, null, null,
-				new AutorResumo(2L, "Clarice Lispector"), null);
+				new AutorResumo(2L, "Clarice Lispector"), null, null);
 		abrir();
 
 		naThread(() -> {
@@ -106,6 +107,7 @@ class DetalhesLivroControllerTests {
 		});
 
 		assertThat(naThread(() -> texto("#categoria"))).isEqualTo("—");
+		assertThat(naThread(() -> texto("#disciplina"))).isEqualTo("—");
 		assertThat(naThread(() -> texto("#ano"))).isEqualTo("—");
 		assertThat(naThread(() -> texto("#editora"))).isEqualTo("—");
 		assertThat(naThread(() -> texto("#descricao"))).isEqualTo("—");

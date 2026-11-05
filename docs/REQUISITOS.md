@@ -11,7 +11,7 @@ O ClassBook é uma biblioteca digital para uma escola de ensino médio. Ele orga
 ### Incluído
 
 - CRUD de Autor, Livro, Categoria, Disciplina e MaterialDigital.
-- Relacionamentos: Livro–Autor, Livro–Categoria e MaterialDigital–Disciplina.
+- Relacionamentos: Livro–Autor, Livro–Categoria, Livro–Disciplina e MaterialDigital–Disciplina.
 - Pesquisa avançada de livros (funcionalidade extra).
 - Validação de entrada e tratamento padronizado de erros HTTP.
 - Documentação das rotas com Swagger/OpenAPI.
@@ -27,7 +27,7 @@ Autenticação e autorização, empréstimo ou reserva de livros, upload de arqu
 | ID | Requisito |
 | --- | --- |
 | RF01 | Cadastrar, editar, listar, consultar por ID e excluir **autores**. |
-| RF02 | Cadastrar, editar, listar, consultar por ID e excluir **livros**, cada um vinculado a um autor e, opcionalmente, a uma categoria. |
+| RF02 | Cadastrar, editar, listar, consultar por ID e excluir **livros**, cada um vinculado a um autor e, opcionalmente, a uma categoria e a uma disciplina. |
 | RF03 | Cadastrar, editar, listar, consultar por ID e excluir **categorias**. |
 | RF04 | Cadastrar, editar, listar, consultar por ID e excluir **disciplinas**. |
 | RF05 | Cadastrar, editar, listar, consultar por ID e excluir **materiais digitais**, cada um vinculado a uma disciplina. |
@@ -110,7 +110,7 @@ Feita na Issue #78, em 27/10/2026. O enunciado publicado pelo professor (não ve
 | Cinco CRUDs completos (cadastrar, editar, listar, consultar por ID e excluir); o CRUD de usuário das aulas não conta | RF01 a RF05 | Registrada; nenhum dos cinco é de usuário |
 | Pelo menos uma funcionalidade além dos CRUDs, relacionada à proposta | RF06 e *Funcionalidade extra* | Registrada |
 | A ideia da funcionalidade extra deve ser apresentada ao professor, para alinhar escopo e complexidade | *Funcionalidade extra* | Não estava registrada; apresentada e aprovada na Issue #92 |
-| Entidades com atributos e relacionamentos coerentes, com pelo menos 4 atributos além do ID (menos, só com justificativa) | [MODELAGEM](MODELAGEM.md#entidades-e-atributos): 4 ou 5 atributos por entidade e três relacionamentos | Registrada |
+| Entidades com atributos e relacionamentos coerentes, com pelo menos 4 atributos além do ID (menos, só com justificativa) | [MODELAGEM](MODELAGEM.md#entidades-e-atributos): 4 ou 5 atributos por entidade e quatro relacionamentos | Registrada |
 | Camadas Model, DTO, Repository, Service e Controller | RNF04 e [ARQUITETURA](ARQUITETURA.md) | Registrada |
 | Persistir os dados em banco, com criação e alteração das tabelas por migrations | RNF02 | Registrada |
 | Validar os dados recebidos e tratar os erros com mensagens claras e códigos HTTP adequados | RF07 e RF08 | Registrada |

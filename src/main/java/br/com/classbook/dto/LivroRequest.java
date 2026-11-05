@@ -7,8 +7,8 @@ import jakarta.validation.constraints.Size;
 
 /**
  * Corpo do {@code POST} e do {@code PUT} de {@code /api/livros}. Os tamanhos máximos são os das
- * colunas da tabela {@code livro}. {@code categoriaId} é opcional: ausente ou {@code null} deixa (ou
- * limpa, no {@code PUT}) o livro sem categoria.
+ * colunas da tabela {@code livro}. {@code categoriaId} e {@code disciplinaId} são opcionais: ausente ou
+ * {@code null} deixa (ou limpa, no {@code PUT}) o livro sem categoria ou sem disciplina.
  */
 public record LivroRequest(
 		@NotBlank @Size(max = 200) String titulo,
@@ -19,7 +19,8 @@ public record LivroRequest(
 		String descricao,
 		@Size(max = 120) String editora,
 		@NotNull Long autorId,
-		Long categoriaId) {
+		Long categoriaId,
+		Long disciplinaId) {
 
 	public LivroRequest {
 		// Roda antes do @Valid: o @Pattern confere o ISBN já sem hífens e em maiúsculas.

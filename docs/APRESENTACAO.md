@@ -13,7 +13,7 @@ Este documento cobre os critérios possíveis sem a presença dos dois integrant
 | Tempo | Parte | Quem fala |
 | --- | --- | --- |
 | 0:00–0:30 | Abertura: o que é o ClassBook, objetivo e stack (Java 21, Spring Boot, PostgreSQL, Flyway) | Isabela |
-| 0:30–1:30 | Arquitetura e modelagem: camadas (`controller → service → repository → model`), as 5 entidades e os 3 relacionamentos | Juan |
+| 0:30–1:30 | Arquitetura e modelagem: camadas (`controller → service → repository → model`), as 5 entidades e os 4 relacionamentos | Juan |
 | 1:30–4:00 | Demo: CRUD de Autor e de Livro, relacionamento Livro–Autor e pesquisa avançada (título, autor, categoria) | Isabela |
 | 4:00–6:30 | Demo: CRUD de Categoria, Disciplina e MaterialDigital, relacionamento Material–Disciplina e tratamento de erros padronizado | Juan |
 | 6:30–7:30 | Qualidade: migrations, CI (GitHub Actions) e GitHub Flow | Isabela ou Juan (combinar) |
@@ -29,7 +29,7 @@ Este documento cobre os critérios possíveis sem a presença dos dois integrant
 ### 2. Arquitetura e modelagem (Juan, 1 min)
 
 - Camadas: `controller → service → repository → model`, DTOs de entrada (`Request`) e saída (`Response`) — a API nunca expõe a entidade JPA direto (ver [ARQUITETURA](ARQUITETURA.md)).
-- 5 entidades: Autor, Livro, Categoria, Disciplina, MaterialDigital. 3 relacionamentos: Livro–Autor, Livro–Categoria, MaterialDigital–Disciplina (ver [MODELAGEM](MODELAGEM.md)).
+- 5 entidades: Autor, Livro, Categoria, Disciplina, MaterialDigital. 4 relacionamentos: Livro–Autor, Livro–Categoria, Livro–Disciplina, MaterialDigital–Disciplina (ver [MODELAGEM](MODELAGEM.md)).
 - Schema criado só por migrations Flyway; o Hibernate roda em modo `validate`, nunca altera o banco sozinho.
 
 ### 3. Demo — Autor, Livro e pesquisa avançada (Isabela, 2min30)
@@ -91,9 +91,9 @@ O que o Juan precisa saber explicar sozinho, inclusive da frente da Isabela, com
 - **Uma rota de ponta a ponta (`POST /api/livros`):**
   1. `LivroController.criar` recebe o `LivroRequest` com `@Valid`. O construtor do record tira hífens e espaços do ISBN antes da validação, e o `@Pattern` exige 10 ou 13 dígitos.
   2. `LivroService.criar` confere o ISBN repetido (`409`). Depois, em `preencher`, confere o ano no futuro, o autor inexistente e a categoria inexistente (`400`).
-  3. O `LivroRepository` grava, e o `LivroResponse.de` monta a resposta com o autor e a categoria resumidos.
+  3. O `LivroRepository` grava, e o `LivroResponse.de` monta a resposta com o autor, a categoria e a disciplina resumidos.
   4. O controller responde `201` com o header `Location`. Qualquer exceção vai para o `TratadorGlobalDeExcecoes`, que monta o `ErroResponse`.
-- **Relacionamentos do Livro (`model/Livro.java`):** o autor é obrigatório (`optional = false`), e a categoria é opcional. Os dois usam `LAZY`, e o `@EntityGraph` do `LivroRepository` carrega autor e categoria na mesma consulta da listagem, para não fazer uma consulta por livro (o problema N+1). No `PUT`, um `categoriaId` nulo tira o livro da categoria.
+- **Relacionamentos do Livro (`model/Livro.java`):** o autor é obrigatório (`optional = false`), e a categoria e a disciplina são opcionais. Os três usam `LAZY`, e o `@EntityGraph` do `LivroRepository` carrega autor, categoria e disciplina na mesma consulta da listagem, para não fazer uma consulta por livro (o problema N+1). No `PUT`, um `categoriaId` ou `disciplinaId` nulo tira o livro da categoria ou da disciplina. A disciplina entrou depois, pela migration `V202611051836__adiciona_disciplina_em_livro.sql` (a `V1` não muda depois de integrada).
 - **Pesquisa avançada (`LivroRepository.pesquisar`):**
   - Os três filtros (`titulo`, `autorId` e `categoriaId`) são opcionais e se combinam com E lógico, e o resultado vem ordenado por título.
   - Um `autorId` inexistente devolve lista vazia, e não erro.
