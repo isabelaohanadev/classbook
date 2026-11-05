@@ -61,9 +61,15 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
 - Cliente HTTP dos cinco recursos e da pesquisa de livros, com os erros da API convertidos em exceções
   e as chamadas fora da thread da interface (Issue #59).
 - Catálogo de livros: lista título, autor, categoria e ano com `GET /api/livros`, chamado por
-  `EmSegundoPlano` (Issue #56). Lista vazia ou erro da API mostram uma mensagem no lugar da tabela.
-  Ainda sem busca nem filtros (Issue #57). Os botões Novo livro, Editar e Excluir usam o formulário de
-  livro (Issue #58), e um livro sem categoria ou sem ano mostra "—".
+  `EmSegundoPlano` (Issue #56). Lista vazia ou erro da API mostram uma mensagem no lugar da tabela. Os
+  botões Novo livro, Editar e Excluir usam o formulário de livro (Issue #58), e um livro sem categoria ou
+  sem ano mostra "—".
+- Busca e filtros no catálogo (Issue #57): o campo de título e os combos de autor e categoria disparam
+  `ClienteApi.pesquisarLivros(titulo, autorId, categoriaId)` a cada mudança, e os três são combináveis.
+  "Limpar filtros" volta a mostrar todos os livros. Sem resultado, a mensagem e a contagem deixam claro
+  que é a pesquisa que não achou nada, não que o acervo está vazio ("Nenhum livro encontrado com esses
+  filtros."). Como cada mudança nos filtros chama a API de novo, um contador (`ultimaPesquisa`) garante
+  que só a resposta da pesquisa mais recente chega a aparecer na tabela.
 - Identidade visual: paleta de cores, tipografia e a marca ClassBook na barra lateral, em
   `styles.css`. Item ativo do menu destacado, estados de carregando/vazio/erro do catálogo
   diferenciados visualmente, e placeholder "em construção" nas seções ainda não implementadas.
@@ -82,9 +88,8 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
   - Com o backend fora do ar, aparece "Não foi possível falar com a API em ...". Um erro inesperado
     mostra uma mensagem genérica, sem stack trace (`Mensagens`).
 
-## Planejado (Issues #57 e #60)
+## Planejado (Issue #60)
 
-- Busca e filtros no catálogo de livros (Issue #57).
 - Detalhes do livro e links dos materiais digitais (Issue #60).
 - Sem telas de login nem dashboards.
 
