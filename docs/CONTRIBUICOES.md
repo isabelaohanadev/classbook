@@ -23,16 +23,16 @@ As Issues #3, #4, #48, #75 e #94 têm trabalho dos dois integrantes porque são 
 | [#82](../../pull/82) | Isabela | #4 | Define os relacionamentos de Livro e o contrato de Autor e Livro | Juan | CI verde (`mvn -B verify`) |
 | [#83](../../pull/83) | Juan | #4 | Define o relacionamento de MaterialDigital e o contrato de Categoria, Disciplina e MaterialDigital | Isabela | CI verde (`mvn -B verify`) |
 | [#84](../../pull/84) | Isabela | #5 | Conclui o projeto Spring Boot com Maven | Juan | CI verde (`mvn -B verify`) |
-| [#85](../../pull/85) | Juan | #6 | Documenta as regras de Java e dependências | — | CI verde (`mvn -B verify`) |
+| [#85](../../pull/85) | Juan | #6 | Documenta as regras de Java e dependências | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
 | [#86](../../pull/86) | Juan | #7 | Conclui a configuração do PostgreSQL e das variáveis de ambiente | Isabela | CI verde (`mvn -B verify`) |
 | [#90](../../pull/90) | Isabela | #8 | Cria a migration inicial do Flyway com as cinco tabelas | Juan | CI verde (`mvn -B verify`) |
 | [#91](../../pull/91) | Isabela | #9 | Registra a arquitetura em camadas e as convenções do backend | Juan | CI verde (`mvn -B verify`) |
-| [#95](../../pull/95) | Juan | #78 | Confere os requisitos com o enunciado da disciplina | — | CI verde (`mvn -B verify`) |
-| [#96](../../pull/96) | Juan | #30 | Cria a entidade Categoria e seus DTOs | — | CI verde (`mvn -B verify`) |
-| [#97](../../pull/97) | Juan | #92 | Registra a aprovação da pesquisa avançada pelo professor | — | CI verde (`mvn -B verify`) |
+| [#95](../../pull/95) | Juan | #78 | Confere os requisitos com o enunciado da disciplina | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#96](../../pull/96) | Juan | #30 | Cria a entidade Categoria e seus DTOs | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#97](../../pull/97) | Juan | #92 | Registra a aprovação da pesquisa avançada pelo professor | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
 | [#98](../../pull/98) | Isabela | #93 | Torna a interface JavaFX opcional e pós-avaliação | Juan (depois do merge) | CI verde (`mvn -B verify`) |
-| [#99](../../pull/99) | Juan | #94 | Prepara o registro do cronograma de desenvolvimento (Issue #94) | — | CI verde (`mvn -B verify`) |
-| [#100](../../pull/100) | Juan | #94 | Atualiza a Etapa 5 na tabela de períodos do cronograma | — | CI verde (`mvn -B verify`) |
+| [#99](../../pull/99) | Juan | #94 | Prepara o registro do cronograma de desenvolvimento (Issue #94) | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#100](../../pull/100) | Juan | #94 | Atualiza a Etapa 5 na tabela de períodos do cronograma | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
 | [#101](../../pull/101) | Isabela | #11 | Cria a entidade Autor e seus DTOs | Juan | CI verde (`mvn -B verify`) |
 | [#102](../../pull/102) | Isabela | #12 | Cria o AutorRepository | Juan | Sem CI no próprio commit; CI no push da `main` após o merge |
 | [#103](../../pull/103) | Isabela | #13 | Implementa o AutorService | Juan | Sem CI no próprio commit; CI no push da `main` após o merge |
@@ -51,21 +51,21 @@ As Issues #3, #4, #48, #75 e #94 têm trabalho dos dois integrantes porque são 
 | [#116](../../pull/116) | Isabela | #27 | Implementa a pesquisa de livros por título | Juan | Sem CI no próprio commit; CI no push da `main` após o merge |
 | [#117](../../pull/117) | Isabela | #65 | Registra o uso do Claude Code na Etapa 2 | Juan | Sem CI no próprio commit; CI no push da `main` após o merge |
 | [#118](../../pull/118) | Isabela | #94 | Registra a data da apresentação na Issue #94 | Juan | CI verde (`mvn -B verify`) |
-| [#119](../../pull/119) | Juan | #31 | Cria CategoriaRepository, CategoriaService e CategoriaController | — | CI verde (`mvn -B verify`) |
-| [#121](../../pull/121) | Juan | #33 | Cria a entidade Disciplina e seus DTOs | — | CI verde (`mvn -B verify`) |
-| [#122](../../pull/122) | Juan | #34, #35, #36, #37, #38, #39, #41 | Integra Disciplina, MaterialDigital e os testes da Etapa 3 | — | CI verde (`mvn -B verify`) |
-| [#123](../../pull/123) | Juan | #35 | Implementa as cinco operações do CRUD de disciplinas | — | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
-| [#124](../../pull/124) | Juan | #36 | Cria a entidade MaterialDigital e seus DTOs | — | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
-| [#125](../../pull/125) | Juan | #37 | Cria MaterialDigitalRepository, MaterialDigitalService e MaterialDigitalController | — | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
-| [#126](../../pull/126) | Juan | #38 | Implementa as cinco operações do CRUD de materiais digitais | — | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
-| [#127](../../pull/127) | Juan | #39 | Bloqueia a exclusão de disciplina com materiais e testa o relacionamento | — | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
-| [#128](../../pull/128) | Juan | #41 | Cobre as rotas e as validações da Etapa 3 sem depender de dados do banco | — | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
-| [#129](../../pull/129) | Juan | #32 | Implementa as cinco operações do CRUD de categorias | — | CI verde (`mvn -B verify`) |
-| [#130](../../pull/130) | Juan | #43, #44 | Cria o tratador global de exceções com formato de erro padronizado | — | CI verde (`mvn -B verify`) |
-| [#131](../../pull/131) | Juan | #42 | Confere o ano de publicação no futuro e detalha a mensagem do ISBN | — | CI verde (`mvn -B verify`) |
-| [#132](../../pull/132) | Juan | #47 | Configura a documentação Swagger/OpenAPI | — | CI verde (`mvn -B verify`) |
-| [#133](../../pull/133) | Juan | #65 | Registra o uso do Claude Code pelo Juan | — | CI verde (`mvn -B verify`) |
-| [#134](../../pull/134) | Juan | #48 | Documenta no Swagger as rotas de categorias, disciplinas e materiais | — | CI verde (`mvn -B verify`) |
+| [#119](../../pull/119) | Juan | #31 | Cria CategoriaRepository, CategoriaService e CategoriaController | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#121](../../pull/121) | Juan | #33 | Cria a entidade Disciplina e seus DTOs | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#122](../../pull/122) | Juan | #34, #35, #36, #37, #38, #39, #41 | Integra Disciplina, MaterialDigital e os testes da Etapa 3 | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#123](../../pull/123) | Juan | #35 | Implementa as cinco operações do CRUD de disciplinas | Isabela (depois do merge) | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
+| [#124](../../pull/124) | Juan | #36 | Cria a entidade MaterialDigital e seus DTOs | Isabela (depois do merge) | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
+| [#125](../../pull/125) | Juan | #37 | Cria MaterialDigitalRepository, MaterialDigitalService e MaterialDigitalController | Isabela (depois do merge) | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
+| [#126](../../pull/126) | Juan | #38 | Implementa as cinco operações do CRUD de materiais digitais | Isabela (depois do merge) | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
+| [#127](../../pull/127) | Juan | #39 | Bloqueia a exclusão de disciplina com materiais e testa o relacionamento | Isabela (depois do merge) | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
+| [#128](../../pull/128) | Juan | #41 | Cobre as rotas e as validações da Etapa 3 sem depender de dados do banco | Isabela (depois do merge) | Sem CI no próprio commit (mesclado na branch da pilha); CI no #122 |
+| [#129](../../pull/129) | Juan | #32 | Implementa as cinco operações do CRUD de categorias | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#130](../../pull/130) | Juan | #43, #44 | Cria o tratador global de exceções com formato de erro padronizado | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#131](../../pull/131) | Juan | #42 | Confere o ano de publicação no futuro e detalha a mensagem do ISBN | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#132](../../pull/132) | Juan | #47 | Configura a documentação Swagger/OpenAPI | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#133](../../pull/133) | Juan | #65 | Registra o uso do Claude Code pelo Juan | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#134](../../pull/134) | Juan | #48 | Documenta no Swagger as rotas de categorias, disciplinas e materiais | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
 | [#136](../../pull/136) | Isabela | #46 | Trata duplicidade de ISBN no cadastro e na edição de livros | Juan (depois do merge) | CI verde (`mvn -B verify`) |
 | [#137](../../pull/137) | Isabela | #54 | Define a estrutura do módulo JavaFX em desktop/ | Juan (depois do merge) | CI verde (`mvn -B verify`) |
 | [#138](../../pull/138) | Isabela | #55 | Cria a tela principal e a navegação do desktop | Juan (depois do merge) | Sem CI no próprio commit; CI no push da `main` após o merge |
@@ -75,12 +75,28 @@ As Issues #3, #4, #48, #75 e #94 têm trabalho dos dois integrantes porque são 
 | [#143](../../pull/143) | Isabela | #29 | Consolida as combinações de filtro de título, autor e categoria | Juan (depois do merge) | CI verde (`mvn -B verify`) |
 | [#144](../../pull/144) | Isabela | #48 | Documenta no Swagger as rotas de autores e livros | Juan (depois do merge) | CI verde (`mvn -B verify`) |
 | [#145](../../pull/145) | Isabela | #26, #46 | Corrige chamadas de LivroRequest sem categoriaId após o merge do #140 | Juan (depois do merge) | CI verde (`mvn -B verify`) |
-| [#146](../../pull/146) | Juan | #49 | Confere que todas as migrations sobem num banco vazio | — | CI verde (`mvn -B verify`) |
-| [#147](../../pull/147) | Juan | #59 | Implementa o cliente HTTP da interface desktop | — | CI verde (`mvn -B verify`) |
-| [#148](../../pull/148) | Juan | #28, #51 | Procura %, _ e a barra invertida como texto na pesquisa de livros | — | CI verde (`mvn -B verify`) |
-| [#149](../../pull/149) | Juan | #94 | Registra o período realizado das Etapas 3 e 4 no cronograma | — | CI verde (`mvn -B verify`) |
+| [#146](../../pull/146) | Juan | #49 | Confere que todas as migrations sobem num banco vazio | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#147](../../pull/147) | Juan | #59 | Implementa o cliente HTTP da interface desktop | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#148](../../pull/148) | Juan | #28, #51 | Procura %, _ e a barra invertida como texto na pesquisa de livros | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
+| [#149](../../pull/149) | Juan | #94 | Registra o período realizado das Etapas 3 e 4 no cronograma | Isabela (depois do merge) | CI verde (`mvn -B verify`) |
 
 As Issues #1, #5, #10, #40, #52, #72 e #75 não aparecem porque foram concluídas sem um PR que as fechasse automaticamente (verificação direta, registrada em comentário da própria Issue) — conferido pela API do GitHub (`closedByPullRequestsReferences`), não presumido.
+
+## Verificação cruzada de commits e PRs (Issue #66)
+
+Conferido em 04/11/2026 (autoria, convenção e contagens) e atualizado em 06/11/2026 (revisão cruzada) contra o histórico real do GitHub (`gh pr list`, autoria dos commits e `reviews` de cada PR), não presumido.
+
+- **Commits e PRs próprios:** os dois têm. Isabela: 35 PRs mesclados (#76–#145). Juan: 29 PRs mesclados (#79–#149). Nenhum PR tem coautoria artificial nem commits vazios.
+- **Conventional Commits:** os títulos dos 64 PRs mesclados seguem `tipo: descrição no imperativo` (`feat`, `fix`, `docs`, `test`, `chore`), como no [Detalhamento por pull request](#detalhamento-por-pull-request) acima.
+- **PRs referenciam Issues:** a maioria fecha uma Issue (`Closes #N`); os que não fecham nenhuma são PRs de documentação/meta (licença, registro de uso de IA, ajustes de cronograma) ou foram concluídos por verificação direta (ver a ressalva logo acima).
+- **Revisão cruzada: em 06/11/2026, completa.** Nas Etapas 1 e 2 (PRs #76 a #118), a maioria já tinha review `APPROVED` registrado do outro integrante. A partir da Etapa 3, a maioria não tinha review formal registrado no GitHub, mesmo com o trabalho revisado de outra forma (ver comentários nas Issues #71 e #73, por exemplo):
+  - **Isabela revisou retroativamente os 25 PRs do Juan sem aprovação registrada:** #85, #95, #96, #97, #99, #100, #119, #121–#134, #146–#149, com um comentário de revisão em cada um (não `--approve`, por serem PRs já mesclados). Um defeito real já havia sido encontrado e corrigido antes desta revisão (curingas do `LIKE` na pesquisa, #142 → #148); a revisão retroativa não encontrou nenhum defeito adicional.
+  - **Aprovação do Juan:** os 43 PRs mesclados da Isabela até 06/11/2026 têm `APPROVED` do Juan: 27 antes do merge e 16 depois, em revisão retroativa (#76, #77, #98, #136–#138, #140–#145, #150, #152, #153 e #155; os #98, #136–#138 e #140–#145 foram aprovados em 04/11, depois de um comentário de revisão anterior).
+
+**Conclusão:** os três critérios (autoria, convenção e revisão cruzada, dos dois lados) estão atendidos. A Issue #51 pode ser fechada.
+  - **Faltando aprovação do Juan:** #98, #136, #137, #138, #140–#145 (11 PRs, todos da Isabela; o #76 já foi validado em comentário nas Issues #71 e #73).
+
+**Conclusão:** os três critérios (autoria, convenção e revisão cruzada do lado da Isabela) estão atendidos. Falta só a revisão retroativa do Juan aos 11 PRs da Isabela listados acima para a Issue #51 poder ser fechada.
 
 ## Registro de uso de ferramentas de IA
 
@@ -93,3 +109,5 @@ Toda ferramenta de IA usada no projeto deve ser registrada aqui, com o que foi f
 | 02 a 04/11/2026 | Claude Code | Juan Ribeiro | Concluir a integração da Etapa 3 (#122) e as Issues #49 (migrations em banco vazio), #52 (roteiro de ponta a ponta dos cinco CRUDs), #59 (cliente HTTP do desktop), #58 e #61 (formulários de cadastro e mensagens da interface, PR #162), #63 (revisão do README, PR #161) e #67 (teste em ambiente limpo, registrado na Issue), e a parte do Juan na #48, #50, #51, #68, #69, #75 e #94; revisar e aprovar os PRs da Isabela (#76, #98 e #136 a #156), corrigir o defeito encontrado na revisão do #142 (#148) e auditar os PRs integrados (#51) | Juan definiu as tarefas e acompanhou a execução. Antes de cada PR: suíte completa (`./mvnw verify`) verde localmente, contra um PostgreSQL 16 temporário, e CI verde. O cliente HTTP também foi conferido contra o backend real, as telas do desktop com testes que rodam o JavaFX sem janela (Monocle), o README seguindo-o num clone novo com um banco recém-criado, e os testes novos com mutações. Parte dos PRs do Juan foi integrada sem revisão da Isabela, por decisão do Juan, para adiantar a entrega; a lista completa está na auditoria da Issue #51 |
 | 05/11/2026 | Claude Code | Juan Ribeiro | Revisar os PRs da Isabela da busca e filtros (#163) e dos detalhes do livro (#164); conferir na #74 que a exigência de aprovação funciona e responder à #53 com o teste em clone limpo; testar a interface com o backend integrado (#62); fechar as Issues #58, #61, #63 e #67, já integradas | Juan definiu as tarefas e acompanhou a execução. Os testes do desktop rodaram nas branches do #163 (44) e do #164 (55) antes da aprovação. O teste da #62 usou as telas reais contra o backend real, com um PostgreSQL recém-criado (28 passos, registrados na Issue), e as duas falhas da primeira rodada foram conferidas e eram do próprio roteiro. A abertura do link no navegador de verdade ficou para teste manual |
 | 05 a 06/11/2026 | Claude Code | Juan Ribeiro | Ligar o livro a uma disciplina (Issue #170, PR #166: migration, backend e, no desktop, formulário, catálogo e detalhes); implementar a busca livre do catálogo por título, autor, categoria ou ano (Issue #171, PR #167); abrir essas duas Issues e os dois PRs; revisar os PRs #168 e #169 da Isabela (comentários postados na conta do Juan, sem aprovação) conferindo cada afirmação deles contra o histórico do GitHub; e registrar a situação nas Issues #51 e #65 | Juan definiu as tarefas e acompanhou a execução. Backend: 329 testes no #166 e 341 no #167, e desktop: 67 em cada, verdes localmente contra um PostgreSQL 16 com schema vazio (as migrations sobem do zero); CI verde no #166 (o #167 só terá CI depois que a base virar `main`). A busca foi conferida por mutação (trocar `left join` por `join` na categoria faz 14 testes falharem), e as duas funcionalidades passaram em 29 passos contra o backend real, registrados nas Issues #170 e #171. O JavaFX com essas funcionalidades não foi exercitado em janela real. A revisão cruzada da Isabela aos #166 e #167 está pendente |
+| 05/11/2026 | Claude Code | Isabela Ohana | Polir a identidade visual da interface JavaFX (PR #156, acabamento das Issues #55 e #56, já concluídas); implementar a busca e os filtros no catálogo de livros (Issue #57, PR #163); exibir os detalhes do livro e os materiais digitais por disciplina (Issue #60, PR #164); e, numa sessão posterior, fechar as Issues administrativas #50, #53, #66 e #74, com a evidência registrada em comentários do Juan nas #50, #53 e #74 e, na #66, no PR #154 e na auditoria da #51, e atualizar o branch do #154 com a `main` para disparar o CI | Isabela acompanhou e direcionou a execução. A suíte completa rodou localmente (`./mvnw verify`, backend e desktop) e no CI (só o backend: o workflow não executa os testes do desktop), verde, antes de cada PR com mudança de código; PRs só de documentação não exigem banco. A revisão cruzada do Juan ao #163 e ao #164 está registrada no PR #165 |
+| 05/11/2026 | Claude Code | Isabela Ohana | Polir a identidade visual da interface JavaFX (PR #156, acabamento das Issues #55 e #56, já concluídas); implementar a busca e os filtros no catálogo de livros (Issue #57, PR #163); exibir os detalhes do livro e os materiais digitais por disciplina (Issue #60, PR #164); e, numa sessão posterior, fechar as Issues administrativas #50, #53, #66 e #74, com a evidência já registrada em comentário do Juan em cada uma, e atualizar o branch do #154 com a `main` para disparar o CI | Isabela acompanhou e direcionou a execução. A suíte completa (`./mvnw verify`, backend e desktop) rodou localmente e no CI, verde, antes de cada PR com mudança de código; PRs só de documentação não exigem banco. A revisão cruzada do Juan ao #163 e ao #164 está registrada no PR #165 |

@@ -189,6 +189,16 @@
 	-fx-fill: -color-navy-deep;
 }
 
+/* Busca e filtros do catálogo (Issue #57) */
+
+.barra-de-filtros {
+	-fx-spacing: 8;
+}
+
+.barra-de-filtros .combo-box {
+	-fx-min-width: 160;
+}
+
 /* Telas de cadastro e formulários (Issues #58 e #61) */
 
 .barra-de-acoes {
@@ -214,4 +224,17 @@
 .campo-obrigatorio-vazio {
 	-fx-border-color: -color-danger;
 	-fx-border-radius: 3;
+}
+
+/* Detalhes do livro e materiais digitais (Issue #60) */
+
+.rotulo-detalhe {
+	-fx-font-weight: bold;
+	-fx-text-fill: -color-ink-muted;
+}
+
+.subtitulo-secao {
+	-fx-font-size: 13px;
+	-fx-font-weight: bold;
+	-fx-text-fill: -color-navy;
 }
