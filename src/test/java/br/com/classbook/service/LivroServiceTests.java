@@ -156,7 +156,7 @@ class LivroServiceTests {
 		livroService.criar(new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId, null, null));
 		livroService.criar(new LivroRequest("Dom Casmurro", "9780316000000", null, null, null, autorId, null, null));
 
-		List<LivroResponse> livros = livroService.listar(null, null, null);
+		List<LivroResponse> livros = livroService.listar(null, null, null, null);
 
 		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro", "Memórias Póstumas");
 	}
@@ -167,7 +167,7 @@ class LivroServiceTests {
 		livroService.criar(new LivroRequest("Memórias Póstumas", "9780306406157", null, null, null, autorId, null, null));
 		livroService.criar(new LivroRequest("Dom Casmurro", "9780316000000", null, null, null, autorId, null, null));
 
-		List<LivroResponse> livros = livroService.listar("casmurro", null, null);
+		List<LivroResponse> livros = livroService.listar("casmurro", null, null, null);
 
 		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
 	}
@@ -177,7 +177,7 @@ class LivroServiceTests {
 		autorId = criarAutor();
 		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null, null));
 
-		assertThat(livroService.listar("inexistente", null, null)).isEmpty();
+		assertThat(livroService.listar("inexistente", null, null, null)).isEmpty();
 	}
 
 	@Test
@@ -188,11 +188,11 @@ class LivroServiceTests {
 		livroService.criar(new LivroRequest("Guia_de_Estudos", "8535910654", null, null, null, autorId, null, null));
 
 		// O autorId restringe a pesquisa aos livros deste teste, qualquer que seja o conteúdo do banco.
-		assertThat(livroService.listar("%", autorId, null)).extracting(LivroResponse::titulo)
+		assertThat(livroService.listar("%", null, autorId, null)).extracting(LivroResponse::titulo)
 				.containsExactly("100% Jovem");
-		assertThat(livroService.listar("_", autorId, null)).extracting(LivroResponse::titulo)
+		assertThat(livroService.listar("_", null, autorId, null)).extracting(LivroResponse::titulo)
 				.containsExactly("Guia_de_Estudos");
-		assertThat(livroService.listar("\\", autorId, null)).isEmpty();
+		assertThat(livroService.listar("\\", null, autorId, null)).isEmpty();
 	}
 
 	@Test
@@ -202,7 +202,7 @@ class LivroServiceTests {
 		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, machado, null, null));
 		livroService.criar(new LivroRequest("Senhora", "9780316000000", null, null, null, outroAutor, null, null));
 
-		List<LivroResponse> livros = livroService.listar(null, machado, null);
+		List<LivroResponse> livros = livroService.listar(null, null, machado, null);
 
 		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
 	}
@@ -212,7 +212,7 @@ class LivroServiceTests {
 		autorId = criarAutor();
 		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null, null));
 
-		assertThat(livroService.listar(null, -1L, null)).isEmpty();
+		assertThat(livroService.listar(null, null, -1L, null)).isEmpty();
 	}
 
 	@Test
@@ -225,7 +225,7 @@ class LivroServiceTests {
 		livroService
 				.criar(new LivroRequest("Dicionário", "9780316000000", null, null, null, autorId, referencia, null));
 
-		List<LivroResponse> livros = livroService.listar(null, null, literatura);
+		List<LivroResponse> livros = livroService.listar(null, null, null, literatura);
 
 		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
 	}
@@ -241,7 +241,7 @@ class LivroServiceTests {
 				.criar(new LivroRequest("Senhora", "9780316000000", null, null, null, outroAutor, literatura, null));
 		livroService.criar(new LivroRequest("Memórias Póstumas", "9780321000000", null, null, null, machado, null, null));
 
-		List<LivroResponse> livros = livroService.listar(null, machado, literatura);
+		List<LivroResponse> livros = livroService.listar(null, null, machado, literatura);
 
 		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
 	}
@@ -253,7 +253,7 @@ class LivroServiceTests {
 		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, machado, null, null));
 		livroService.criar(new LivroRequest("Dom Sebastião", "9780316000000", null, null, null, outroAutor, null, null));
 
-		List<LivroResponse> livros = livroService.listar("dom", machado, null);
+		List<LivroResponse> livros = livroService.listar("dom", null, machado, null);
 
 		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
 	}
@@ -268,7 +268,7 @@ class LivroServiceTests {
 		livroService
 				.criar(new LivroRequest("Dom Dicionário", "9780316000000", null, null, null, autorId, referencia, null));
 
-		List<LivroResponse> livros = livroService.listar("dom", null, literatura);
+		List<LivroResponse> livros = livroService.listar("dom", null, null, literatura);
 
 		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
 	}
@@ -280,7 +280,7 @@ class LivroServiceTests {
 		livroService
 				.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, literatura, null));
 
-		assertThat(livroService.listar("Senhora", autorId, literatura)).isEmpty();
+		assertThat(livroService.listar("Senhora", null, autorId, literatura)).isEmpty();
 	}
 
 	@Test
@@ -546,11 +546,143 @@ class LivroServiceTests {
 				new LivroRequest("Com disciplina", "9780306406157", null, null, null, autorId, null, disciplinaId));
 		livroService.criar(new LivroRequest("Sem disciplina", "0306406152", null, null, null, autorId, null, null));
 
-		List<LivroResponse> livros = livroService.listar(null, autorId, null);
+		List<LivroResponse> livros = livroService.listar(null, null, autorId, null);
 
 		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Com disciplina", "Sem disciplina");
 		assertThat(livros.get(0).disciplina().id()).isEqualTo(disciplinaId);
 		assertThat(livros.get(1).disciplina()).isNull();
+	}
+
+	// ---- Busca livre (parâmetro busca): título, autor, categoria e ano ----
+
+	@Test
+	void buscaEncontraPeloTituloSemDiferenciarMaiusculas() {
+		autorId = criarAutor();
+		livroService.criar(new LivroRequest("Memórias Póstumas", "9780306406157", 1881, null, null, autorId, null, null));
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780316000000", 1899, null, null, autorId, null, null));
+
+		// O autorId restringe a pesquisa aos livros deste teste, qualquer que seja o conteúdo do banco.
+		List<LivroResponse> livros = livroService.listar(null, "CASMURRO", autorId, null);
+
+		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Dom Casmurro");
+	}
+
+	@Test
+	void buscaEncontraPeloNomeDoAutorMesmoQueOTituloNaoTenhaOTexto() {
+		Long autorZeta = autorRepository.save(autorEntidade(nome("Autora Zeta"))).getId();
+		Long outroAutor = autorRepository.save(autorEntidade(nome("Autor Outro"))).getId();
+		livroService.criar(new LivroRequest("Primeiro Livro", "9780306406157", null, null, null, autorZeta, null, null));
+		livroService.criar(new LivroRequest("Segundo Livro", "9780316000000", null, null, null, autorZeta, null, null));
+		livroService.criar(new LivroRequest("Livro de Outro", "9780321000000", null, null, null, outroAutor, null, null));
+
+		// O sufixo de nome() é único por execução, então só os livros deste teste podem bater.
+		List<LivroResponse> livros = livroService.listar(null, nome("autora zeta"), null, null);
+
+		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Primeiro Livro", "Segundo Livro");
+	}
+
+	@Test
+	void buscaEncontraPeloNomeDaCategoria() {
+		autorId = criarAutor();
+		Long categoriaId = criarCategoria(nome("Categoria Zeta"));
+		livroService.criar(new LivroRequest("Com categoria", "9780306406157", null, null, null, autorId, categoriaId, null));
+		livroService.criar(new LivroRequest("Sem categoria", "9780316000000", null, null, null, autorId, null, null));
+
+		List<LivroResponse> livros = livroService.listar(null, nome("categoria zeta"), null, null);
+
+		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Com categoria");
+	}
+
+	@Test
+	void buscaEncontraPeloAnoDePublicacaoInteiroOuParcial() {
+		autorId = criarAutor();
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", 1899, null, null, autorId, null, null));
+		livroService.criar(new LivroRequest("Memórias Póstumas", "9780316000000", 1881, null, null, autorId, null, null));
+		livroService.criar(new LivroRequest("A Hora da Estrela", "9780321000000", 1977, null, null, autorId, null, null));
+		livroService.criar(new LivroRequest("Sem ano", "9780000000001", null, null, null, autorId, null, null));
+
+		assertThat(livroService.listar(null, "1899", autorId, null)).extracting(LivroResponse::titulo)
+				.containsExactly("Dom Casmurro");
+		assertThat(livroService.listar(null, "18", autorId, null)).extracting(LivroResponse::titulo)
+				.containsExactly("Dom Casmurro", "Memórias Póstumas");
+		assertThat(livroService.listar(null, "2050", autorId, null)).isEmpty();
+	}
+
+	@Test
+	void buscaPeloTituloNaoEscondeOsLivrosSemCategoriaNemSemAno() {
+		autorId = criarAutor();
+		livroService.criar(new LivroRequest("Livro Simples", "9780306406157", null, null, null, autorId, null, null));
+
+		List<LivroResponse> livros = livroService.listar(null, "simples", autorId, null);
+
+		assertThat(livros).extracting(LivroResponse::titulo).containsExactly("Livro Simples");
+		assertThat(livros.get(0).categoria()).isNull();
+		assertThat(livros.get(0).anoPublicacao()).isNull();
+	}
+
+	@Test
+	void buscaTrazOLivroUmaSoVezQuandoVariosCamposBatem() {
+		Long autorDom = autorRepository.save(autorEntidade(nome("Dom Autor"))).getId();
+		Long categoriaId = criarCategoria(nome("Dom Categoria"));
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", 1899, null, null, autorDom, categoriaId, null));
+
+		assertThat(livroService.listar(null, "dom", autorDom, null)).extracting(LivroResponse::titulo)
+				.containsExactly("Dom Casmurro");
+	}
+
+	@Test
+	void buscaCombinaComOsFiltrosDeTituloAutorECategoria() {
+		Long machado = criarAutor();
+		Long outroAutor = autorRepository.save(autorEntidade("José de Alencar")).getId();
+		Long literatura = criarCategoria(nome("Literatura"));
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", 1899, null, null, machado, literatura, null));
+		livroService.criar(new LivroRequest("Dom Sebastião", "9780316000000", 1899, null, null, outroAutor, literatura, null));
+		livroService.criar(new LivroRequest("Memórias Póstumas", "9780321000000", 1881, null, null, machado, null, null));
+
+		// busca + autorId
+		assertThat(livroService.listar(null, "1899", machado, null)).extracting(LivroResponse::titulo)
+				.containsExactly("Dom Casmurro");
+		// busca + categoriaId
+		assertThat(livroService.listar(null, "1899", machado, literatura)).extracting(LivroResponse::titulo)
+				.containsExactly("Dom Casmurro");
+		// busca + titulo: os dois precisam bater
+		assertThat(livroService.listar("memórias", "1899", machado, null)).isEmpty();
+		assertThat(livroService.listar("memórias", "1881", machado, null)).extracting(LivroResponse::titulo)
+				.containsExactly("Memórias Póstumas");
+	}
+
+	@Test
+	void buscaComCuringaDoLikeProcuraOCaractereComoTexto() {
+		autorId = criarAutor();
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null, null));
+		livroService.criar(new LivroRequest("100% Jovem", "9780316000000", null, null, null, autorId, null, null));
+		livroService.criar(new LivroRequest("Guia_de_Estudos", "8535910654", null, null, null, autorId, null, null));
+
+		assertThat(livroService.listar(null, "%", autorId, null)).extracting(LivroResponse::titulo)
+				.containsExactly("100% Jovem");
+		assertThat(livroService.listar(null, "_", autorId, null)).extracting(LivroResponse::titulo)
+				.containsExactly("Guia_de_Estudos");
+		assertThat(livroService.listar(null, "\\", autorId, null)).isEmpty();
+	}
+
+	@Test
+	void buscaVaziaOuEmBrancoNaoFiltra() {
+		autorId = criarAutor();
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", 1899, null, null, autorId, null, null));
+		livroService.criar(new LivroRequest("Senhora", "9780316000000", 1875, null, null, autorId, null, null));
+
+		assertThat(livroService.listar(null, "", autorId, null)).hasSize(2);
+		assertThat(livroService.listar(null, "   ", autorId, null)).hasSize(2);
+		assertThat(livroService.listar(null, null, autorId, null)).hasSize(2);
+	}
+
+	@Test
+	void buscaIgnoraEspacosNasPontas() {
+		autorId = criarAutor();
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", 1899, null, null, autorId, null, null));
+
+		assertThat(livroService.listar(null, "  casmurro  ", autorId, null)).extracting(LivroResponse::titulo)
+				.containsExactly("Dom Casmurro");
 	}
 
 }

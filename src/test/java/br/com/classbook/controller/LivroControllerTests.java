@@ -418,6 +418,45 @@ class LivroControllerTests {
 				.andExpect(jsonPath("$[1].disciplina").value(nullValue()));
 	}
 
+	@Test
+	void buscaLivrePeloNomeDoAutorEPeloNomeDaCategoriaRespondeOsLivrosCorrespondentes() throws Exception {
+		Long autorId = cadastrarAutor(nome("Autora Busca"));
+		Long outroAutor = cadastrarAutor(nome("Outro Autor"));
+		Long categoriaId = cadastrarCategoria(nome("Categoria Busca"));
+		cadastrarLivro(new LivroRequest("A primeira obra", "9780306406157", 1899, null, null, autorId, categoriaId, null));
+		cadastrarLivro(new LivroRequest("B segunda obra", "9780316000000", null, null, null, autorId, null, null));
+		cadastrarLivro(new LivroRequest("C obra alheia", "9780321000000", 1899, null, null, outroAutor, null, null));
+
+		// O sufixo de nome() é único por execução, então só os livros deste teste podem bater.
+		mockMvc.perform(get("/api/livros").param("busca", nome("autora busca")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(2))
+				.andExpect(jsonPath("$[0].titulo").value("A primeira obra"))
+				.andExpect(jsonPath("$[1].titulo").value("B segunda obra"));
+		mockMvc.perform(get("/api/livros").param("busca", nome("categoria busca")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].titulo").value("A primeira obra"));
+	}
+
+	@Test
+	void buscaLivrePeloAnoCombinaComOFiltroDeAutorEIgnoraBuscaEmBranco() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780306406157", 1899, null, null, autorId, null, null));
+		cadastrarLivro(new LivroRequest("Memórias Póstumas", "9780316000000", 1881, null, null, autorId, null, null));
+
+		mockMvc.perform(get("/api/livros").param("busca", "1899").param("autorId", String.valueOf(autorId)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(1))
+				.andExpect(jsonPath("$[0].titulo").value("Dom Casmurro"));
+		mockMvc.perform(get("/api/livros").param("busca", "   ").param("autorId", String.valueOf(autorId)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(2));
+		mockMvc.perform(get("/api/livros").param("busca", "2050").param("autorId", String.valueOf(autorId)))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.length()").value(0));
+	}
+
 	private Long cadastrarDisciplina(String nome, String codigo) throws Exception {
 		MvcResult resultado = mockMvc.perform(post("/api/disciplinas").contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(

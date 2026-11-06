@@ -28,7 +28,8 @@ import br.com.classbook.dto.LivroRequest;
 import br.com.classbook.dto.LivroResponse;
 import br.com.classbook.service.LivroService;
 
-@Tag(name = "Livros", description = "Livros do acervo, com a pesquisa avançada por título, autor e categoria")
+@Tag(name = "Livros",
+		description = "Livros do acervo, com a busca livre (título, autor, categoria ou ano) e os filtros por título, autor e categoria")
 @RestController
 @RequestMapping("/api/livros")
 public class LivroController {
@@ -55,18 +56,23 @@ public class LivroController {
 
 	@GetMapping
 	@Operation(summary = "Pesquisa os livros",
-			description = "Filtros opcionais e combináveis (E lógico): titulo (contém, sem diferenciar "
-					+ "maiúsculas), autorId e categoriaId. Sem filtros, devolve todos os livros.")
+			description = "Filtros opcionais e combináveis (E lógico): busca (texto livre, que procura no "
+					+ "título, no nome do autor, no nome da categoria e no ano de publicação), titulo (contém, "
+					+ "sem diferenciar maiúsculas), autorId e categoriaId. Sem filtros, devolve todos os livros.")
 	@ApiResponse(responseCode = "200", description = "Livros ordenados por título; lista vazia sem correspondência")
 	@ApiResponse(responseCode = "400", description = "autorId ou categoriaId que não é número")
 	public List<LivroResponse> listar(
-			@Parameter(description = "Contém o texto, sem diferenciar maiúsculas de minúsculas")
+			@Parameter(description = "Texto livre: o livro entra se o texto estiver no título, no nome do autor, "
+					+ "no nome da categoria ou no ano de publicação (parcial, sem diferenciar maiúsculas de "
+					+ "minúsculas; por exemplo, 189 acha 1899)")
+			@RequestParam(required = false) String busca,
+			@Parameter(description = "Contém o texto no título, sem diferenciar maiúsculas de minúsculas")
 			@RequestParam(required = false) String titulo,
 			@Parameter(description = "ID do autor; inexistente responde lista vazia, não erro")
 			@RequestParam(required = false) Long autorId,
 			@Parameter(description = "ID da categoria; inexistente responde lista vazia, não erro")
 			@RequestParam(required = false) Long categoriaId) {
-		return livroService.listar(titulo, autorId, categoriaId);
+		return livroService.listar(titulo, busca, autorId, categoriaId);
 	}
 
 	@GetMapping("/{id}")
