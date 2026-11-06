@@ -1,0 +1,240 @@
+/*
+ * Folha de estilos da interface desktop. Paleta azul-acadêmico + âmbar (marca ClassBook),
+ * aplicada na Scene inteira por AplicacaoDesktop. Cores e tipografia só; nenhuma regra daqui
+ * depende de um controller específico.
+ */
+
+.root {
+	-color-bg: #F5F6F8;
+	-color-surface: #FFFFFF;
+	-color-surface-2: #EEF1F5;
+	-color-border: #DFE3EA;
+	-color-ink: #1C2630;
+	-color-ink-muted: #5B6472;
+	-color-navy: #1B3A57;
+	-color-navy-deep: #12293F;
+	-color-navy-soft: #E7EEF4;
+	-color-amber: #C9821F;
+	-color-danger: #B23B3B;
+
+	-fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+	-fx-font-size: 13px;
+	-fx-background-color: -color-bg;
+}
+
+/* Barra lateral */
+
+.sidebar {
+	-fx-background-color: -color-navy-deep;
+	-fx-padding: 20 14 20 14;
+	-fx-spacing: 4;
+}
+
+.marca {
+	-fx-spacing: 10;
+	-fx-padding: 0 4 20 4;
+}
+
+.marca-selo {
+	-fx-background-color: -color-amber;
+	-fx-background-radius: 8;
+	-fx-min-width: 32;
+	-fx-min-height: 32;
+	-fx-max-width: 32;
+	-fx-max-height: 32;
+	-fx-alignment: center;
+}
+
+.marca-icone {
+	-fx-fill: -color-navy-deep;
+	-fx-scale-x: 0.7;
+	-fx-scale-y: 0.7;
+}
+
+.marca-nome {
+	-fx-font-size: 15px;
+	-fx-font-weight: bold;
+	-fx-text-fill: white;
+}
+
+.marca-tagline {
+	-fx-font-size: 9px;
+	-fx-text-fill: #9FB2C4;
+}
+
+.nav-item {
+	-fx-background-color: transparent;
+	-fx-background-radius: 7;
+	-fx-text-fill: #B9C7D6;
+	-fx-font-size: 13px;
+	-fx-alignment: CENTER_LEFT;
+	-fx-padding: 9 12 9 12;
+	-fx-cursor: hand;
+}
+
+.nav-item:hover {
+	-fx-background-color: derive(-color-navy, 20%);
+	-fx-text-fill: white;
+}
+
+.nav-item.ativo {
+	-fx-background-color: -color-navy;
+	-fx-text-fill: white;
+	-fx-font-weight: bold;
+	-fx-border-width: 0 0 0 3;
+	-fx-border-color: -color-amber;
+	-fx-padding: 9 12 9 9;
+}
+
+/* Área de conteúdo */
+
+.area-conteudo {
+	-fx-background-color: -color-bg;
+	-fx-padding: 24;
+}
+
+.cabecalho-pagina .titulo {
+	-fx-font-size: 20px;
+	-fx-font-weight: bold;
+	-fx-text-fill: -color-ink;
+}
+
+.cabecalho-pagina .subtitulo {
+	-fx-font-size: 12px;
+	-fx-text-fill: -color-ink-muted;
+}
+
+.cartao {
+	-fx-background-color: -color-surface;
+	-fx-background-radius: 10;
+	-fx-border-color: -color-border;
+	-fx-border-radius: 10;
+	-fx-padding: 2;
+}
+
+/* Estado "em construção" das seções ainda não implementadas */
+
+.estado-vazio {
+	-fx-spacing: 6;
+	-fx-padding: 48;
+}
+
+.estado-vazio .icone {
+	-fx-font-size: 26px;
+}
+
+.estado-vazio .titulo {
+	-fx-font-size: 14px;
+	-fx-font-weight: bold;
+	-fx-text-fill: -color-ink;
+}
+
+.estado-vazio .descricao {
+	-fx-font-size: 12px;
+	-fx-text-fill: -color-ink-muted;
+}
+
+/* Mensagens de estado da tabela (placeholder do TableView) */
+
+.mensagem-vazia {
+	-fx-text-fill: -color-ink-muted;
+	-fx-font-size: 13px;
+}
+
+.mensagem-erro {
+	-fx-text-fill: -color-danger;
+	-fx-font-size: 13px;
+	-fx-font-weight: bold;
+}
+
+/* TableView */
+
+.table-view {
+	-fx-background-color: transparent;
+	-fx-table-cell-border-color: transparent;
+}
+
+.table-view .column-header-background {
+	-fx-background-color: -color-navy-soft;
+	-fx-background-radius: 8 8 0 0;
+}
+
+.table-view .column-header,
+.table-view .filler {
+	-fx-background-color: transparent;
+	-fx-size: 34px;
+}
+
+.table-view .column-header .label {
+	-fx-text-fill: -color-navy;
+	-fx-font-weight: bold;
+	-fx-font-size: 11px;
+}
+
+.table-row-cell {
+	-fx-background-color: -color-surface;
+	-fx-border-color: transparent transparent -color-border transparent;
+	-fx-table-cell-border-color: transparent;
+}
+
+.table-row-cell:odd {
+	-fx-background-color: -color-surface-2;
+}
+
+.table-row-cell:selected {
+	-fx-background-color: -color-navy-soft;
+}
+
+.table-row-cell:selected .text {
+	-fx-fill: -color-navy-deep;
+}
+
+/* Busca e filtros do catálogo (Issue #57) */
+
+.barra-de-filtros {
+	-fx-spacing: 8;
+}
+
+.barra-de-filtros .combo-box {
+	-fx-min-width: 160;
+}
+
+/* Telas de cadastro e formulários (Issues #58 e #61) */
+
+.barra-de-acoes {
+	-fx-spacing: 8;
+	-fx-alignment: CENTER_LEFT;
+}
+
+.aviso-sucesso {
+	-fx-text-fill: #2E6B3F;
+	-fx-font-weight: bold;
+}
+
+.aviso-erro {
+	-fx-text-fill: -color-danger;
+	-fx-font-weight: bold;
+}
+
+.formulario .legenda {
+	-fx-text-fill: -color-ink-muted;
+	-fx-font-size: 12px;
+}
+
+.campo-obrigatorio-vazio {
+	-fx-border-color: -color-danger;
+	-fx-border-radius: 3;
+}
+
+/* Detalhes do livro e materiais digitais (Issue #60) */
+
+.rotulo-detalhe {
+	-fx-font-weight: bold;
+	-fx-text-fill: -color-ink-muted;
+}
+
+.subtitulo-secao {
+	-fx-font-size: 13px;
+	-fx-font-weight: bold;
+	-fx-text-fill: -color-navy;
+}

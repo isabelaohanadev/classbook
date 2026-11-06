@@ -83,7 +83,7 @@ A conferência com o enunciado (Issue #78) confirmou que a interface visual não
 - A interface JavaFX é opcional e não bloqueia a entrega (decisão da Issue #93).
 - A pesquisa avançada cobre somente livros; não há busca com filtros em materiais digitais.
 - Sem paginação nas listagens; pode ser adicionada se o volume exigir.
-- Datas de entrega e de avaliação não estão registradas aqui; serão incluídas somente quando forem informadas. O enunciado também não as traz (ver Issue #94).
+- Data de entrega não está registrada aqui; será incluída somente quando for informada. O enunciado não a traz (ver Issue #94). A data da apresentação já foi registrada em [PLANO_DE_TRABALHO](PLANO_DE_TRABALHO.md#cronograma).
 
 ## Decisões da revisão de requisitos
 

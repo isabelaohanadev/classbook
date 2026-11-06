@@ -6,7 +6,7 @@ Biblioteca Escolar Digital desenvolvida em Java e Spring Boot para projeto acad�
 
 O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, autores, categorias, disciplinas e materiais digitais** de uma escola de ensino médio, com pesquisa avançada de livros. O backend expõe uma API REST; a interface desktop (JavaFX) consome essa API e é opcional, construída depois dos itens avaliados (decisão da Issue #93).
 
-> **Status:** em planejamento. O backlog completo está nas [Issues](../../issues) e no GitHub Project **ClassBook — Planejamento e Desenvolvimento**. Nenhum CRUD foi implementado ainda.
+> **Status:** backend concluído. Os cinco CRUDs, os relacionamentos, a pesquisa avançada de livros, as validações, o tratamento padronizado de erros e a documentação Swagger estão implementados e testados, e o CI está verde na `main`. A interface desktop (opcional) já tem todas as telas implementadas: cliente HTTP, navegação, catálogo com busca e filtros, cadastro e edição dos cinco recursos, mensagens de sucesso e erro, e detalhes do livro com os materiais digitais (ver `desktop/README.md`). Falta o teste com o backend integrado (Issue #62). O andamento está nas [Issues](../../issues) e no GitHub Project **ClassBook — Planejamento e Desenvolvimento**.
 
 ## Tecnologias
 
@@ -18,7 +18,7 @@ O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, aut
 | Migrations | Flyway |
 | Validação | Bean Validation |
 | Documentação da API | Swagger/OpenAPI (springdoc), em `/swagger-ui.html` |
-| Interface | JavaFX, consumindo a API REST — opcional, pós-avaliação (a criar — Issue #54; decisão da Issue #93) |
+| Interface | JavaFX 21, consumindo a API REST — opcional, pós-avaliação (decisão da Issue #93), em `desktop/` |
 | Build | Maven (wrapper incluso) |
 | CI | GitHub Actions |
 
@@ -28,7 +28,7 @@ O ClassBook permite cadastrar, editar, listar, consultar e excluir **livros, aut
 .
 ├── .github/workflows/ci.yml      # CI: mvn -B verify em PRs e na main
 ├── docs/                         # requisitos, modelagem, arquitetura, plano de trabalho, contribuições
-├── desktop/                      # interface JavaFX (estrutura a definir — Issue #54)
+├── desktop/                      # interface JavaFX: projeto Maven separado (ver desktop/README.md)
 ├── src/main/java/br/com/classbook/
 │   ├── model/                    # entidades JPA
 │   ├── dto/                      # records de entrada (Request) e de saída (Response)
@@ -114,6 +114,29 @@ Com a aplicação no ar, a documentação das rotas fica disponível no navegado
 - **Swagger UI:** `http://localhost:8080/swagger-ui.html`, para ver e testar cada rota
 - **OpenAPI (JSON):** `http://localhost:8080/v3/api-docs`
 
+### Rotas da API
+
+Cada recurso tem as cinco operações: `POST` (cadastra e responde `201` com `Location`), `GET` (lista), `GET /{id}` (consulta), `PUT /{id}` (edita) e `DELETE /{id}` (exclui e responde `204`).
+
+| Recurso | Rota | Observações |
+| --- | --- | --- |
+| Autores | `/api/autores` | Um autor com livros não pode ser excluído (`409`). |
+| Livros | `/api/livros` | Pesquisa avançada no `GET`: `?titulo=`, `?autorId=` e `?categoriaId=`, opcionais e combináveis. O ISBN é único (`409`), e a categoria é opcional. |
+| Categorias | `/api/categorias` | Nome único, sem diferenciar maiúsculas (`409`). Uma categoria com livros não pode ser excluída (`409`). |
+| Disciplinas | `/api/disciplinas` | Código único, gravado em maiúsculas (`409`). Uma disciplina com materiais não pode ser excluída (`409`). |
+| Materiais digitais | `/api/materiais` | Cada material pertence a uma disciplina (`disciplinaId`), e a URL precisa ser `http` ou `https`. |
+
+### Interface desktop (opcional)
+
+A interface JavaFX é um projeto Maven separado, em `desktop/`, que só conversa com a API. Com o backend no ar:
+
+```bash
+cd desktop
+./mvnw javafx:run
+```
+
+Para usar outro endereço da API, defina `CLASSBOOK_API_URL` (o padrão é `http://localhost:8080/api`). Os detalhes, o que já está pronto e como rodar os testes da interface estão no [README do desktop](desktop/README.md).
+
 ## Como testar
 
 Os testes de integração usam o PostgreSQL. Para não misturar com seus dados de desenvolvimento, aponte para o banco `classbook_test`:
@@ -173,6 +196,7 @@ Todo erro sai no mesmo formato JSON (`horario`, `status`, `erro`, `mensagem`, `c
 - [Arquitetura e convenções do backend](docs/ARQUITETURA.md)
 - [Plano de trabalho](docs/PLANO_DE_TRABALHO.md)
 - [Contribuições](docs/CONTRIBUICOES.md)
+- [Roteiro da apresentação](docs/APRESENTACAO.md)
 - [Como contribuir (GitHub Flow)](CONTRIBUTING.md)
 
 ## Equipe

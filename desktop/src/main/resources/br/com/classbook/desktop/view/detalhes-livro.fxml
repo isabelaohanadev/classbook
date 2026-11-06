@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.VBox?>
+
+<!-- Detalhes de um livro (Issue #60): os dados dele, mais os materiais digitais por disciplina (sem
+	vínculo com o livro na modelagem). DetalhesLivroController preenche tudo. -->
+<VBox xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" spacing="16" prefWidth="460"
+	fx:controller="br.com.classbook.desktop.view.DetalhesLivroController">
+	<GridPane hgap="10" vgap="8">
+		<Label text="Título:" styleClass="rotulo-detalhe" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+		<Label fx:id="titulo" wrapText="true" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+		<Label text="Autor:" styleClass="rotulo-detalhe" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+		<Label fx:id="autor" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+		<Label text="Categoria:" styleClass="rotulo-detalhe" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+		<Label fx:id="categoria" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+		<Label text="ISBN:" styleClass="rotulo-detalhe" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+		<Label fx:id="isbn" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+		<Label text="Ano:" styleClass="rotulo-detalhe" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+		<Label fx:id="ano" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+		<Label text="Editora:" styleClass="rotulo-detalhe" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+		<Label fx:id="editora" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+		<Label text="Descrição:" styleClass="rotulo-detalhe" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+		<Label fx:id="descricao" wrapText="true" maxWidth="320" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+	</GridPane>
+	<VBox spacing="8">
+		<Label text="Materiais digitais" styleClass="subtitulo-secao"/>
+		<ComboBox fx:id="comboDisciplina" promptText="Todas as disciplinas" maxWidth="Infinity"/>
+		<Label fx:id="avisoDeLink" styleClass="aviso-erro" wrapText="true"/>
+		<ListView fx:id="listaDeMateriais" prefHeight="160">
+			<placeholder>
+				<Label fx:id="mensagemSemMateriais" text="Carregando materiais..." styleClass="mensagem-vazia"/>
+			</placeholder>
+		</ListView>
+	</VBox>
+</VBox>
