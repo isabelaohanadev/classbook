@@ -82,6 +82,19 @@ As Issues #3, #4, #48, #75 e #94 têm trabalho dos dois integrantes porque são 
 
 As Issues #1, #5, #10, #40, #52, #72 e #75 não aparecem porque foram concluídas sem um PR que as fechasse automaticamente (verificação direta, registrada em comentário da própria Issue) — conferido pela API do GitHub (`closedByPullRequestsReferences`), não presumido.
 
+## Verificação cruzada de commits e PRs (Issue #66)
+
+Conferido em 04/11/2026 contra o histórico real do GitHub (`gh pr list`, autoria dos commits e `reviews` de cada PR), não presumido.
+
+- **Commits e PRs próprios:** os dois têm. Isabela: 35 PRs mesclados (#76–#145). Juan: 29 PRs mesclados (#79–#149). Nenhum PR tem coautoria artificial nem commits vazios.
+- **Conventional Commits:** os títulos dos 64 PRs mesclados seguem `tipo: descrição no imperativo` (`feat`, `fix`, `docs`, `test`, `chore`), como no [Detalhamento por pull request](#detalhamento-por-pull-request) acima.
+- **PRs referenciam Issues:** a maioria fecha uma Issue (`Closes #N`); os que não fecham nenhuma são PRs de documentação/meta (licença, registro de uso de IA, ajustes de cronograma) ou foram concluídos por verificação direta (ver a ressalva logo acima).
+- **Revisão cruzada: incompleta.** Nas Etapas 1 e 2 (PRs #76 a #118), a maioria tem review `APPROVED` registrado do outro integrante. A partir da Etapa 3, a maioria **não tem** review formal registrado no GitHub, mesmo com o trabalho revisado de outra forma (ver comentários nas Issues #71 e #73, por exemplo):
+  - **Faltando aprovação da Isabela:** #85, #95, #96, #97, #99, #100, #119, #121–#134, #146–#149 (25 PRs, todos do Juan).
+  - **Faltando aprovação do Juan:** #98, #136, #137, #138, #140–#145 (11 PRs, todos da Isabela; o #76 já foi validado em comentário nas Issues #71 e #73).
+
+**Conclusão:** os dois critérios de autoria e convenção estão atendidos; a revisão cruzada formal (aprovação registrada no GitHub, exigida pela #51 e pela proteção da `main` da #74) ainda não cobre os PRs acima. Esta Issue continua aberta até as aprovações serem registradas.
+
 ## Registro de uso de ferramentas de IA
 
 Toda ferramenta de IA usada no projeto deve ser registrada aqui, com o que foi feito e como o resultado foi revisado (Issue #65).
