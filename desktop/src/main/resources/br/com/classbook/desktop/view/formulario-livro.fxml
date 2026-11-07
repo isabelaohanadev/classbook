@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
 
-<!-- Campos do livro (Issue #58); as listas de autor e categoria vêm da API. -->
+<!-- Campos do livro (Issue #58); as listas de autor, categoria e disciplina vêm da API. -->
 <GridPane hgap="8" vgap="8" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1"
 	fx:controller="br.com.classbook.desktop.view.FormularioLivroController">
 	<columnConstraints>
@@ -29,10 +29,15 @@
 		<ComboBox fx:id="categoria" maxWidth="Infinity" promptText="Sem categoria" HBox.hgrow="ALWAYS"/>
 		<Button text="Limpar" onAction="#limparCategoria"/>
 	</HBox>
-	<Label text="Ano de publicação" GridPane.rowIndex="4"/>
-	<TextField fx:id="anoPublicacao" promptText="por exemplo, 1899" GridPane.columnIndex="1" GridPane.rowIndex="4"/>
-	<Label text="Editora" GridPane.rowIndex="5"/>
-	<TextField fx:id="editora" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
-	<Label text="Descrição" GridPane.rowIndex="6"/>
-	<TextArea fx:id="descricao" prefRowCount="3" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+	<Label text="Disciplina" GridPane.rowIndex="4"/>
+	<HBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="4">
+		<ComboBox fx:id="disciplina" maxWidth="Infinity" promptText="Sem disciplina" HBox.hgrow="ALWAYS"/>
+		<Button text="Limpar" onAction="#limparDisciplina"/>
+	</HBox>
+	<Label text="Ano de publicação" GridPane.rowIndex="5"/>
+	<TextField fx:id="anoPublicacao" promptText="por exemplo, 1899" GridPane.columnIndex="1" GridPane.rowIndex="5"/>
+	<Label text="Editora" GridPane.rowIndex="6"/>
+	<TextField fx:id="editora" GridPane.columnIndex="1" GridPane.rowIndex="6"/>
+	<Label text="Descrição" GridPane.rowIndex="7"/>
+	<TextArea fx:id="descricao" prefRowCount="3" wrapText="true" GridPane.columnIndex="1" GridPane.rowIndex="7"/>
 </GridPane>

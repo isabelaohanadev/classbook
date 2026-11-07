@@ -152,21 +152,29 @@ class FormulariosTests {
 	}
 
 	@Test
-	void edicaoDeLivroCarregaAutorECategoriaDaApiEEnviaPut() throws Exception {
+	void edicaoDeLivroCarregaAutorCategoriaEDisciplinaDaApiEEnviaPut() throws Exception {
 		api.responder("GET /api/autores", 200, """
 				[{"id": 1, "nome": "Clarice Lispector"}, {"id": 2, "nome": "Machado de Assis"}]""");
 		api.responder("GET /api/categorias", 200, """
 				[{"id": 5, "nome": "Literatura", "tipo": "LITERATURA"}]""");
+		api.responder("GET /api/disciplinas", 200, """
+				[{"id": 6, "nome": "Matemática", "codigo": "MAT-1", "serieEscolar": "PRIMEIRA_SERIE"},
+				 {"id": 7, "nome": "Língua Portuguesa", "codigo": "LP-1", "serieEscolar": "PRIMEIRA_SERIE"}]""");
 		api.responder("PUT /api/livros/3", 200, """
 				{"id": 3, "titulo": "Dom Casmurro (edição revista)", "isbn": "9788535902778",
-				 "autor": {"id": 2, "nome": "Machado de Assis"}, "categoria": {"id": 5, "nome": "Literatura"}}""");
+				 "autor": {"id": 2, "nome": "Machado de Assis"}, "categoria": {"id": 5, "nome": "Literatura"},
+				 "disciplina": {"id": 7, "nome": "Língua Portuguesa", "codigo": "LP-1"}}""");
 		LivroResponse livro = new LivroResponse(3L, "Dom Casmurro", "9788535902778", null, null, null,
 				new LivroResponse.AutorResumo(2L, "Machado de Assis"),
-				new LivroResponse.CategoriaResumo(5L, "Literatura"));
+				new LivroResponse.CategoriaResumo(5L, "Literatura"),
+				new LivroResponse.DisciplinaResumo(7L, "Língua Portuguesa", "LP-1"));
 		JanelaDeFormulario<?, ?> janela = abrir(Cadastro.livros(), livro);
 
-		esperarAte("as listas de autor e categoria chegarem", () -> escolha(janela, "autor").getValue() != null);
+		esperarAte("as listas chegarem", () -> escolha(janela, "autor").getValue() != null);
 		assertThat(naThread(() -> escolha(janela, "autor").getItems())).hasSize(2);
+		assertThat(naThread(() -> this.<DisciplinaResponse>escolha(janela, "disciplina").getItems())).hasSize(2);
+		assertThat(naThread(() -> this.<DisciplinaResponse>escolha(janela, "disciplina").getValue().id()))
+				.isEqualTo(7L);
 		naThread(() -> {
 			campo(janela, "titulo").setText("Dom Casmurro (edição revista)");
 			clicar(janela, JanelaDeFormulario.SALVAR);
@@ -177,7 +185,35 @@ class FormulariosTests {
 		assertThat(api.alteracoes()).hasSize(1).first().satisfies(requisicao -> {
 			assertThat(requisicao.rota()).isEqualTo("PUT /api/livros/3");
 			assertThat(requisicao.corpo()).contains("\"titulo\":\"Dom Casmurro (edição revista)\"", "\"autorId\":2",
-					"\"categoriaId\":5", "\"anoPublicacao\":null");
+					"\"categoriaId\":5", "\"disciplinaId\":7", "\"anoPublicacao\":null");
+		});
+	}
+
+	@Test
+	void edicaoDeLivroSemDisciplinaEnviaDisciplinaIdNulo() throws Exception {
+		api.responder("GET /api/autores", 200, """
+				[{"id": 2, "nome": "Machado de Assis"}]""");
+		api.responder("GET /api/categorias", 200, "[]");
+		api.responder("GET /api/disciplinas", 200, """
+				[{"id": 7, "nome": "Língua Portuguesa", "codigo": "LP-1", "serieEscolar": "PRIMEIRA_SERIE"}]""");
+		api.responder("PUT /api/livros/3", 200, """
+				{"id": 3, "titulo": "Dom Casmurro", "isbn": "9788535902778",
+				 "autor": {"id": 2, "nome": "Machado de Assis"}}""");
+		LivroResponse livro = new LivroResponse(3L, "Dom Casmurro", "9788535902778", null, null, null,
+				new LivroResponse.AutorResumo(2L, "Machado de Assis"), null, null);
+		JanelaDeFormulario<?, ?> janela = abrir(Cadastro.livros(), livro);
+
+		esperarAte("as listas chegarem", () -> escolha(janela, "autor").getValue() != null);
+		assertThat(naThread(() -> this.<DisciplinaResponse>escolha(janela, "disciplina").getValue())).isNull();
+		naThread(() -> {
+			clicar(janela, JanelaDeFormulario.SALVAR);
+			return null;
+		});
+		esperarAte("a API confirmar a edição", () -> !salvos.isEmpty());
+
+		assertThat(api.alteracoes()).hasSize(1).first().satisfies(requisicao -> {
+			assertThat(requisicao.rota()).isEqualTo("PUT /api/livros/3");
+			assertThat(requisicao.corpo()).contains("\"disciplinaId\":null", "\"categoriaId\":null");
 		});
 	}
 

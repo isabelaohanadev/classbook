@@ -1,5 +1,6 @@
 package br.com.classbook.model;
 
+import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import jakarta.persistence.EntityManager;
@@ -11,8 +12,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Confere o mapeamento de {@link Livro} para a tabela {@code livro} da migration inicial, inclusive o
- * relacionamento obrigatório com {@link Autor} e o opcional com {@link Categoria}. A transação é
- * desfeita ao final.
+ * relacionamento obrigatório com {@link Autor} e os opcionais com {@link Categoria} e {@link Disciplina}.
+ * A transação é desfeita ao final.
  */
 @SpringBootTest
 @Transactional
@@ -66,6 +67,7 @@ class LivroTests {
 		assertThat(lido.getDescricao()).isNull();
 		assertThat(lido.getEditora()).isNull();
 		assertThat(lido.getCategoria()).isNull();
+		assertThat(lido.getDisciplina()).isNull();
 	}
 
 	@Test
@@ -90,6 +92,32 @@ class LivroTests {
 		Livro lido = entityManager.find(Livro.class, livro.getId());
 
 		assertThat(lido.getCategoria().getId()).isEqualTo(categoria.getId());
+	}
+
+	@Test
+	void gravaELeORelacionamentoComDisciplina() {
+		Autor autor = new Autor();
+		autor.setNome("Machado de Assis");
+		entityManager.persist(autor);
+
+		Disciplina disciplina = new Disciplina();
+		disciplina.setNome("Língua Portuguesa");
+		disciplina.setCodigo(codigo("LP-1"));
+		disciplina.setSerieEscolar(SerieEscolar.PRIMEIRA_SERIE);
+		entityManager.persist(disciplina);
+
+		Livro livro = new Livro();
+		livro.setTitulo("Dom Casmurro");
+		livro.setIsbn("9780306406157");
+		livro.setAutor(autor);
+		livro.setDisciplina(disciplina);
+		entityManager.persist(livro);
+		entityManager.clear();
+
+		Livro lido = entityManager.find(Livro.class, livro.getId());
+
+		assertThat(lido.getDisciplina().getId()).isEqualTo(disciplina.getId());
+		assertThat(lido.getCategoria()).isNull();
 	}
 
 }

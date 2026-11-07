@@ -32,7 +32,9 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.classbook.dto.AutorRequest;
 import br.com.classbook.dto.DisciplinaRequest;
+import br.com.classbook.dto.LivroRequest;
 import br.com.classbook.dto.MaterialDigitalRequest;
 import br.com.classbook.model.FormatoMaterial;
 import br.com.classbook.model.SerieEscolar;
@@ -192,6 +194,22 @@ class DisciplinaControllerTests {
 		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 		enviar(post("/api/materiais"), new MaterialDigitalRequest("Lista de funções", FormatoMaterial.PDF,
 				"https://exemplo.com/funcoes.pdf", null, null, id))
+				.andExpect(status().isCreated());
+
+		mockMvc.perform(delete("/api/disciplinas/{id}", id)).andExpect(status().isConflict());
+		mockMvc.perform(get("/api/disciplinas/{id}", id)).andExpect(status().isOk());
+	}
+
+	@Test
+	void exclusaoDeDisciplinaComLivrosVinculadosRespondeConflict() throws Exception {
+		Long id = cadastrar(new DisciplinaRequest("Língua Portuguesa", codigo("LP-1"), null,
+				SerieEscolar.PRIMEIRA_SERIE));
+		String autor = enviar(post("/api/autores"), new AutorRequest("Machado de Assis", null, null, null))
+				.andExpect(status().isCreated())
+				.andReturn().getResponse().getContentAsString();
+		Long autorId = ((Number) JsonPath.read(autor, "$.id")).longValue();
+		enviar(post("/api/livros"), new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId,
+				null, id))
 				.andExpect(status().isCreated());
 
 		mockMvc.perform(delete("/api/disciplinas/{id}", id)).andExpect(status().isConflict());

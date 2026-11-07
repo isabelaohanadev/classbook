@@ -10,8 +10,8 @@ import jakarta.persistence.ManyToOne;
 
 /**
  * Livro do acervo, mapeado para a tabela {@code livro} (ver docs/MODELAGEM.md). Relacionamentos
- * unidirecionais com {@link Autor} (obrigatório) e {@link Categoria} (opcional): só o Livro conhece o
- * Autor e a Categoria (ver docs/ARQUITETURA.md).
+ * unidirecionais com {@link Autor} (obrigatório), {@link Categoria} (opcional) e {@link Disciplina}
+ * (opcional): só o Livro conhece o Autor, a Categoria e a Disciplina (ver docs/ARQUITETURA.md).
  */
 @Entity
 public class Livro {
@@ -37,6 +37,10 @@ public class Livro {
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "categoria_id")
 	private Categoria categoria;
+
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "disciplina_id")
+	private Disciplina disciplina;
 
 	public Long getId() {
 		return id;
@@ -96,6 +100,14 @@ public class Livro {
 
 	public void setCategoria(Categoria categoria) {
 		this.categoria = categoria;
+	}
+
+	public Disciplina getDisciplina() {
+		return disciplina;
+	}
+
+	public void setDisciplina(Disciplina disciplina) {
+		this.disciplina = disciplina;
 	}
 
 }

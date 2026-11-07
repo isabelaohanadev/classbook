@@ -35,8 +35,9 @@ import br.com.classbook.desktop.modelo.LivroResponse;
  * para a janela não travar enquanto a resposta não chega. Os botões Novo, Editar e Excluir usam o mesmo
  * formulário dos outros cadastros (Issues #58 e #61), e o resultado aparece no aviso do cabeçalho.
  *
- * <p>Busca e filtros (Issue #57): o título, o autor e a categoria disparam {@link #pesquisar()} sozinhos,
- * a cada mudança, com {@link ClienteApi#pesquisarLivros}; os três podem ser combinados. Como cada mudança
+ * <p>Busca e filtros (Issue #57): o campo de busca (que procura no título, no autor, na categoria e no ano
+ * de publicação) e os combos de autor e categoria disparam {@link #pesquisar()} sozinhos, a cada mudança,
+ * com {@link ClienteApi#pesquisarLivros}; os três podem ser combinados. Como cada mudança
  * chama a API de novo, {@link #ultimaPesquisa} garante que só o resultado da pesquisa mais recente chega a
  * aparecer na tabela, mesmo que uma resposta mais antiga volte depois (a chamada roda em segundo plano).
  *
@@ -54,7 +55,7 @@ public class CatalogoLivrosController {
 	private Label aviso;
 
 	@FXML
-	private TextField campoTitulo;
+	private TextField campoBusca;
 
 	@FXML
 	private ComboBox<AutorResponse> comboAutor;
@@ -87,6 +88,9 @@ public class CatalogoLivrosController {
 	private TableColumn<LivroResponse, String> colunaCategoria;
 
 	@FXML
+	private TableColumn<LivroResponse, String> colunaDisciplina;
+
+	@FXML
 	private TableColumn<LivroResponse, String> colunaAno;
 
 	private final Cadastro<LivroRequest, LivroResponse> cadastro = Cadastro.livros();
@@ -114,6 +118,7 @@ public class CatalogoLivrosController {
 		colunaTitulo.setCellValueFactory(dados -> new SimpleStringProperty(dados.getValue().titulo()));
 		colunaAutor.setCellValueFactory(dados -> new SimpleStringProperty(dados.getValue().autor().nome()));
 		colunaCategoria.setCellValueFactory(dados -> new SimpleStringProperty(nomeDaCategoria(dados.getValue())));
+		colunaDisciplina.setCellValueFactory(dados -> new SimpleStringProperty(nomeDaDisciplina(dados.getValue())));
 		colunaAno.setCellValueFactory(dados -> new SimpleStringProperty(ano(dados.getValue())));
 		detalhes.disableProperty().bind(tabela.getSelectionModel().selectedItemProperty().isNull());
 		editar.disableProperty().bind(tabela.getSelectionModel().selectedItemProperty().isNull());
@@ -125,7 +130,7 @@ public class CatalogoLivrosController {
 		});
 		comboAutor.setConverter(Campos.exibicao(AutorResponse::nome));
 		comboCategoria.setConverter(Campos.exibicao(CategoriaResponse::nome));
-		campoTitulo.textProperty().addListener((observavel, anterior, atual) -> pesquisar());
+		campoBusca.textProperty().addListener((observavel, anterior, atual) -> pesquisar());
 		comboAutor.valueProperty().addListener((observavel, anterior, atual) -> pesquisar());
 		comboCategoria.valueProperty().addListener((observavel, anterior, atual) -> pesquisar());
 	}
@@ -142,17 +147,17 @@ public class CatalogoLivrosController {
 					comboAutor.getItems().setAll(listas.autores());
 					comboCategoria.getItems().setAll(listas.categorias());
 				}, falha -> {
-					// Os filtros de autor e categoria ficam vazios; a pesquisa por título continua funcionando.
+					// Os filtros de autor e categoria ficam vazios; a busca por texto continua funcionando.
 				});
 	}
 
 	/** Dispara {@code GET /api/livros} com os filtros atuais; chamado a cada mudança neles. */
 	private void pesquisar() {
 		long pesquisaAtual = ++ultimaPesquisa;
-		String titulo = campoTitulo.getText();
+		String busca = campoBusca.getText();
 		Long autorId = comboAutor.getValue() == null ? null : comboAutor.getValue().id();
 		Long categoriaId = comboCategoria.getValue() == null ? null : comboCategoria.getValue().id();
-		EmSegundoPlano.executar(() -> api.pesquisarLivros(titulo, autorId, categoriaId),
+		EmSegundoPlano.executar(() -> api.pesquisarLivros(busca, autorId, categoriaId),
 				livros -> aplicarSeForAPesquisaAtual(pesquisaAtual, () -> exibir(livros)),
 				erro -> aplicarSeForAPesquisaAtual(pesquisaAtual, () -> falhar(erro)));
 	}
@@ -166,7 +171,7 @@ public class CatalogoLivrosController {
 
 	@FXML
 	void limparFiltros() {
-		campoTitulo.clear();
+		campoBusca.clear();
 		comboAutor.setValue(null);
 		comboCategoria.setValue(null);
 	}
@@ -265,9 +270,9 @@ public class CatalogoLivrosController {
 		mensagemVazia.getStyleClass().add(erro ? "mensagem-erro" : "mensagem-vazia");
 	}
 
-	/** Se há algum filtro preenchido (título, autor ou categoria), para a mensagem e a contagem certas. */
+	/** Se há algum filtro preenchido (busca, autor ou categoria), para a mensagem e a contagem certas. */
 	private boolean temFiltroAtivo() {
-		return !campoTitulo.getText().isBlank() || comboAutor.getValue() != null || comboCategoria.getValue() != null;
+		return !campoBusca.getText().isBlank() || comboAutor.getValue() != null || comboCategoria.getValue() != null;
 	}
 
 	private static String contagem(int total, boolean filtrado) {
@@ -292,6 +297,14 @@ public class CatalogoLivrosController {
 	/** O nome da categoria do livro, ou {@value #TRACO} quando o livro não tem categoria. */
 	static String nomeDaCategoria(LivroResponse livro) {
 		return livro.categoria() == null ? TRACO : livro.categoria().nome();
+	}
+
+	/**
+	 * O código e o nome da disciplina do livro, ou {@value #TRACO} quando o livro não tem disciplina. O código
+	 * vem junto porque o nome não é único (a mesma disciplina existe em séries diferentes).
+	 */
+	static String nomeDaDisciplina(LivroResponse livro) {
+		return livro.disciplina() == null ? TRACO : livro.disciplina().codigo() + " — " + livro.disciplina().nome();
 	}
 
 	private static boolean confirmarComAlerta(String pergunta) {

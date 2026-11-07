@@ -51,6 +51,9 @@ public class DetalhesLivroController {
 	private Label categoria;
 
 	@FXML
+	private Label disciplina;
+
+	@FXML
 	private Label isbn;
 
 	@FXML
@@ -95,6 +98,8 @@ public class DetalhesLivroController {
 		titulo.setText(livro.titulo());
 		autor.setText(livro.autor().nome());
 		categoria.setText(livro.categoria() == null ? TRACO : livro.categoria().nome());
+		disciplina.setText(livro.disciplina() == null ? TRACO
+				: livro.disciplina().codigo() + " — " + livro.disciplina().nome());
 		isbn.setText(livro.isbn());
 		ano.setText(CatalogoLivrosController.ano(livro));
 		editora.setText(Campos.ouTraco(livro.editora()));

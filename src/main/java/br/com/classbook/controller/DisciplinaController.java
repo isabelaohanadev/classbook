@@ -81,11 +81,11 @@ public class DisciplinaController {
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	@Operation(summary = "Exclui uma disciplina", description = "Só é possível depois de excluir os materiais "
-			+ "digitais vinculados a ela.")
+			+ "digitais e os livros vinculados a ela.")
 	@ApiResponse(responseCode = "204", description = "Disciplina excluída")
 	@ApiResponse(responseCode = "400", description = "ID que não é número")
 	@ApiResponse(responseCode = "404", description = "Disciplina não encontrada")
-	@ApiResponse(responseCode = "409", description = "A disciplina tem materiais digitais vinculados")
+	@ApiResponse(responseCode = "409", description = "A disciplina tem materiais digitais ou livros vinculados")
 	public void excluir(@PathVariable Long id) {
 		disciplinaService.excluir(id);
 	}

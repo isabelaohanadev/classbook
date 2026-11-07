@@ -17,14 +17,16 @@
 		<Label fx:id="autor" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 		<Label text="Categoria:" styleClass="rotulo-detalhe" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
 		<Label fx:id="categoria" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-		<Label text="ISBN:" styleClass="rotulo-detalhe" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-		<Label fx:id="isbn" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
-		<Label text="Ano:" styleClass="rotulo-detalhe" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
-		<Label fx:id="ano" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
-		<Label text="Editora:" styleClass="rotulo-detalhe" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
-		<Label fx:id="editora" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
-		<Label text="Descrição:" styleClass="rotulo-detalhe" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
-		<Label fx:id="descricao" wrapText="true" maxWidth="320" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+		<Label text="Disciplina:" styleClass="rotulo-detalhe" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+		<Label fx:id="disciplina" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+		<Label text="ISBN:" styleClass="rotulo-detalhe" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+		<Label fx:id="isbn" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+		<Label text="Ano:" styleClass="rotulo-detalhe" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+		<Label fx:id="ano" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+		<Label text="Editora:" styleClass="rotulo-detalhe" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+		<Label fx:id="editora" GridPane.rowIndex="6" GridPane.columnIndex="1"/>
+		<Label text="Descrição:" styleClass="rotulo-detalhe" GridPane.rowIndex="7" GridPane.columnIndex="0"/>
+		<Label fx:id="descricao" wrapText="true" maxWidth="320" GridPane.rowIndex="7" GridPane.columnIndex="1"/>
 	</GridPane>
 	<VBox spacing="8">
 		<Label text="Materiais digitais" styleClass="subtitulo-secao"/>

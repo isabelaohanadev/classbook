@@ -12,6 +12,7 @@ import br.com.classbook.exception.ConflitoException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
 import br.com.classbook.model.Disciplina;
 import br.com.classbook.repository.DisciplinaRepository;
+import br.com.classbook.repository.LivroRepository;
 import br.com.classbook.repository.MaterialDigitalRepository;
 
 @Service
@@ -21,10 +22,13 @@ public class DisciplinaService {
 
 	private final MaterialDigitalRepository materialDigitalRepository;
 
+	private final LivroRepository livroRepository;
+
 	public DisciplinaService(DisciplinaRepository disciplinaRepository,
-			MaterialDigitalRepository materialDigitalRepository) {
+			MaterialDigitalRepository materialDigitalRepository, LivroRepository livroRepository) {
 		this.disciplinaRepository = disciplinaRepository;
 		this.materialDigitalRepository = materialDigitalRepository;
+		this.livroRepository = livroRepository;
 	}
 
 	@Transactional
@@ -62,6 +66,9 @@ public class DisciplinaService {
 		Disciplina disciplina = buscarOuLancar(id);
 		if (materialDigitalRepository.existsByDisciplinaId(id)) {
 			throw new ConflitoException("Disciplina " + id + " possui materiais vinculados.");
+		}
+		if (livroRepository.existsByDisciplinaId(id)) {
+			throw new ConflitoException("Disciplina " + id + " possui livros vinculados.");
 		}
 		disciplinaRepository.delete(disciplina);
 	}

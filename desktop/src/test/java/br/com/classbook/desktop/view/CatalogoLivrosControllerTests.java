@@ -95,9 +95,20 @@ class CatalogoLivrosControllerTests {
 	}
 
 	@Test
+	void nomeDaDisciplinaMostraCodigoENomeOuTracoQuandoOLivroNaoTemDisciplina() {
+		LivroResponse semDisciplina = livro(null);
+		LivroResponse comDisciplina = new LivroResponse(1L, "Dom Casmurro", "978-85-359-0277-5", 1899, null, null,
+				new AutorResumo(1L, "Machado de Assis"), null,
+				new LivroResponse.DisciplinaResumo(3L, "Língua Portuguesa", "LP-1"));
+
+		assertThat(CatalogoLivrosController.nomeDaDisciplina(semDisciplina)).isEqualTo("—");
+		assertThat(CatalogoLivrosController.nomeDaDisciplina(comDisciplina)).isEqualTo("LP-1 — Língua Portuguesa");
+	}
+
+	@Test
 	void anoUsaUmTracoQuandoOLivroNaoTemAno() {
 		LivroResponse semAno = new LivroResponse(2L, "A Hora da Estrela", "9788532508120", null, null, null,
-				new AutorResumo(2L, "Clarice Lispector"), null);
+				new AutorResumo(2L, "Clarice Lispector"), null, null);
 
 		assertThat(CatalogoLivrosController.ano(livro(null))).isEqualTo("1899");
 		assertThat(CatalogoLivrosController.ano(semAno)).isEqualTo("—");
@@ -133,13 +144,13 @@ class CatalogoLivrosControllerTests {
 
 		api.responder("GET /api/livros", 200, UM_LIVRO);
 		naThread(() -> {
-			campoTitulo().setText("Dom");
+			campoBusca().setText("Dom");
 			return null;
 		});
 
 		esperarAte("a pesquisa filtrar", () -> tabela().getItems().size() == 1);
 		assertThat(naThread(() -> tabela().getItems().getFirst().titulo())).isEqualTo("Dom Casmurro");
-		assertThat(ultimaConsultaEm("GET /api/livros")).isEqualTo("titulo=Dom");
+		assertThat(ultimaConsultaEm("GET /api/livros")).isEqualTo("busca=Dom");
 	}
 
 	@Test
@@ -163,11 +174,11 @@ class CatalogoLivrosControllerTests {
 				() -> "autorId=1&categoriaId=1".equals(ultimaConsultaEm("GET /api/livros")));
 
 		naThread(() -> {
-			campoTitulo().setText("Dom");
+			campoBusca().setText("Dom");
 			return null;
 		});
 		esperarAte("o título entrar na combinação",
-				() -> "titulo=Dom&autorId=1&categoriaId=1".equals(ultimaConsultaEm("GET /api/livros")));
+				() -> "busca=Dom&autorId=1&categoriaId=1".equals(ultimaConsultaEm("GET /api/livros")));
 	}
 
 	@Test
@@ -177,12 +188,12 @@ class CatalogoLivrosControllerTests {
 		esperarAte("o filtro inicial carregar", () -> tabela().getItems().size() == 1);
 		esperarAte("os autores chegarem", () -> !comboAutor().getItems().isEmpty());
 		naThread(() -> {
-			campoTitulo().setText("Dom");
+			campoBusca().setText("Dom");
 			comboAutor().setValue(comboAutor().getItems().get(0));
 			return null;
 		});
 		esperarAte("o filtro combinado ser aplicado",
-				() -> "titulo=Dom&autorId=1".equals(ultimaConsultaEm("GET /api/livros")));
+				() -> "busca=Dom&autorId=1".equals(ultimaConsultaEm("GET /api/livros")));
 
 		api.responder("GET /api/livros", 200, TRES_LIVROS);
 		naThread(() -> {
@@ -191,7 +202,7 @@ class CatalogoLivrosControllerTests {
 		});
 
 		esperarAte("a lista completa voltar", () -> tabela().getItems().size() == 3);
-		assertThat(naThread(() -> campoTitulo().getText())).isEmpty();
+		assertThat(naThread(() -> campoBusca().getText())).isEmpty();
 		assertThat(naThread(comboAutor()::getValue)).isNull();
 		assertThat(naThread(comboCategoria()::getValue)).isNull();
 	}
@@ -204,7 +215,7 @@ class CatalogoLivrosControllerTests {
 
 		api.responder("GET /api/livros", 200, "[]");
 		naThread(() -> {
-			campoTitulo().setText("Não existe");
+			campoBusca().setText("Não existe");
 			return null;
 		});
 
@@ -286,8 +297,8 @@ class CatalogoLivrosControllerTests {
 		return (Label) tabela().getPlaceholder();
 	}
 
-	private TextField campoTitulo() {
-		return (TextField) tela.lookup("#campoTitulo");
+	private TextField campoBusca() {
+		return (TextField) tela.lookup("#campoBusca");
 	}
 
 	@SuppressWarnings("unchecked")
@@ -306,7 +317,7 @@ class CatalogoLivrosControllerTests {
 
 	private static LivroResponse livro(CategoriaResumo categoria) {
 		return new LivroResponse(1L, "Dom Casmurro", "978-85-359-0277-5", 1899, null, null,
-				new AutorResumo(1L, "Machado de Assis"), categoria);
+				new AutorResumo(1L, "Machado de Assis"), categoria, null);
 	}
 
 }

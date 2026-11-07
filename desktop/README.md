@@ -23,7 +23,7 @@ desktop/
 
 - **FXML:** cada tela tem um `.fxml` (em `resources`, no mesmo pacote do controller) carregado por `FXMLLoader`. Sem Scene Builder nem `module-info.java`: o projeto roda em classpath simples (sem JPMS), para manter o setup enxuto.
 - **Navegação:** a tela principal (Issue #55) usa um `BorderPane` raiz — menu lateral à esquerda, conteúdo no centro — e troca o `center` ao clicar em cada seção. Sem roteador à parte: é pouca coisa para justificar uma abstração própria.
-- **Cliente HTTP (Issue #59):** o `ClienteApi` (pacote `api`) usa o `java.net.http.HttpClient` com Jackson. Para cada recurso, ele tem as cinco operações (`api.autores().listar()`, `buscar(id)`, `cadastrar(request)`, `editar(id, request)` e `excluir(id)`), e para os livros tem também `pesquisarLivros(titulo, autorId, categoriaId)`. Os `Request` e `Response` ficam no pacote `modelo`, com os mesmos campos dos DTOs do backend.
+- **Cliente HTTP (Issue #59):** o `ClienteApi` (pacote `api`) usa o `java.net.http.HttpClient` com Jackson. Para cada recurso, ele tem as cinco operações (`api.autores().listar()`, `buscar(id)`, `cadastrar(request)`, `editar(id, request)` e `excluir(id)`), e para os livros tem também `pesquisarLivros(busca, autorId, categoriaId)`. Os `Request` e `Response` ficam no pacote `modelo`, com os mesmos campos dos DTOs do backend.
 - **Erros da API:** uma resposta `4xx` ou `5xx` vira `ErroDaApiException`, com o código e a mensagem que a API mandou, seguida dos campos inválidos. Se a API não responde (backend fora do ar ou URL errada), o cliente lança `ApiIndisponivelException`, com uma mensagem que pode ir direto para a tela.
 - **Fora da thread da interface:** as chamadas do `ClienteApi` esperam a resposta, então as telas as fazem por `EmSegundoPlano` (pacote `view`). Ele roda a chamada numa thread separada e devolve o resultado, ou o erro, na thread do JavaFX:
 
@@ -60,12 +60,14 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
   (Issue #55). A navegação em si não depende do backend: cada tela carrega os dados em segundo plano.
 - Cliente HTTP dos cinco recursos e da pesquisa de livros, com os erros da API convertidos em exceções
   e as chamadas fora da thread da interface (Issue #59).
-- Catálogo de livros: lista título, autor, categoria e ano com `GET /api/livros`, chamado por
+- Catálogo de livros: lista título, autor, categoria, disciplina e ano com `GET /api/livros`, chamado por
   `EmSegundoPlano` (Issue #56). Lista vazia ou erro da API mostram uma mensagem no lugar da tabela. Os
-  botões Novo livro, Editar e Excluir usam o formulário de livro (Issue #58), e um livro sem categoria ou
-  sem ano mostra "—".
-- Busca e filtros no catálogo (Issue #57): o campo de título e os combos de autor e categoria disparam
-  `ClienteApi.pesquisarLivros(titulo, autorId, categoriaId)` a cada mudança, e os três são combináveis.
+  botões Novo livro, Editar e Excluir usam o formulário de livro (Issue #58), e um livro sem categoria,
+  disciplina ou ano mostra "—".
+- Busca e filtros no catálogo (Issue #57): o campo de busca e os combos de autor e categoria disparam
+  `ClienteApi.pesquisarLivros(busca, autorId, categoriaId)` a cada mudança, e os três são combináveis. O campo
+  de busca procura o texto no título, no nome do autor, no nome da categoria e no ano de publicação (por
+  exemplo, `1899` ou `machado`); os combos continuam filtrando exatamente por autor e por categoria.
   "Limpar filtros" volta a mostrar todos os livros. Sem resultado, a mensagem e a contagem deixam claro
   que é a pesquisa que não achou nada, não que o acervo está vazio ("Nenhum livro encontrado com esses
   filtros."). Como cada mudança nos filtros chama a API de novo, um contador (`ultimaPesquisa`) garante
@@ -79,7 +81,7 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
   a rota e o formulário de cada recurso. Os livros usam o catálogo. Cada formulário é um FXML
   (`formulario-*.fxml`) aberto pela `JanelaDeFormulario`:
   - Os campos obrigatórios têm `*` e ficam marcados se estiverem vazios, sem chamar a API.
-  - As listas de autor, categoria e disciplina vêm da API.
+  - As listas de autor, categoria e disciplina vêm da API. No livro, a categoria e a disciplina são opcionais (botão Limpar); editar um livro sem escolher a disciplina a remove, porque o `PUT` substitui o registro inteiro.
   - Cancelar descarta tudo sem chamar a API.
 - Mensagens de sucesso e de erro (Issue #61):
   - Cadastro, edição e exclusão bem-sucedidos mostram o aviso no cabeçalho ("Disciplina cadastrada.").
@@ -88,8 +90,8 @@ Se a propriedade de sistema `classbook.api.url` estiver definida na JVM da aplic
   - Com o backend fora do ar, aparece "Não foi possível falar com a API em ...". Um erro inesperado
     mostra uma mensagem genérica, sem stack trace (`Mensagens`).
 - Detalhes do livro e materiais digitais (Issue #60): o botão Detalhes abre `detalhes-livro.fxml`
-  (`DetalhesLivroController`) num diálogo com todos os dados do livro selecionado (incluindo autor e
-  categoria) e uma área de materiais digitais filtrável por disciplina. Pela modelagem, materiais se ligam
+  (`DetalhesLivroController`) num diálogo com todos os dados do livro selecionado (incluindo autor,
+  categoria e disciplina) e uma área de materiais digitais filtrável por disciplina. Pela modelagem, materiais se ligam
   a disciplinas, não a livros, então essa área não depende do livro aberto — é um jeito de navegar os
   materiais a partir da mesma tela. A lista de disciplinas mostra `código — nome`, porque a API só exige
   que o código seja único. Cada material tem um link que abre no navegador padrão, pelo `HostServices` do

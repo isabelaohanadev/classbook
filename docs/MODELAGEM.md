@@ -1,6 +1,6 @@
 # Modelagem do ClassBook
 
-> **Revisada nas Issues #3 e #4.** As cinco entidades foram revisadas e as decisões estão em [Decisões da revisão conjunta](#decisões-da-revisão-conjunta). Os três relacionamentos e o contrato inicial da API estão definidos (ver [Decisões dos relacionamentos](#decisões-dos-relacionamentos)). As tabelas são criadas pela migration inicial, [`V1__criar_tabelas_iniciais.sql`](../src/main/resources/db/migration/V1__criar_tabelas_iniciais.sql) (Issue #8); as entidades JPA ainda não foram criadas.
+> **Revisada nas Issues #3 e #4.** As cinco entidades foram revisadas e as decisões estão em [Decisões da revisão conjunta](#decisões-da-revisão-conjunta). Os três relacionamentos iniciais e o contrato inicial da API estão definidos (ver [Decisões dos relacionamentos](#decisões-dos-relacionamentos)); o relacionamento [Livro → Disciplina](#livro--disciplina) foi acrescentado depois, pela migration `V202611051836__adiciona_disciplina_em_livro.sql`. As tabelas são criadas pela migration inicial, [`V1__criar_tabelas_iniciais.sql`](../src/main/resources/db/migration/V1__criar_tabelas_iniciais.sql) (Issue #8); as entidades JPA ainda não foram criadas.
 
 ## Entidades e atributos
 
@@ -17,9 +17,10 @@ Restrições e índices têm nome explícito, para que a mensagem de erro do ban
 | `uk_disciplina_codigo` | `disciplina` | `UNIQUE (codigo)` |
 | `fk_livro_autor` | `livro` | `autor_id` → `autor`, `ON DELETE RESTRICT` |
 | `fk_livro_categoria` | `livro` | `categoria_id` → `categoria`, `ON DELETE RESTRICT` |
+| `fk_livro_disciplina` | `livro` | `disciplina_id` → `disciplina`, `ON DELETE RESTRICT` |
 | `fk_material_digital_disciplina` | `material_digital` | `disciplina_id` → `disciplina`, `ON DELETE RESTRICT` |
 
-Cada chave estrangeira também tem um índice (`idx_livro_autor_id`, `idx_livro_categoria_id`, `idx_material_digital_disciplina_id`), porque o PostgreSQL não cria um automaticamente. Eles servem aos filtros da pesquisa de livros e à verificação de registro em uso antes de uma exclusão.
+Cada chave estrangeira também tem um índice (`idx_livro_autor_id`, `idx_livro_categoria_id`, `idx_livro_disciplina_id`, `idx_material_digital_disciplina_id`), porque o PostgreSQL não cria um automaticamente. Eles servem aos filtros da pesquisa de livros e à verificação de registro em uso antes de uma exclusão.
 
 ### Autor (`autor`)
 
@@ -45,6 +46,7 @@ Nome **não** é único (homônimos existem).
 | editora | String | `editora VARCHAR(120)` | opcional |
 | autor | Autor | `autor_id BIGINT` | **obrigatório**, FK para `autor` |
 | categoria | Categoria | `categoria_id BIGINT` | **opcional**, FK para `categoria` |
+| disciplina | Disciplina | `disciplina_id BIGINT` | **opcional**, FK para `disciplina` (migration posterior à inicial) |
 
 Sobre o ISBN:
 
@@ -101,6 +103,7 @@ Os valores fechados (`tipo`, `formato` e `serieEscolar`) são **enums Java** em 
 | --- | --- | --- | --- |
 | Livro → Autor | muitos para um | `livro.autor_id` | `ON DELETE RESTRICT` |
 | Livro → Categoria | muitos para um (opcional) | `livro.categoria_id` | `ON DELETE RESTRICT` |
+| Livro → Disciplina | muitos para um (opcional) | `livro.disciplina_id` | `ON DELETE RESTRICT` |
 | MaterialDigital → Disciplina | muitos para um | `material_digital.disciplina_id` | `ON DELETE RESTRICT` |
 
 Excluir um autor, categoria ou disciplina que ainda é referenciado deve responder **409 Conflict**, tratado no `service` e protegido pela FK no banco.
@@ -127,6 +130,17 @@ Excluir um autor, categoria ou disciplina que ainda é referenciado deve respond
 | Mapeamento JPA | `@ManyToOne(fetch = LAZY)` com `@JoinColumn(name = "categoria_id")`. Unidirecional e sem `cascade`. |
 | API | Entrada: `categoriaId` (opcional). Saída: `categoria: {id, nome}`, ou `null` quando o livro não tem categoria. |
 
+### Livro → Disciplina
+
+| Aspecto | Definição |
+| --- | --- |
+| Cardinalidade | N:1 opcional. Um livro tem no máximo uma disciplina; uma disciplina pode ter vários livros ou nenhum. |
+| Lado dono da FK | `livro.disciplina_id` |
+| Nulabilidade | Aceita `NULL`: o livro pode não ter disciplina, e os livros cadastrados antes dessa migration continuam válidos. |
+| Exclusão | `ON DELETE RESTRICT`: uma disciplina com livros não é excluída (`409`). Excluir um livro não afeta a disciplina. |
+| Mapeamento JPA | `@ManyToOne(fetch = LAZY)` com `@JoinColumn(name = "disciplina_id")`. Unidirecional e sem `cascade`: `Disciplina` não tem lista de livros. |
+| API | Entrada: `disciplinaId` (opcional). Saída: `disciplina: {id, nome, codigo}`, ou `null` quando o livro não tem disciplina. O `codigo` entra no resumo porque o nome da disciplina não é único (como em `MaterialDigital`). |
+
 ### MaterialDigital → Disciplina
 
 | Aspecto | Definição |
@@ -143,7 +157,7 @@ Excluir um autor, categoria ou disciplina que ainda é referenciado deve respond
 
 - **Excluir um registro em uso:** como o lado "um" não guarda lista, o `service` consulta o repositório do lado "muitos" (por exemplo, `LivroRepository.existsByAutorId`) e responde `409` antes de tentar excluir. A FK com `RESTRICT` é a rede de segurança: se a violação de integridade chegar ao tratador global, também vira `409`, nunca `500`.
 - **Referência inexistente no corpo** (`autorId`, `categoriaId`, `disciplinaId`): responde `400` com mensagem clara (decisão 2 em [Decisões dos relacionamentos](#decisões-dos-relacionamentos)).
-- **`LAZY` com `open-in-view=false`:** a associação só pode ser lida dentro da transação. O `service` converte a entidade em DTO dentro do método `@Transactional`, nunca no controller, e a listagem e a pesquisa carregam autor e categoria na mesma consulta (`@EntityGraph(attributePaths = {"autor", "categoria"})` ou `LEFT JOIN FETCH`), para não gerar uma consulta extra por livro. Como a categoria é opcional, o `fetch` precisa ser `LEFT`: um `JOIN FETCH` simples esconderia os livros sem categoria.
+- **`LAZY` com `open-in-view=false`:** a associação só pode ser lida dentro da transação. O `service` converte a entidade em DTO dentro do método `@Transactional`, nunca no controller, e a listagem e a pesquisa carregam autor, categoria e disciplina na mesma consulta (`@EntityGraph(attributePaths = {"autor", "categoria", "disciplina"})` ou `LEFT JOIN FETCH`), para não gerar uma consulta extra por livro. Como a categoria e a disciplina são opcionais, o `fetch` precisa ser `LEFT`: um `JOIN FETCH` simples esconderia os livros sem categoria ou sem disciplina.
 - **O que o Hibernate valida:** com `ddl-auto=validate`, ele confere tabelas e colunas, mas não `NOT NULL`, `UNIQUE`, chave estrangeira nem `ON DELETE`. Essas regras estão declaradas na migration inicial e são conferidas pelo teste `MigrationInicialTests`.
 
 ## Diagrama ER
@@ -152,6 +166,7 @@ Excluir um autor, categoria ou disciplina que ainda é referenciado deve respond
 erDiagram
     AUTOR ||--o{ LIVRO : "escreve"
     CATEGORIA |o--o{ LIVRO : "classifica"
+    DISCIPLINA |o--o{ LIVRO : "reúne"
     DISCIPLINA ||--o{ MATERIAL_DIGITAL : "possui"
 
     AUTOR {
@@ -170,6 +185,7 @@ erDiagram
         varchar editora
         bigint autor_id FK
         bigint categoria_id FK
+        bigint disciplina_id FK
     }
     CATEGORIA {
         bigint id PK
@@ -203,6 +219,7 @@ erDiagram
 - **DTOs na entrada e na saída.** As entidades nunca são expostas pela API. Os DTOs são *records* Java em `dto/`, `XxxRequest` na entrada e `XxxResponse` na saída, como combinado na Issue #9 (ver [ARQUITETURA](ARQUITETURA.md#dtos)). As respostas de `Livro` trazem resumos aninhados (`autor: {id, nome}`, `categoria: {id, nome}`), e as de `MaterialDigital` trazem `disciplina: {id, nome, codigo}` (o `codigo` desambigua disciplinas de mesmo nome).
 - **Um autor por livro.** Atende ao requisito "relacionamento com Autor" com o menor custo. Coautoria exigiria a tabela `livro_autor` e mudaria a API e a interface; fica fora desta versão (decidido na Issue #3, ver [Limitações assumidas](REQUISITOS.md#limitações-assumidas)).
 - **Categoria opcional em Livro.** Reduz o acoplamento entre as duas frentes de trabalho: o CRUD de Livro funciona sem esperar o CRUD de Categoria. A associação é ligada na Issue #26, que depende explicitamente das Issues #30 e #31.
+- **Disciplina opcional em Livro.** Segue o padrão da categoria: o CRUD de Livro funciona sem disciplina, e os livros já cadastrados continuam válidos depois da migration. Um livro tem no máximo uma disciplina; ligar o livro a várias exigiria uma tabela de junção (`livro_disciplina`) e listas na API, e fica fora desta versão.
 - **Schema só por Flyway.** A pasta `db/migration` é a fonte da verdade e o Hibernate roda com `ddl-auto=validate`. A migration inicial cria as cinco tabelas já revisadas; mudanças posteriores entram em novas migrations (ver [CONTRIBUTING](../CONTRIBUTING.md#migrations-flyway)).
 - **Unicidade onde há regra de negócio:** ISBN, código da disciplina e nome da categoria. Nome de autor não, por haver homônimos, e nome de disciplina também não, porque a mesma disciplina pode existir em séries diferentes.
 - **Enums Java para listas fechadas** (`tipo`, `formato`, `serieEscolar`): evitam erros de digitação e viram lista de seleção na interface. Texto livre exigiria validar a mesma lista em vários lugares. O custo é que um valor novo exige alterar o código, o que o valor `OUTRO` ameniza em `tipo` e `formato`.
@@ -220,7 +237,7 @@ Serve para o backend e a interface JavaFX avançarem em paralelo. Validado na Is
 | Disciplina | `GET/POST /api/disciplinas`, `GET/PUT/DELETE /api/disciplinas/{id}` |
 | MaterialDigital | `GET/POST /api/materiais`, `GET/PUT/DELETE /api/materiais/{id}` |
 
-- **Pesquisa avançada:** `GET /api/livros?titulo=&autorId=&categoriaId=` (filtros opcionais e combináveis; o filtro de autor usa só o ID). Detalhes em [Livros e autores](#livros-e-autores).
+- **Pesquisa avançada:** `GET /api/livros?busca=&titulo=&autorId=&categoriaId=` (filtros opcionais e combináveis; o filtro de autor usa só o ID, e `busca` é o texto livre). Detalhes em [Livros e autores](#livros-e-autores).
 - **Códigos HTTP:** `200` (consulta, edição), `201` com `Location` (cadastro), `204` (exclusão), `400` (dados inválidos), `404` (ID da rota inexistente), `409` (duplicidade ou registro em uso). O que cada operação pode devolver está na tabela abaixo.
 
 ### Códigos HTTP
@@ -251,7 +268,8 @@ Corpo de `LivroRequest` (entrada de `POST` e `PUT`):
   "descricao": "Texto opcional",
   "editora": "Editora Exemplo",
   "autorId": 1,
-  "categoriaId": 2
+  "categoriaId": 2,
+  "disciplinaId": 3
 }
 ```
 
@@ -266,14 +284,16 @@ Corpo de `LivroRequest` (entrada de `POST` e `PUT`):
   "descricao": "Texto opcional",
   "editora": "Editora Exemplo",
   "autor": { "id": 1, "nome": "Autor Exemplo" },
-  "categoria": { "id": 2, "nome": "Literatura" }
+  "categoria": { "id": 2, "nome": "Literatura" },
+  "disciplina": { "id": 3, "nome": "Língua Portuguesa", "codigo": "LP-1" }
 }
 ```
 
-- **`PUT` substitui o registro inteiro.** Campo opcional ausente ou `null` limpa o valor; um `PUT` sem `categoriaId` remove a categoria do livro. `autorId` ausente responde `400`.
-- **Campos opcionais sem valor** vêm como `null` na resposta (`anoPublicacao`, `descricao`, `editora`, `categoria`).
+- **`PUT` substitui o registro inteiro.** Campo opcional ausente ou `null` limpa o valor; um `PUT` sem `categoriaId` remove a categoria do livro, e um `PUT` sem `disciplinaId` remove a disciplina. `autorId` ausente responde `400`.
+- **Campos opcionais sem valor** vêm como `null` na resposta (`anoPublicacao`, `descricao`, `editora`, `categoria`, `disciplina`).
 - **Pesquisa em `GET /api/livros`:**
-  - `titulo`: contém o texto, sem diferenciar maiúsculas de minúsculas; vazio ou em branco equivale a não informar.
+  - `busca`: texto livre. O livro entra se o texto estiver no **título**, no **nome do autor**, no **nome da categoria** ou no **ano de publicação**. É parcial e não diferencia maiúsculas de minúsculas; o ano é comparado como texto, então `189` acha 1899. Espaços nas pontas são ignorados, `%` e `_` são procurados como texto, e vazio ou em branco equivale a não informar. Um livro sem categoria ou sem ano continua aparecendo quando o título ou o autor bate. É um único trecho de texto: `machado 1899` não separa os dois termos.
+  - `titulo`: contém o texto só no título, sem diferenciar maiúsculas de minúsculas; vazio ou em branco equivale a não informar.
   - `autorId` e `categoriaId`: IDs numéricos. Um ID que não existe não é erro: a resposta é `200` com lista vazia. Valor que não é número responde `400`.
   - Filtros informados juntos precisam ser todos satisfeitos (E lógico). Sem filtros, devolve todos os livros, ordenados por título.
   - Livros sem categoria só aparecem quando o filtro de categoria não é usado.
@@ -281,10 +301,11 @@ Corpo de `LivroRequest` (entrada de `POST` e `PUT`):
 
 | Rota | Código | Causa |
 | --- | --- | --- |
-| `POST /api/livros`, `PUT /api/livros/{id}` | `400` | `autorId` ausente ou inexistente; `categoriaId` informado e inexistente; demais campos inválidos |
+| `POST /api/livros`, `PUT /api/livros/{id}` | `400` | `autorId` ausente ou inexistente; `categoriaId` ou `disciplinaId` informado e inexistente; demais campos inválidos |
 | `POST /api/livros`, `PUT /api/livros/{id}` | `409` | ISBN já cadastrado em outro livro |
 | `GET`, `PUT` e `DELETE /api/livros/{id}` | `404` | livro inexistente |
 | `DELETE /api/autores/{id}` | `409` | autor com livros |
+| `DELETE /api/disciplinas/{id}` | `409` | disciplina com livros ou com materiais digitais |
 
 ### Categoria, Disciplina e MaterialDigital
 
@@ -372,7 +393,7 @@ Respostas aos pontos em aberto da proposta (Issue #3). As decisões 1, 2, 3 e 5 
 
 ## Decisões dos relacionamentos
 
-Pontos que estavam em aberto ao definir as relações e o contrato (Issue #4). As decisões 1 a 5 dizem respeito a `Livro`, `Autor` e `Categoria`; a decisão 6, a `MaterialDigital` e `Disciplina`.
+Pontos que estavam em aberto ao definir as relações e o contrato (Issue #4). As decisões 1 a 5 dizem respeito a `Livro`, `Autor` e `Categoria`; a decisão 6, a `MaterialDigital` e `Disciplina`; a decisão 7 foi tomada depois, ao ligar o `Livro` à `Disciplina`.
 
 | # | Pergunta | Decisão |
 | --- | --- | --- |
@@ -382,3 +403,4 @@ Pontos que estavam em aberto ao definir as relações e o contrato (Issue #4). A
 | 4 | O que faz um `PUT` sem `categoriaId`? | **Remove a categoria.** O `PUT` é uma substituição completa; o formulário de edição envia o campo vazio para limpar a categoria. |
 | 5 | Como ler `autor` e `categoria` de forma `LAZY` com `open-in-view=false`? | Converter para DTO dentro do `service` transacional e carregar as duas associações na consulta da listagem (`LEFT JOIN FETCH` ou `@EntityGraph`). Ver [Regras comuns às relações](#regras-comuns-às-relações). |
 | 6 | MaterialDigital → Disciplina: `disciplinaId` inexistente também responde `400`? E os demais pontos da relação? | **`400`, seguindo a decisão 2**, com o mesmo erro padronizado de `autorId` e `categoriaId` (Issue #45). A relação é N:1, `NOT NULL`, `LAZY`, unidirecional e com **`ON DELETE RESTRICT`**: `CASCADE` apagaria todos os materiais de uma disciplina sem aviso, pelo mesmo motivo que levou a rejeitar o `SET NULL` na decisão 1. Ver [MaterialDigital → Disciplina](#materialdigital--disciplina). |
+| 7 | Livro → Disciplina: um livro tem uma ou várias disciplinas? A disciplina é obrigatória? | **Uma só, opcional.** `livro.disciplina_id` aceita `NULL`, como `categoria_id`: os livros já cadastrados seguem válidos e o CRUD de Livro não depende de Disciplina. `ON DELETE RESTRICT` e `disciplinaId` inexistente responde `400`, pelos mesmos motivos das decisões 1 e 2; um `PUT` sem `disciplinaId` remove a disciplina (decisão 4). Ver [Livro → Disciplina](#livro--disciplina). |

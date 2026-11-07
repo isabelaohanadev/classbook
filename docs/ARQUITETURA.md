@@ -91,7 +91,8 @@ public record LivroRequest(
         String descricao,
         @Size(max = 120) String editora,
         @NotNull Long autorId,
-        Long categoriaId) {
+        Long categoriaId,
+        Long disciplinaId) {
 
     public LivroRequest {
         // Roda antes do @Valid: o @Pattern confere o ISBN já sem hífens e em maiúsculas.
@@ -102,7 +103,8 @@ public record LivroRequest(
 
 ```java
 public record LivroResponse(Long id, String titulo, String isbn, Integer anoPublicacao,
-        String descricao, String editora, AutorResumo autor, CategoriaResumo categoria) {
+        String descricao, String editora, AutorResumo autor, CategoriaResumo categoria,
+        DisciplinaResumo disciplina) {
 
     public record AutorResumo(Long id, String nome) {
     }
@@ -110,12 +112,18 @@ public record LivroResponse(Long id, String titulo, String isbn, Integer anoPubl
     public record CategoriaResumo(Long id, String nome) {
     }
 
+    public record DisciplinaResumo(Long id, String nome, String codigo) {
+    }
+
     public static LivroResponse de(Livro livro) {
         Categoria categoria = livro.getCategoria();
+        Disciplina disciplina = livro.getDisciplina();
         return new LivroResponse(livro.getId(), livro.getTitulo(), livro.getIsbn(),
                 livro.getAnoPublicacao(), livro.getDescricao(), livro.getEditora(),
                 new AutorResumo(livro.getAutor().getId(), livro.getAutor().getNome()),
-                categoria == null ? null : new CategoriaResumo(categoria.getId(), categoria.getNome()));
+                categoria == null ? null : new CategoriaResumo(categoria.getId(), categoria.getNome()),
+                disciplina == null ? null
+                        : new DisciplinaResumo(disciplina.getId(), disciplina.getNome(), disciplina.getCodigo()));
     }
 }
 ```
