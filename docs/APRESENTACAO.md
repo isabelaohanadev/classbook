@@ -111,9 +111,42 @@ O que o Juan precisa saber explicar sozinho, inclusive da frente da Isabela, com
   - A `main` já ficou vermelha uma vez: o #136 e o #140 passaram no CI separados, mas juntos quebraram a compilação dos testes. O #145 corrigiu.
 - **GitHub Flow:** são os sete passos do `CONTRIBUTING.md`, seção *Fluxo de trabalho*. Os nomes de branch são `feature/`, `fix/`, `docs/`, `test/` e `chore/`, e os commits seguem `tipo: descrição` (Conventional Commits).
 
+### Guia de estudo da Isabela (Issue #69)
+
+O que a Isabela precisa saber explicar sozinha, inclusive da frente do Juan, com o arquivo para conferir no código durante o estudo. No dia, só o próprio código pode ser consultado.
+
+- **Uma rota de ponta a ponta (`POST /api/materiais`):**
+  1. `MaterialDigitalController.criar` recebe o `MaterialDigitalRequest` com `@Valid`: `titulo` (`@NotBlank`), `formato` (`@NotNull`, enum `FormatoMaterial`), `url` (`@NotBlank` e `@URL` com um regexp que só aceita `http://` ou `https://`, sem espaços) e `disciplinaId` (`@NotNull`).
+  2. `MaterialDigitalService.criar` chama `preencher`, que busca a `Disciplina` pelo `disciplinaId` e lança `DadosInvalidosException` (`400`) se ela não existir.
+  3. O `MaterialDigitalRepository` grava, e o `MaterialDigitalResponse.de` monta a resposta com a disciplina resumida (`id`, `nome`, `codigo`).
+  4. O controller responde `201` com o header `Location`. Qualquer exceção vai para o `TratadorGlobalDeExcecoes`.
+- **Relacionamento Material–Disciplina (`DisciplinaService.excluir`):** excluir uma disciplina confere, antes de apagar, se existe material vinculado (`existsByDisciplinaId`) ou livro vinculado (mesmo método do Livro–Disciplina), e lança `ConflitoException` (`409`) nos dois casos. A FK `RESTRICT` da migration é a rede de segurança se a checagem do service falhar.
+- **Validações de entrada (Bean Validation):** cada `Request` usa anotações do Jakarta Validation (`@NotBlank`, `@NotNull`, `@Size`, `@Pattern`, `@URL`) nos próprios campos do record; o Spring valida com `@Valid` no controller antes de chegar ao service. Validação de regra de negócio (ISBN duplicado, disciplina inexistente, ano no futuro) não dá para declarar com anotação e fica no service.
+- **Tratador global de exceções (`TratadorGlobalDeExcecoes`):** um `@RestControllerAdvice` com um `@ExceptionHandler` por tipo, cada um mapeado a um código HTTP: `RecursoNaoEncontradoException` → `404`, `DadosInvalidosException` → `400`, `ConflitoException` → `409`, `MethodArgumentNotValidException` (falha do `@Valid`) → `400` com a lista de campos, `HttpMessageNotReadableException` (JSON inválido) → `400`, `MethodArgumentTypeMismatchException` (tipo errado na URL) → `400`, `DataIntegrityViolationException` (constraint do banco que escapou do service) → `409`, e `Exception` (genérico) → `500`. Todos respondem no mesmo formato (`horario`, `status`, `erro`, `mensagem`, `caminho`, `campos`).
+- **Swagger:** `springdoc-openapi` gera a documentação a partir das anotações dos controllers e dos records `Request`/`Response`; a UI fica em `/swagger-ui.html` e o JSON em `/v3/api-docs`. Não é um arquivo escrito à mão.
+- **Cliente HTTP do desktop (`ClienteApi`):** uma classe só, com `java.net.http.HttpClient` e Jackson, e as cinco operações por recurso (Autor, Categoria, Disciplina, Material, Livro, este com pesquisa e filtros). A URL base é configurável (`URL_PADRAO = http://localhost:8080/api`). As chamadas bloqueiam até a resposta, por isso a interface sempre as faz fora da thread do JavaFX (`EmSegundoPlano`), para não travar a janela. Erros da API viram `ErroDaApiException` (traz a mensagem do `TratadorGlobalDeExcecoes`), e a API fora do ar vira `ApiIndisponivelException`.
+- **Formulários do desktop (`JanelaDeFormulario`, `Formulario`, os `Formulario*Controller`):** cada formulário (Autor, Categoria, Disciplina, Material, Livro) roda numa janela modal própria, valida os campos antes de chamar a API e mostra a mensagem de erro do `ErroDaApiException` sem fechar a janela, para o usuário corrigir e tentar de novo. `Mensagens` centraliza os textos de sucesso e erro (Issue #61).
+- **GitHub Flow e CI:** os mesmos do guia do Juan, acima — a Isabela também precisa saber explicar.
+
+## Estimativa de tempo por contagem de palavras
+
+Checagem automática, feita antes do ensaio real, para pegar blocos claramente desproporcionais ao tempo alocado (não substitui cronometrar em voz alta — só a fala tem texto para contar; a demo é ação na tela, e a lida do tempo real também muda com o ritmo de quem fala):
+
+| Bloco | Tempo alocado | Palavras do texto | A ~130 palavras/min |
+| --- | ---: | ---: | ---: |
+| 1. Abertura | 30s | 38 | ~18s — cabe, com folga |
+| 2. Arquitetura e modelagem | 60s | 57 | ~26s — cabe, com folga |
+| 3. Demo Isabela (6 passos) | 150s | 90 (roteiro dos passos, não a narração ao vivo) | ~25s/passo — razoável |
+| 4. Demo Juan (4 passos) | 150s | 102 (idem) | ~38s/passo — razoável |
+| 5. Qualidade | 60s | 90 | ~41s — cabe |
+| 6. Participação de cada um | 90s | — (ad lib, a partir do CONTRIBUICOES.md) | não dá para estimar por palavra |
+| 7. Fechamento | 60s | — (ad lib) | não dá para estimar por palavra |
+
+Nenhum bloco com texto fixo (1, 2, 5) estourou o tempo; os blocos 3 e 4 são ação, não leitura, e os blocos 6 e 7 são propositalmente livres. **Isso não dispensa o ensaio real** — é só um indício de que o roteiro não está obviamente desalinhado antes de gastar o tempo do ensaio ajustando isso.
+
 ## Pendente antes do dia 06/11
 
 - [ ] **Ensaiar em voz alta, cronometrando cada bloco** — isto não pode ser feito por este documento; exige os dois integrantes. Ajustar os tempos acima pelo que o ensaio mostrar.
 - [ ] Confirmar quem apresenta primeiro, o notebook usado e o acesso à rede/projetor no local.
 - [ ] Cadastrar os dados de exemplo no banco da demo antes do ensaio final.
-- [ ] Ensaio de perguntas (#69): cada um pergunta ao outro sobre a própria frente, usando a lista acima e o guia de estudo, sem consultar nada além do código.
+- [ ] Ensaio de perguntas (#69): cada um pergunta ao outro sobre a própria frente, usando a lista acima e os dois guias de estudo (do Juan e da Isabela), sem consultar nada além do código.
