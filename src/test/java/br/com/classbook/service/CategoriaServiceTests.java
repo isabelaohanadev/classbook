@@ -4,14 +4,20 @@ import static br.com.classbook.Unico.nome;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import jakarta.validation.ConstraintViolationException;
+
+import tools.jackson.core.JacksonException;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.classbook.Json;
 import br.com.classbook.dto.CategoriaRequest;
 import br.com.classbook.dto.CategoriaResponse;
 import br.com.classbook.exception.ConflitoException;
+import br.com.classbook.exception.DadosInvalidosException;
 import br.com.classbook.exception.RecursoNaoEncontradoException;
 import br.com.classbook.model.Autor;
 import br.com.classbook.model.Livro;
@@ -94,6 +100,98 @@ class CategoriaServiceTests {
 		CategoriaRequest request = new CategoriaRequest(nome("Nome"), null, null, TipoCategoria.OUTRO);
 
 		assertThatThrownBy(() -> categoriaService.atualizar(-1L, request))
+				.isInstanceOf(RecursoNaoEncontradoException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteMudaSoOsCamposEnviados() {
+		CategoriaResponse criada = categoriaService.criar(new CategoriaRequest(nome("Literatura"), "Romances",
+				"14 a 17 anos", TipoCategoria.LITERATURA));
+
+		CategoriaResponse atualizada = categoriaService.atualizarParcialmente(criada.id(),
+				Json.de("{'descricao': 'Romances, contos e poesia'}"));
+
+		assertThat(atualizada).isEqualTo(new CategoriaResponse(criada.id(), nome("Literatura"),
+				"Romances, contos e poesia", "14 a 17 anos", TipoCategoria.LITERATURA));
+		assertThat(categoriaRepository.findById(criada.id()).orElseThrow().getDescricao())
+				.isEqualTo("Romances, contos e poesia");
+	}
+
+	@Test
+	void atualizarParcialmenteComNullLimpaOCampoOpcional() {
+		CategoriaResponse criada = categoriaService.criar(new CategoriaRequest(nome("Literatura"), "Romances",
+				"14 a 17 anos", TipoCategoria.LITERATURA));
+
+		CategoriaResponse atualizada = categoriaService.atualizarParcialmente(criada.id(),
+				Json.de("{'descricao': null}"));
+
+		assertThat(atualizada).isEqualTo(new CategoriaResponse(criada.id(), nome("Literatura"), null,
+				"14 a 17 anos", TipoCategoria.LITERATURA));
+	}
+
+	@Test
+	void atualizarParcialmenteComCorpoVazioNaoMudaNada() {
+		CategoriaResponse criada = categoriaService.criar(new CategoriaRequest(nome("Literatura"), "Romances",
+				"14 a 17 anos", TipoCategoria.LITERATURA));
+
+		assertThat(categoriaService.atualizarParcialmente(criada.id(), Json.de("{}"))).isEqualTo(criada);
+	}
+
+	@Test
+	void atualizarParcialmenteComNomeNullLancaViolacaoDeValidacao() {
+		CategoriaResponse criada = categoriaService
+				.criar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+
+		assertThatThrownBy(() -> categoriaService.atualizarParcialmente(criada.id(), Json.de("{'nome': null}")))
+				.isInstanceOfSatisfying(ConstraintViolationException.class, ex -> assertThat(ex.getConstraintViolations())
+						.extracting(violacao -> violacao.getPropertyPath().toString()).containsExactly("nome"));
+		assertThat(categoriaRepository.findById(criada.id()).orElseThrow().getNome()).isEqualTo(nome("Literatura"));
+	}
+
+	@Test
+	void atualizarParcialmenteComTipoForaDaListaLancaErroDoJackson() {
+		CategoriaResponse criada = categoriaService
+				.criar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+
+		assertThatThrownBy(() -> categoriaService.atualizarParcialmente(criada.id(), Json.de("{'tipo': 'INFANTIL'}")))
+				.isInstanceOf(JacksonException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteComCorpoQueNaoEhObjetoLancaDadosInvalidos() {
+		CategoriaResponse criada = categoriaService
+				.criar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+
+		assertThatThrownBy(() -> categoriaService.atualizarParcialmente(criada.id(), Json.de("[1, 2]")))
+				.isInstanceOf(DadosInvalidosException.class);
+		assertThatThrownBy(() -> categoriaService.atualizarParcialmente(criada.id(), Json.de("null")))
+				.isInstanceOf(DadosInvalidosException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteComNomeDeOutraCategoriaLancaConflito() {
+		categoriaService.criar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+		CategoriaResponse outra = categoriaService
+				.criar(new CategoriaRequest(nome("Referência"), null, null, TipoCategoria.REFERENCIA));
+
+		assertThatThrownBy(() -> categoriaService.atualizarParcialmente(outra.id(),
+				Json.de("{'nome': '" + nome("literatura") + "'}"))).isInstanceOf(ConflitoException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteMantendoOProprioNomeNaoEhConflito() {
+		CategoriaResponse criada = categoriaService
+				.criar(new CategoriaRequest(nome("literatura"), null, null, TipoCategoria.LITERATURA));
+
+		CategoriaResponse atualizada = categoriaService.atualizarParcialmente(criada.id(),
+				Json.de("{'nome': '" + nome("Literatura") + "'}"));
+
+		assertThat(atualizada.nome()).isEqualTo(nome("Literatura"));
+	}
+
+	@Test
+	void atualizarParcialmenteComIdInexistenteLancaExcecao() {
+		assertThatThrownBy(() -> categoriaService.atualizarParcialmente(-1L, Json.de("{'descricao': 'x'}")))
 				.isInstanceOf(RecursoNaoEncontradoException.class);
 	}
 

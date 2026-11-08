@@ -6,12 +6,17 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.time.LocalDate;
 
+import jakarta.validation.ConstraintViolationException;
+
+import tools.jackson.core.JacksonException;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.classbook.Json;
 import br.com.classbook.dto.DisciplinaRequest;
 import br.com.classbook.dto.MaterialDigitalRequest;
 import br.com.classbook.dto.MaterialDigitalResponse;
@@ -139,6 +144,93 @@ class MaterialDigitalServiceTests {
 	@Test
 	void excluirIdInexistenteLancaExcecao() {
 		assertThatThrownBy(() -> materialDigitalService.excluir(-1L))
+				.isInstanceOf(RecursoNaoEncontradoException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteMudaSoOsCamposEnviados() {
+		MaterialDigitalResponse criado = materialDigitalService.criar(new MaterialDigitalRequest("Lista de funções",
+				FormatoMaterial.PDF, "https://exemplo.com/funcoes.pdf", "Texto", LocalDate.of(2026, 3, 10),
+				disciplinaId));
+
+		MaterialDigitalResponse atualizado = materialDigitalService.atualizarParcialmente(criado.id(),
+				Json.de("{'url': 'https://exemplo.com/funcoes-v2.pdf'}"));
+
+		assertThat(atualizado).isEqualTo(new MaterialDigitalResponse(criado.id(), "Lista de funções",
+				FormatoMaterial.PDF, "https://exemplo.com/funcoes-v2.pdf", "Texto", LocalDate.of(2026, 3, 10),
+				new DisciplinaResumo(disciplinaId, "Matemática", codigo("MAT-1"))));
+		assertThat(materialDigitalRepository.findById(criado.id()).orElseThrow().getUrl())
+				.isEqualTo("https://exemplo.com/funcoes-v2.pdf");
+	}
+
+	@Test
+	void atualizarParcialmenteComNullLimpaOsCamposOpcionais() {
+		MaterialDigitalResponse criado = materialDigitalService.criar(new MaterialDigitalRequest("Lista de funções",
+				FormatoMaterial.PDF, "https://exemplo.com/funcoes.pdf", "Texto", LocalDate.of(2026, 3, 10),
+				disciplinaId));
+
+		MaterialDigitalResponse atualizado = materialDigitalService.atualizarParcialmente(criado.id(),
+				Json.de("{'descricao': null, 'dataPublicacao': null}"));
+
+		assertThat(atualizado.descricao()).isNull();
+		assertThat(atualizado.dataPublicacao()).isNull();
+		assertThat(atualizado.titulo()).isEqualTo("Lista de funções");
+	}
+
+	@Test
+	void atualizarParcialmenteTrocaADisciplina() {
+		MaterialDigitalResponse criado = materialDigitalService.criar(material("Lista", disciplinaId));
+		Long outraDisciplinaId = disciplinaService
+				.criar(new DisciplinaRequest("Física", codigo("FIS-1"), null, SerieEscolar.PRIMEIRA_SERIE)).id();
+
+		MaterialDigitalResponse atualizado = materialDigitalService.atualizarParcialmente(criado.id(),
+				Json.de("{'disciplinaId': " + outraDisciplinaId + "}"));
+
+		assertThat(atualizado.disciplina()).isEqualTo(new DisciplinaResumo(outraDisciplinaId, "Física", codigo("FIS-1")));
+	}
+
+	@Test
+	void atualizarParcialmenteComDisciplinaInexistenteLancaDadosInvalidos() {
+		MaterialDigitalResponse criado = materialDigitalService.criar(material("Lista", disciplinaId));
+
+		assertThatThrownBy(() -> materialDigitalService.atualizarParcialmente(criado.id(),
+				Json.de("{'disciplinaId': -1}"))).isInstanceOf(DadosInvalidosException.class)
+				.hasMessage("Disciplina -1 não existe.");
+	}
+
+	@Test
+	void atualizarParcialmenteComDisciplinaNullLancaViolacaoDeValidacao() {
+		MaterialDigitalResponse criado = materialDigitalService.criar(material("Lista", disciplinaId));
+
+		assertThatThrownBy(() -> materialDigitalService.atualizarParcialmente(criado.id(),
+				Json.de("{'disciplinaId': null}")))
+				.isInstanceOfSatisfying(ConstraintViolationException.class, ex -> assertThat(ex.getConstraintViolations())
+						.extracting(violacao -> violacao.getPropertyPath().toString()).containsExactly("disciplinaId"));
+	}
+
+	@Test
+	void atualizarParcialmenteComUrlQueNaoEhHttpLancaViolacaoDeValidacao() {
+		MaterialDigitalResponse criado = materialDigitalService.criar(material("Lista", disciplinaId));
+
+		assertThatThrownBy(() -> materialDigitalService.atualizarParcialmente(criado.id(),
+				Json.de("{'url': 'ftp://exemplo.com/lista.pdf'}")))
+				.isInstanceOfSatisfying(ConstraintViolationException.class, ex -> assertThat(ex.getConstraintViolations())
+						.extracting(violacao -> violacao.getPropertyPath().toString()).containsExactly("url"));
+		assertThat(materialDigitalRepository.findById(criado.id()).orElseThrow().getUrl())
+				.isEqualTo("https://exemplo.com/material.pdf");
+	}
+
+	@Test
+	void atualizarParcialmenteComFormatoForaDaListaLancaErroDoJackson() {
+		MaterialDigitalResponse criado = materialDigitalService.criar(material("Lista", disciplinaId));
+
+		assertThatThrownBy(() -> materialDigitalService.atualizarParcialmente(criado.id(),
+				Json.de("{'formato': 'pdf'}"))).isInstanceOf(JacksonException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteComIdInexistenteLancaExcecao() {
+		assertThatThrownBy(() -> materialDigitalService.atualizarParcialmente(-1L, Json.de("{'titulo': 'Novo'}")))
 				.isInstanceOf(RecursoNaoEncontradoException.class);
 	}
 

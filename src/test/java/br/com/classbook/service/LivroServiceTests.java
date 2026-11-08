@@ -8,11 +8,16 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.time.Year;
 import java.util.List;
 
+import jakarta.validation.ConstraintViolationException;
+
+import tools.jackson.core.JacksonException;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.classbook.Json;
 import br.com.classbook.dto.LivroRequest;
 import br.com.classbook.dto.LivroResponse;
 import br.com.classbook.exception.ConflitoException;
@@ -683,6 +688,144 @@ class LivroServiceTests {
 
 		assertThat(livroService.listar(null, "  casmurro  ", autorId, null)).extracting(LivroResponse::titulo)
 				.containsExactly("Dom Casmurro");
+	}
+
+	@Test
+	void atualizarParcialmenteMudaSoOsCamposEnviados() {
+		autorId = criarAutor();
+		Long categoriaId = criarCategoria(nome("Literatura"));
+		Long disciplinaId = criarDisciplina(codigo("LP-1"));
+		LivroResponse criado = livroService.criar(new LivroRequest("Título Antigo", "9780306406157", 1899, "Resumo",
+				"Editora A", autorId, categoriaId, disciplinaId));
+
+		LivroResponse atualizado = livroService.atualizarParcialmente(criado.id(), Json.de("{'titulo': 'Título Novo'}"));
+
+		assertThat(atualizado.titulo()).isEqualTo("Título Novo");
+		assertThat(atualizado).usingRecursiveComparison().ignoringFields("titulo")
+				.isEqualTo(criado);
+		assertThat(livroRepository.findById(criado.id()).orElseThrow().getTitulo()).isEqualTo("Título Novo");
+	}
+
+	@Test
+	void atualizarParcialmenteComNullTiraACategoriaEADisciplinaSemMexerNoResto() {
+		autorId = criarAutor();
+		Long categoriaId = criarCategoria(nome("Literatura"));
+		Long disciplinaId = criarDisciplina(codigo("LP-1"));
+		LivroResponse criado = livroService.criar(new LivroRequest("Título", "9780306406157", 1899, null, null,
+				autorId, categoriaId, disciplinaId));
+
+		LivroResponse semCategoria = livroService.atualizarParcialmente(criado.id(), Json.de("{'categoriaId': null}"));
+		assertThat(semCategoria.categoria()).isNull();
+		assertThat(semCategoria.disciplina()).isNotNull();
+
+		LivroResponse semDisciplina = livroService.atualizarParcialmente(criado.id(),
+				Json.de("{'disciplinaId': null}"));
+		assertThat(semDisciplina.disciplina()).isNull();
+		assertThat(semDisciplina.titulo()).isEqualTo("Título");
+		assertThat(semDisciplina.anoPublicacao()).isEqualTo(1899);
+		assertThat(semDisciplina.autor().id()).isEqualTo(autorId);
+	}
+
+	@Test
+	void atualizarParcialmenteTrocaACategoria() {
+		autorId = criarAutor();
+		Long categoriaId = criarCategoria(nome("Literatura"));
+		Long outraCategoriaId = criarCategoria(nome("Referência"));
+		LivroResponse criado = livroService.criar(new LivroRequest("Título", "9780306406157", null, null, null,
+				autorId, categoriaId, null));
+
+		LivroResponse atualizado = livroService.atualizarParcialmente(criado.id(),
+				Json.de("{'categoriaId': " + outraCategoriaId + "}"));
+
+		assertThat(atualizado.categoria().id()).isEqualTo(outraCategoriaId);
+	}
+
+	@Test
+	void atualizarParcialmenteNormalizaOIsbn() {
+		autorId = criarAutor();
+		LivroResponse criado = livroService
+				.criar(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+
+		LivroResponse atualizado = livroService.atualizarParcialmente(criado.id(),
+				Json.de("{'isbn': '978-0-316-00000-0'}"));
+
+		assertThat(atualizado.isbn()).isEqualTo("9780316000000");
+	}
+
+	@Test
+	void atualizarParcialmenteComIsbnDeOutroLivroLancaConflito() {
+		autorId = criarAutor();
+		livroService.criar(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null, null));
+		LivroResponse outro = livroService
+				.criar(new LivroRequest("Senhora", "9780316000000", null, null, null, autorId, null, null));
+
+		assertThatThrownBy(() -> livroService.atualizarParcialmente(outro.id(), Json.de("{'isbn': '9780306406157'}")))
+				.isInstanceOf(ConflitoException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteMantendoOProprioIsbnNaoEhConflito() {
+		autorId = criarAutor();
+		LivroResponse criado = livroService
+				.criar(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+
+		LivroResponse atualizado = livroService.atualizarParcialmente(criado.id(),
+				Json.de("{'isbn': '9780306406157', 'titulo': 'Outro título'}"));
+
+		assertThat(atualizado.titulo()).isEqualTo("Outro título");
+	}
+
+	@Test
+	void atualizarParcialmenteComAutorNullLancaViolacaoDeValidacao() {
+		autorId = criarAutor();
+		LivroResponse criado = livroService
+				.criar(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+
+		assertThatThrownBy(() -> livroService.atualizarParcialmente(criado.id(), Json.de("{'autorId': null}")))
+				.isInstanceOfSatisfying(ConstraintViolationException.class, ex -> assertThat(ex.getConstraintViolations())
+						.extracting(violacao -> violacao.getPropertyPath().toString()).containsExactly("autorId"));
+	}
+
+	@Test
+	void atualizarParcialmenteComAutorCategoriaOuDisciplinaInexistenteLancaDadosInvalidos() {
+		autorId = criarAutor();
+		LivroResponse criado = livroService
+				.criar(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+
+		assertThatThrownBy(() -> livroService.atualizarParcialmente(criado.id(), Json.de("{'autorId': -1}")))
+				.isInstanceOf(DadosInvalidosException.class).hasMessage("Autor -1 não existe.");
+		assertThatThrownBy(() -> livroService.atualizarParcialmente(criado.id(), Json.de("{'categoriaId': -1}")))
+				.isInstanceOf(DadosInvalidosException.class).hasMessage("Categoria -1 não existe.");
+		assertThatThrownBy(() -> livroService.atualizarParcialmente(criado.id(), Json.de("{'disciplinaId': -1}")))
+				.isInstanceOf(DadosInvalidosException.class).hasMessage("Disciplina -1 não existe.");
+	}
+
+	@Test
+	void atualizarParcialmenteComAnoNoFuturoLancaDadosInvalidos() {
+		autorId = criarAutor();
+		LivroResponse criado = livroService
+				.criar(new LivroRequest("Título", "9780306406157", 1899, null, null, autorId, null, null));
+		int anoQueVem = Year.now().getValue() + 1;
+
+		assertThatThrownBy(() -> livroService.atualizarParcialmente(criado.id(),
+				Json.de("{'anoPublicacao': " + anoQueVem + "}"))).isInstanceOf(DadosInvalidosException.class);
+		assertThat(livroRepository.findById(criado.id()).orElseThrow().getAnoPublicacao()).isEqualTo(1899);
+	}
+
+	@Test
+	void atualizarParcialmenteComValorDeTipoErradoLancaErroDoJackson() {
+		autorId = criarAutor();
+		LivroResponse criado = livroService
+				.criar(new LivroRequest("Título", "9780306406157", 1899, null, null, autorId, null, null));
+
+		assertThatThrownBy(() -> livroService.atualizarParcialmente(criado.id(),
+				Json.de("{'anoPublicacao': 'abc'}"))).isInstanceOf(JacksonException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteComIdInexistenteLancaExcecao() {
+		assertThatThrownBy(() -> livroService.atualizarParcialmente(-1L, Json.de("{'titulo': 'Novo'}")))
+				.isInstanceOf(RecursoNaoEncontradoException.class);
 	}
 
 }

@@ -189,6 +189,81 @@ class TratadorGlobalDeExcecoesTests {
 				.doesNotContain("senha");
 	}
 
+	@Test
+	void patchComCampoInvalidoResponde400ListandoOsCamposNoMesmoFormatoDoValid() throws Exception {
+		Number autorId = cadastrarAutor();
+
+		enviarJson(patch("/api/autores/{id}", autorId), """
+				{"nome": "   ", "dataNascimento": "2999-01-01"}
+				""")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.erro").value("Requisição inválida"))
+				.andExpect(jsonPath("$.mensagem").value("Há campos inválidos na requisição."))
+				.andExpect(jsonPath("$.caminho").value("/api/autores/" + autorId))
+				.andExpect(jsonPath("$.campos.length()").value(2))
+				.andExpect(jsonPath("$.campos[0].campo").value("dataNascimento"))
+				.andExpect(jsonPath("$.campos[0].mensagem").value("deve ser uma data no passado"))
+				.andExpect(jsonPath("$.campos[1].campo").value("nome"))
+				.andExpect(jsonPath("$.campos[1].mensagem").value("é obrigatório e não pode ficar em branco"));
+	}
+
+	@Test
+	void patchComValorDeTipoErradoResponde400ApontandoOCampo() throws Exception {
+		Number autorId = cadastrarAutor();
+
+		enviarJson(patch("/api/autores/{id}", autorId), "{\"dataNascimento\": \"abc\"}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.mensagem").value("Há campos inválidos na requisição."))
+				.andExpect(jsonPath("$.campos[0].campo").value("dataNascimento"))
+				.andExpect(jsonPath("$.campos[0].mensagem").value("valor com tipo ou formato inválido"));
+	}
+
+	@Test
+	void patchComEnumForaDaListaResponde400ComOsValoresAceitos() throws Exception {
+		String corpo = enviarJson(post("/api/categorias"), """
+				{"nome": "Categoria do PATCH %d", "tipo": "OUTRO"}
+				""".formatted(ThreadLocalRandom.current().nextLong(1_000_000_000L)))
+				.andExpect(status().isCreated())
+				.andReturn().getResponse().getContentAsString();
+		Number categoriaId = JsonPath.read(corpo, "$.id");
+
+		enviarJson(patch("/api/categorias/{id}", categoriaId), "{\"tipo\": \"INFANTIL\"}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("tipo"))
+				.andExpect(jsonPath("$.campos[0].mensagem").value(
+						"valor 'INFANTIL' fora da lista; use um de: DIDATICO, PARADIDATICO, LITERATURA, REFERENCIA, OUTRO"));
+	}
+
+	@Test
+	void patchComCorpoQueNaoEhObjetoResponde400ComAMensagemDoMesclador() throws Exception {
+		Number autorId = cadastrarAutor();
+
+		enviarJson(patch("/api/autores/{id}", autorId), "[1, 2]")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.mensagem").value("O corpo do PATCH deve ser um objeto JSON com os campos a alterar."))
+				.andExpect(jsonPath("$.campos").isEmpty());
+	}
+
+	@Test
+	void patchComJsonMalformadoOuSemCorpoResponde400() throws Exception {
+		Number autorId = cadastrarAutor();
+
+		enviarJson(patch("/api/autores/{id}", autorId), "{\"nome\": ")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.mensagem").value("O corpo da requisição não é um JSON válido."));
+		mockMvc.perform(patch("/api/autores/{id}", autorId).contentType(MediaType.APPLICATION_JSON))
+				.andExpect(status().isBadRequest());
+	}
+
+	@Test
+	void patchComCorpoQueNaoEhJsonResponde415() throws Exception {
+		Number autorId = cadastrarAutor();
+
+		mockMvc.perform(patch("/api/autores/{id}", autorId).contentType(MediaType.TEXT_PLAIN).content("nome=Outro"))
+				.andExpect(status().isUnsupportedMediaType())
+				.andExpect(jsonPath("$.status").value(415));
+	}
+
 	private ResultActions enviarJson(MockHttpServletRequestBuilder requisicao, String corpo) throws Exception {
 		return mockMvc.perform(requisicao.contentType(MediaType.APPLICATION_JSON).content(corpo));
 	}

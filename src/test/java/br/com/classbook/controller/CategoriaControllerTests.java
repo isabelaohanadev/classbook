@@ -1,10 +1,12 @@
 package br.com.classbook.controller;
 
+import static br.com.classbook.Json.texto;
 import static br.com.classbook.Unico.nome;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -231,6 +233,124 @@ class CategoriaControllerTests {
 				.andExpect(status().isBadRequest());
 	}
 
+	@Test
+	void edicaoParcialAlteraSoOsCamposEnviados() throws Exception {
+		Long id = cadastrar(new CategoriaRequest(nome("Literatura"), "Romances", "14 a 17 anos",
+				TipoCategoria.LITERATURA));
+
+		editarParcialmente(id, "{'descricao': 'Romances, contos e poesia'}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(id))
+				.andExpect(jsonPath("$.nome").value(nome("Literatura")))
+				.andExpect(jsonPath("$.descricao").value("Romances, contos e poesia"))
+				.andExpect(jsonPath("$.faixaEtaria").value("14 a 17 anos"))
+				.andExpect(jsonPath("$.tipo").value("LITERATURA"));
+		mockMvc.perform(get("/api/categorias/{id}", id))
+				.andExpect(jsonPath("$.descricao").value("Romances, contos e poesia"))
+				.andExpect(jsonPath("$.nome").value(nome("Literatura")));
+	}
+
+	@Test
+	void edicaoParcialComNullLimpaOCampoOpcional() throws Exception {
+		Long id = cadastrar(new CategoriaRequest(nome("Literatura"), "Romances", "14 a 17 anos",
+				TipoCategoria.LITERATURA));
+
+		editarParcialmente(id, "{'descricao': null}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.descricao").value(nullValue()))
+				.andExpect(jsonPath("$.faixaEtaria").value("14 a 17 anos"))
+				.andExpect(jsonPath("$.nome").value(nome("Literatura")));
+	}
+
+	@Test
+	void edicaoParcialComCorpoVazioMantemACategoria() throws Exception {
+		Long id = cadastrar(new CategoriaRequest(nome("Literatura"), "Romances", null, TipoCategoria.LITERATURA));
+
+		editarParcialmente(id, "{}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.nome").value(nome("Literatura")))
+				.andExpect(jsonPath("$.descricao").value("Romances"));
+	}
+
+	@Test
+	void edicaoParcialIgnoraOIdECamposDesconhecidos() throws Exception {
+		Long id = cadastrar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+
+		editarParcialmente(id, "{'id': 999999, 'inexistente': 'x', 'descricao': 'Nova'}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(id))
+				.andExpect(jsonPath("$.descricao").value("Nova"));
+	}
+
+	@Test
+	void edicaoParcialAceitaOTipoDeConteudoMergePatchJson() throws Exception {
+		Long id = cadastrar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+
+		mockMvc.perform(patch("/api/categorias/{id}", id).contentType("application/merge-patch+json")
+				.content(texto("{'faixaEtaria': 'Livre'}")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.faixaEtaria").value("Livre"));
+	}
+
+	@Test
+	void edicaoParcialComNullEmCampoObrigatorioRespondeBadRequestApontandoOCampo() throws Exception {
+		Long id = cadastrar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+
+		editarParcialmente(id, "{'nome': null}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("nome"))
+				.andExpect(jsonPath("$.campos[0].mensagem").value("é obrigatório e não pode ficar em branco"));
+		mockMvc.perform(get("/api/categorias/{id}", id)).andExpect(jsonPath("$.nome").value(nome("Literatura")));
+	}
+
+	@Test
+	void edicaoParcialComTipoForaDaListaRespondeBadRequestApontandoOCampo() throws Exception {
+		Long id = cadastrar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+
+		editarParcialmente(id, "{'tipo': 'INFANTIL'}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("tipo"));
+	}
+
+	@Test
+	void edicaoParcialComCorpoQueNaoEhObjetoRespondeBadRequest() throws Exception {
+		Long id = cadastrar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+
+		editarParcialmente(id, "[]")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.mensagem").value("O corpo do PATCH deve ser um objeto JSON com os campos a alterar."));
+	}
+
+	@Test
+	void edicaoParcialComNomeDeOutraCategoriaRespondeConflict() throws Exception {
+		cadastrar(new CategoriaRequest(nome("Literatura"), null, null, TipoCategoria.LITERATURA));
+		Long id = cadastrar(new CategoriaRequest(nome("Referência"), null, null, TipoCategoria.REFERENCIA));
+
+		editarParcialmente(id, "{'nome': '" + nome("LITERATURA") + "'}")
+				.andExpect(status().isConflict());
+	}
+
+	@Test
+	void edicaoParcialQueSoMudaAsMaiusculasDoProprioNomeRespondeOk() throws Exception {
+		Long id = cadastrar(new CategoriaRequest(nome("literatura"), null, null, TipoCategoria.LITERATURA));
+
+		editarParcialmente(id, "{'nome': '" + nome("Literatura") + "'}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.nome").value(nome("Literatura")));
+	}
+
+	@Test
+	void edicaoParcialComIdInexistenteRespondeNotFound() throws Exception {
+		editarParcialmente(-1L, "{'descricao': 'Nova'}").andExpect(status().isNotFound());
+	}
+
+	@Test
+	void edicaoParcialComIdQueNaoEhNumeroRespondeBadRequest() throws Exception {
+		mockMvc.perform(patch("/api/categorias/{id}", "abc").contentType(MediaType.APPLICATION_JSON)
+				.content("{}"))
+				.andExpect(status().isBadRequest());
+	}
+
 	/** Corpo válido em que cada caso da matriz troca um único campo. */
 	private static Map<String, Object> corpoValido() {
 		return new HashMap<>(Map.of("nome", nome("Didáticos"), "descricao", "Livros-texto",
@@ -240,6 +360,11 @@ class CategoriaControllerTests {
 	private ResultActions enviar(MockHttpServletRequestBuilder requisicao, Object corpo) throws Exception {
 		return mockMvc.perform(requisicao.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(corpo)));
+	}
+
+	private ResultActions editarParcialmente(Long id, String json) throws Exception {
+		return mockMvc.perform(patch("/api/categorias/{id}", id).contentType(MediaType.APPLICATION_JSON)
+				.content(texto(json)));
 	}
 
 	private Long cadastrar(CategoriaRequest request) throws Exception {

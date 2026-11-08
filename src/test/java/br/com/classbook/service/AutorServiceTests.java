@@ -3,13 +3,19 @@ package br.com.classbook.service;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.time.LocalDate;
 import java.util.List;
+
+import jakarta.validation.ConstraintViolationException;
+
+import tools.jackson.core.JacksonException;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.classbook.Json;
 import br.com.classbook.dto.AutorRequest;
 import br.com.classbook.dto.AutorResponse;
 import br.com.classbook.exception.ConflitoException;
@@ -102,6 +108,63 @@ class AutorServiceTests {
 		autorService.excluir(criado.id());
 
 		assertThat(autorRepository.findById(criado.id())).isEmpty();
+	}
+
+	@Test
+	void atualizarParcialmenteMudaSoOsCamposEnviados() {
+		AutorResponse criado = autorService.criar(new AutorRequest("Machado de Assis", "Brasileira",
+				LocalDate.of(1839, 6, 21), "Fundador"));
+
+		AutorResponse atualizado = autorService.atualizarParcialmente(criado.id(),
+				Json.de("{'biografia': 'Fundador da Academia Brasileira de Letras'}"));
+
+		assertThat(atualizado).isEqualTo(new AutorResponse(criado.id(), "Machado de Assis", "Brasileira",
+				LocalDate.of(1839, 6, 21), "Fundador da Academia Brasileira de Letras"));
+		assertThat(autorRepository.findById(criado.id()).orElseThrow().getBiografia())
+				.isEqualTo("Fundador da Academia Brasileira de Letras");
+	}
+
+	@Test
+	void atualizarParcialmenteComNullLimpaOsCamposOpcionais() {
+		AutorResponse criado = autorService.criar(new AutorRequest("Machado de Assis", "Brasileira",
+				LocalDate.of(1839, 6, 21), "Fundador"));
+
+		AutorResponse atualizado = autorService.atualizarParcialmente(criado.id(),
+				Json.de("{'dataNascimento': null, 'biografia': null}"));
+
+		assertThat(atualizado).isEqualTo(new AutorResponse(criado.id(), "Machado de Assis", "Brasileira", null, null));
+	}
+
+	@Test
+	void atualizarParcialmenteComNomeEmBrancoLancaViolacaoDeValidacao() {
+		AutorResponse criado = autorService.criar(new AutorRequest("Machado de Assis", null, null, null));
+
+		assertThatThrownBy(() -> autorService.atualizarParcialmente(criado.id(), Json.de("{'nome': '   '}")))
+				.isInstanceOfSatisfying(ConstraintViolationException.class, ex -> assertThat(ex.getConstraintViolations())
+						.extracting(violacao -> violacao.getPropertyPath().toString()).containsExactly("nome"));
+		assertThat(autorRepository.findById(criado.id()).orElseThrow().getNome()).isEqualTo("Machado de Assis");
+	}
+
+	@Test
+	void atualizarParcialmenteComDataDeNascimentoNoFuturoLancaViolacaoDeValidacao() {
+		AutorResponse criado = autorService.criar(new AutorRequest("Machado de Assis", null, null, null));
+
+		assertThatThrownBy(() -> autorService.atualizarParcialmente(criado.id(),
+				Json.de("{'dataNascimento': '2999-01-01'}"))).isInstanceOf(ConstraintViolationException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteComDataForaDoFormatoLancaErroDoJackson() {
+		AutorResponse criado = autorService.criar(new AutorRequest("Machado de Assis", null, null, null));
+
+		assertThatThrownBy(() -> autorService.atualizarParcialmente(criado.id(),
+				Json.de("{'dataNascimento': '21/06/1839'}"))).isInstanceOf(JacksonException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteComIdInexistenteLancaExcecao() {
+		assertThatThrownBy(() -> autorService.atualizarParcialmente(-1L, Json.de("{'nome': 'Novo'}")))
+				.isInstanceOf(RecursoNaoEncontradoException.class);
 	}
 
 	@Test

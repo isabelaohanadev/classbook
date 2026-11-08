@@ -81,7 +81,31 @@ class OpenApiConfigTests {
 				operacoes.add(operacao);
 			}
 		}
-		assertThat(operacoes).hasSize(25);
+		assertThat(operacoes).hasSize(30);
+	}
+
+	@Test
+	void cadaRecursoDocumentaOPatchComOsTiposDeConteudoDoMergePatchEOExemploDoCorpo() throws Exception {
+		String json = mockMvc.perform(get("/v3/api-docs"))
+				.andExpect(status().isOk())
+				.andReturn().getResponse().getContentAsString(StandardCharsets.UTF_8);
+		JsonNode rotas = objectMapper.readTree(json).path("paths");
+
+		for (String recurso : List.of("autores", "categorias", "disciplinas", "livros", "materiais")) {
+			JsonNode patch = rotas.path("/api/" + recurso + "/{id}").path("patch");
+			assertThat(patch.isMissingNode()).as("PATCH /api/" + recurso + "/{id}").isFalse();
+			assertThat(patch.path("summary").asString()).as(recurso).startsWith("Edita parcialmente");
+			assertThat(patch.path("description").asString()).as(recurso).contains("JSON Merge Patch");
+			JsonNode corpo = patch.path("requestBody").path("content");
+			assertThat(corpo.has("application/json")).as(recurso).isTrue();
+			assertThat(corpo.has("application/merge-patch+json")).as(recurso).isTrue();
+			assertThat(corpo.path("application/json").has("example")).as(recurso).isTrue();
+			assertThat(corpo.path("application/merge-patch+json").has("example")).as(recurso).isTrue();
+			assertThat(patch.path("responses").has("200")).as(recurso).isTrue();
+			assertThat(patch.path("responses").has("400")).as(recurso).isTrue();
+			assertThat(patch.path("responses").has("404")).as(recurso).isTrue();
+		}
+		assertThat(rotas.path("/api/livros").has("patch")).isFalse();
 	}
 
 	@Test

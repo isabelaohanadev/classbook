@@ -1,10 +1,12 @@
 package br.com.classbook.controller;
 
+import static br.com.classbook.Json.texto;
 import static br.com.classbook.Unico.codigo;
 import static br.com.classbook.Unico.nome;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -23,6 +25,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.transaction.annotation.Transactional;
 
 import br.com.classbook.dto.AutorRequest;
@@ -455,6 +458,219 @@ class LivroControllerTests {
 		mockMvc.perform(get("/api/livros").param("busca", "2050").param("autorId", String.valueOf(autorId)))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.length()").value(0));
+	}
+
+	@Test
+	void edicaoParcialAlteraSoOsCamposEnviados() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long categoriaId = cadastrarCategoria(nome("Literatura"));
+		Long disciplinaId = cadastrarDisciplina("Língua Portuguesa", codigo("LP-1"));
+		Long id = cadastrarLivro(new LivroRequest("Título Antigo", "9780306406157", 1899, "Resumo", "Editora A",
+				autorId, categoriaId, disciplinaId));
+
+		editarParcialmente(id, "{'titulo': 'Título Novo'}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(id))
+				.andExpect(jsonPath("$.titulo").value("Título Novo"))
+				.andExpect(jsonPath("$.isbn").value("9780306406157"))
+				.andExpect(jsonPath("$.anoPublicacao").value(1899))
+				.andExpect(jsonPath("$.descricao").value("Resumo"))
+				.andExpect(jsonPath("$.editora").value("Editora A"))
+				.andExpect(jsonPath("$.autor.id").value(autorId))
+				.andExpect(jsonPath("$.categoria.id").value(categoriaId))
+				.andExpect(jsonPath("$.disciplina.id").value(disciplinaId));
+		mockMvc.perform(get("/api/livros/{id}", id))
+				.andExpect(jsonPath("$.titulo").value("Título Novo"))
+				.andExpect(jsonPath("$.categoria.id").value(categoriaId));
+	}
+
+	@Test
+	void edicaoParcialComCategoriaIdNullTiraOLivroDaCategoriaEMantemADisciplina() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long categoriaId = cadastrarCategoria(nome("Literatura"));
+		Long disciplinaId = cadastrarDisciplina("Língua Portuguesa", codigo("LP-1"));
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, categoriaId,
+				disciplinaId));
+
+		editarParcialmente(id, "{'categoriaId': null}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.categoria").value(nullValue()))
+				.andExpect(jsonPath("$.disciplina.id").value(disciplinaId))
+				.andExpect(jsonPath("$.titulo").value("Título"));
+	}
+
+	@Test
+	void edicaoParcialComDisciplinaIdNullTiraOLivroDaDisciplinaEMantemACategoria() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long categoriaId = cadastrarCategoria(nome("Literatura"));
+		Long disciplinaId = cadastrarDisciplina("Língua Portuguesa", codigo("LP-1"));
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, categoriaId,
+				disciplinaId));
+
+		editarParcialmente(id, "{'disciplinaId': null}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.disciplina").value(nullValue()))
+				.andExpect(jsonPath("$.categoria.id").value(categoriaId));
+	}
+
+	@Test
+	void edicaoParcialQueTiraACategoriaLiberaAExclusaoDela() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long categoriaId = cadastrarCategoria(nome("Literatura"));
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, categoriaId,
+				null));
+		mockMvc.perform(delete("/api/categorias/{id}", categoriaId)).andExpect(status().isConflict());
+
+		editarParcialmente(id, "{'categoriaId': null}").andExpect(status().isOk());
+
+		mockMvc.perform(delete("/api/categorias/{id}", categoriaId)).andExpect(status().isNoContent());
+	}
+
+	@Test
+	void edicaoParcialTrocaACategoriaEOAutor() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long outroAutorId = cadastrarAutor("Clarice Lispector");
+		Long categoriaId = cadastrarCategoria(nome("Literatura"));
+		Long outraCategoriaId = cadastrarCategoria(nome("Referência"));
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, categoriaId,
+				null));
+
+		editarParcialmente(id, "{'autorId': " + outroAutorId + ", 'categoriaId': " + outraCategoriaId + "}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.autor.id").value(outroAutorId))
+				.andExpect(jsonPath("$.autor.nome").value("Clarice Lispector"))
+				.andExpect(jsonPath("$.categoria.id").value(outraCategoriaId));
+	}
+
+	@Test
+	void edicaoParcialAceitaOTipoDeConteudoMergePatchJson() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+
+		mockMvc.perform(patch("/api/livros/{id}", id).contentType("application/merge-patch+json")
+				.content(texto("{'editora': 'Nova Editora'}")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.editora").value("Nova Editora"));
+	}
+
+	@Test
+	void edicaoParcialNormalizaOIsbnComoOCadastro() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+
+		editarParcialmente(id, "{'isbn': '978-0-316-00000-0'}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.isbn").value("9780316000000"));
+	}
+
+	@Test
+	void edicaoParcialMantendoOProprioIsbnRespondeOk() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+
+		editarParcialmente(id, "{'isbn': '978-0-306-40615-7', 'titulo': 'Outro título'}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.isbn").value("9780306406157"))
+				.andExpect(jsonPath("$.titulo").value("Outro título"));
+	}
+
+	@Test
+	void edicaoParcialComIsbnDeOutroLivroRespondeConflict() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		cadastrarLivro(new LivroRequest("Dom Casmurro", "9780306406157", null, null, null, autorId, null, null));
+		Long id = cadastrarLivro(
+				new LivroRequest("Memórias Póstumas", "9780316000000", null, null, null, autorId, null, null));
+
+		editarParcialmente(id, "{'isbn': '9780306406157'}").andExpect(status().isConflict());
+		mockMvc.perform(get("/api/livros/{id}", id)).andExpect(jsonPath("$.isbn").value("9780316000000"));
+	}
+
+	@Test
+	void edicaoParcialComIsbnForaDoFormatoRespondeBadRequestApontandoOCampo() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+
+		editarParcialmente(id, "{'isbn': '123'}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("isbn"));
+	}
+
+	@Test
+	void edicaoParcialComAutorNullRespondeBadRequestApontandoOCampo() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+
+		editarParcialmente(id, "{'autorId': null}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("autorId"));
+	}
+
+	@Test
+	void edicaoParcialComAutorCategoriaOuDisciplinaInexistenteRespondeBadRequest() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+
+		editarParcialmente(id, "{'autorId': -1}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.mensagem").value("Autor -1 não existe."));
+		editarParcialmente(id, "{'categoriaId': -1}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.mensagem").value("Categoria -1 não existe."));
+		editarParcialmente(id, "{'disciplinaId': -1}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.mensagem").value("Disciplina -1 não existe."));
+	}
+
+	@Test
+	void edicaoParcialComAnoNoFuturoRespondeBadRequest() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+		int anoFuturo = Year.now().getValue() + 1;
+
+		editarParcialmente(id, "{'anoPublicacao': " + anoFuturo + "}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.mensagem").value("O ano de publicação " + anoFuturo + " está no futuro."));
+	}
+
+	@Test
+	void edicaoParcialComAnoNullLimpaOAno() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", 1899, null, null, autorId, null, null));
+
+		editarParcialmente(id, "{'anoPublicacao': null}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.anoPublicacao").value(nullValue()));
+	}
+
+	@Test
+	void edicaoParcialComAnoQueNaoEhNumeroRespondeBadRequestApontandoOCampo() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", 1899, null, null, autorId, null, null));
+
+		editarParcialmente(id, "{'anoPublicacao': 'abc'}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("anoPublicacao"));
+		mockMvc.perform(get("/api/livros/{id}", id)).andExpect(jsonPath("$.anoPublicacao").value(1899));
+	}
+
+	@Test
+	void edicaoParcialComTituloMaiorQueAColunaRespondeBadRequestApontandoOCampo() throws Exception {
+		Long autorId = cadastrarAutor("Machado de Assis");
+		Long id = cadastrarLivro(new LivroRequest("Título", "9780306406157", null, null, null, autorId, null, null));
+
+		editarParcialmente(id, "{'titulo': '" + "a".repeat(201) + "'}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("titulo"));
+	}
+
+	@Test
+	void edicaoParcialComIdInexistenteRespondeNotFound() throws Exception {
+		editarParcialmente(-1L, "{'titulo': 'Novo título'}").andExpect(status().isNotFound());
+	}
+
+	private ResultActions editarParcialmente(Long id, String json) throws Exception {
+		return mockMvc.perform(patch("/api/livros/{id}", id).contentType(MediaType.APPLICATION_JSON)
+				.content(texto(json)));
 	}
 
 	private Long cadastrarDisciplina(String nome, String codigo) throws Exception {

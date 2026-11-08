@@ -231,11 +231,11 @@ Serve para o backend e a interface JavaFX avançarem em paralelo. Validado na Is
 
 | Recurso | Rotas |
 | --- | --- |
-| Autor | `GET/POST /api/autores`, `GET/PUT/DELETE /api/autores/{id}` |
-| Livro | `GET/POST /api/livros`, `GET/PUT/DELETE /api/livros/{id}` |
-| Categoria | `GET/POST /api/categorias`, `GET/PUT/DELETE /api/categorias/{id}` |
-| Disciplina | `GET/POST /api/disciplinas`, `GET/PUT/DELETE /api/disciplinas/{id}` |
-| MaterialDigital | `GET/POST /api/materiais`, `GET/PUT/DELETE /api/materiais/{id}` |
+| Autor | `GET/POST /api/autores`, `GET/PUT/PATCH/DELETE /api/autores/{id}` |
+| Livro | `GET/POST /api/livros`, `GET/PUT/PATCH/DELETE /api/livros/{id}` |
+| Categoria | `GET/POST /api/categorias`, `GET/PUT/PATCH/DELETE /api/categorias/{id}` |
+| Disciplina | `GET/POST /api/disciplinas`, `GET/PUT/PATCH/DELETE /api/disciplinas/{id}` |
+| MaterialDigital | `GET/POST /api/materiais`, `GET/PUT/PATCH/DELETE /api/materiais/{id}` |
 
 - **Pesquisa avançada:** `GET /api/livros?busca=&titulo=&autorId=&categoriaId=` (filtros opcionais e combináveis; o filtro de autor usa só o ID, e `busca` é o texto livre). Detalhes em [Livros e autores](#livros-e-autores).
 - **Códigos HTTP:** `200` (consulta, edição), `201` com `Location` (cadastro), `204` (exclusão), `400` (dados inválidos), `404` (ID da rota inexistente), `409` (duplicidade ou registro em uso). O que cada operação pode devolver está na tabela abaixo.
@@ -248,6 +248,7 @@ Serve para o backend e a interface JavaFX avançarem em paralelo. Validado na Is
 | `GET /api/<recurso>/{id}` | `200` | `404` |
 | `POST /api/<recurso>` | `201` com `Location` e o registro criado no corpo | `400`, `409` |
 | `PUT /api/<recurso>/{id}` | `200` com o registro atualizado | `400`, `404`, `409` |
+| `PATCH /api/<recurso>/{id}` | `200` com o registro atualizado | `400`, `404`, `409` (ver [Edição parcial](#edição-parcial-patch)) |
 | `DELETE /api/<recurso>/{id}` | `204`, sem corpo | `404`, `409` |
 
 | Código | Quando |
@@ -378,6 +379,30 @@ Corpo de `MaterialDigitalRequest`:
 
 Material nunca responde `409`: não tem campo único, então cadastrar ou editar não gera duplicidade, e nada o referencia, então a exclusão não é bloqueada.
 
+### Edição parcial (`PATCH`)
+
+O `PUT` substitui o registro inteiro: para mudar só a editora de um livro, o cliente precisa reenviar título, ISBN, autor e todo o resto. O `PATCH /api/<recurso>/{id}` resolve isso: altera **só os campos enviados**. Existe nos cinco recursos e segue o **JSON Merge Patch** ([RFC 7396](https://www.rfc-editor.org/rfc/rfc7396)); aceita `application/json` e `application/merge-patch+json`.
+
+| No corpo do `PATCH` | Efeito |
+| --- | --- |
+| Campo ausente | O valor atual é mantido. |
+| Campo com valor | O valor é trocado. |
+| Campo com `null` | O valor é limpo. Só vale para campo opcional: `null` num campo obrigatório responde `400`. |
+| Campo que não existe no `Request` (inclusive `id`) | Ignorado, como no `POST` e no `PUT`. |
+| `{}` | Nada muda; responde `200` com o registro como está. |
+
+```json
+PATCH /api/livros/7
+{ "editora": "Nova Editora", "categoriaId": null }
+```
+
+O livro 7 troca de editora e sai da categoria; título, ISBN, autor, disciplina e o resto ficam como estavam. Tirar a categoria assim é o que libera a exclusão dela ([Regras comuns às relações](#regras-comuns-às-relações)).
+
+- **As regras são as do `PUT`.** O servidor monta o `Request` completo (o estado atual do registro com os campos enviados por cima) e o passa pelo mesmo caminho do `PUT`: a normalização do construtor (ISBN, nome da categoria, código da disciplina), o Bean Validation, a checagem de duplicidade e a de `autorId`, `categoriaId` e `disciplinaId`. Os erros e a mensagem de cada um são os da tabela de erros do recurso.
+- **Códigos:** `400` para corpo que não é um objeto JSON, campo inválido (no mesmo formato do `@Valid`, com `campos`), valor de tipo errado ou fora da lista do enum, `null` em campo obrigatório e referência inexistente; `404` para o `{id}` da rota; `409` para ISBN, nome de categoria ou código de disciplina já usados por outro registro.
+- **Diferença para o `PUT`:** o `404` vem antes do `400` de campo inválido, porque o corpo só pode ser conferido depois de buscar o registro. No `PUT`, o `@Valid` responde `400` antes de chegar ao service.
+- **O `PATCH` não existe na coleção:** `PATCH /api/livros` responde `405`.
+
 ## Decisões da revisão conjunta
 
 Respostas aos pontos em aberto da proposta (Issue #3). As decisões 1, 2, 3 e 5 dizem respeito a `Autor` e `Livro`; as decisões 4 e 6, a `Categoria`, `Disciplina` e `MaterialDigital`.
@@ -393,7 +418,7 @@ Respostas aos pontos em aberto da proposta (Issue #3). As decisões 1, 2, 3 e 5 
 
 ## Decisões dos relacionamentos
 
-Pontos que estavam em aberto ao definir as relações e o contrato (Issue #4). As decisões 1 a 5 dizem respeito a `Livro`, `Autor` e `Categoria`; a decisão 6, a `MaterialDigital` e `Disciplina`; a decisão 7 foi tomada depois, ao ligar o `Livro` à `Disciplina`.
+Pontos que estavam em aberto ao definir as relações e o contrato (Issue #4). As decisões 1 a 5 dizem respeito a `Livro`, `Autor` e `Categoria`; a decisão 6, a `MaterialDigital` e `Disciplina`; a decisão 7 foi tomada depois, ao ligar o `Livro` à `Disciplina`; a decisão 8, ao acrescentar o `PATCH`.
 
 | # | Pergunta | Decisão |
 | --- | --- | --- |
@@ -404,3 +429,4 @@ Pontos que estavam em aberto ao definir as relações e o contrato (Issue #4). A
 | 5 | Como ler `autor` e `categoria` de forma `LAZY` com `open-in-view=false`? | Converter para DTO dentro do `service` transacional e carregar as duas associações na consulta da listagem (`LEFT JOIN FETCH` ou `@EntityGraph`). Ver [Regras comuns às relações](#regras-comuns-às-relações). |
 | 6 | MaterialDigital → Disciplina: `disciplinaId` inexistente também responde `400`? E os demais pontos da relação? | **`400`, seguindo a decisão 2**, com o mesmo erro padronizado de `autorId` e `categoriaId` (Issue #45). A relação é N:1, `NOT NULL`, `LAZY`, unidirecional e com **`ON DELETE RESTRICT`**: `CASCADE` apagaria todos os materiais de uma disciplina sem aviso, pelo mesmo motivo que levou a rejeitar o `SET NULL` na decisão 1. Ver [MaterialDigital → Disciplina](#materialdigital--disciplina). |
 | 7 | Livro → Disciplina: um livro tem uma ou várias disciplinas? A disciplina é obrigatória? | **Uma só, opcional.** `livro.disciplina_id` aceita `NULL`, como `categoria_id`: os livros já cadastrados seguem válidos e o CRUD de Livro não depende de Disciplina. `ON DELETE RESTRICT` e `disciplinaId` inexistente responde `400`, pelos mesmos motivos das decisões 1 e 2; um `PUT` sem `disciplinaId` remove a disciplina (decisão 4). Ver [Livro → Disciplina](#livro--disciplina). |
+| 8 | Como editar só alguns campos, sem reenviar o registro inteiro como no `PUT`? | **`PATCH` com JSON Merge Patch** nos cinco recursos: campo ausente mantém, `null` limpa um campo opcional. Reaproveita o `Request` e o caminho do `PUT`, então as regras não se repetem. Tirar a categoria ou a disciplina de um livro é `{"categoriaId": null}` ou `{"disciplinaId": null}`. Ver [Edição parcial](#edição-parcial-patch). |
