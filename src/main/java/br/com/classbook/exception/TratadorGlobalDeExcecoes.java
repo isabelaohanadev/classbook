@@ -8,6 +8,7 @@ import java.util.stream.Collectors;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.exc.InvalidFormatException;
@@ -63,11 +64,38 @@ public class TratadorGlobalDeExcecoes {
 		return responder(HttpStatus.BAD_REQUEST, "Há campos inválidos na requisição.", campos, requisicao);
 	}
 
+	/**
+	 * Campo inválido num corpo que não passou pelo {@code @Valid}: o resultado da mesclagem de um
+	 * {@code PATCH}, validado pelo {@code MescladorDePatch}. Sai no mesmo formato do {@code @Valid}.
+	 */
+	@ExceptionHandler(ConstraintViolationException.class)
+	public ResponseEntity<ErroResponse> violacoesDeValidacao(ConstraintViolationException ex,
+			HttpServletRequest requisicao) {
+		List<CampoInvalido> campos = ex.getConstraintViolations().stream()
+				.map(violacao -> new CampoInvalido(violacao.getPropertyPath().toString(), violacao.getMessage()))
+				.sorted(Comparator.comparing(CampoInvalido::campo).thenComparing(CampoInvalido::mensagem))
+				.toList();
+		return responder(HttpStatus.BAD_REQUEST, "Há campos inválidos na requisição.", campos, requisicao);
+	}
+
 	/** JSON malformado, enum fora da lista ou valor de tipo errado no corpo. */
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<ErroResponse> corpoIlegivel(HttpMessageNotReadableException ex,
 			HttpServletRequest requisicao) {
-		if (ex.getMostSpecificCause() instanceof JacksonException jackson && !jackson.getPath().isEmpty()) {
+		return corpoIlegivel(ex.getMostSpecificCause(), requisicao);
+	}
+
+	/**
+	 * Enum fora da lista ou valor de tipo errado num corpo que o Jackson leu fora do Spring MVC: o
+	 * {@code MescladorDePatch} converte o resultado da mesclagem do {@code PATCH} para o {@code Request}.
+	 */
+	@ExceptionHandler(JacksonException.class)
+	public ResponseEntity<ErroResponse> jsonInvalidoNaMesclagem(JacksonException ex, HttpServletRequest requisicao) {
+		return corpoIlegivel(ex, requisicao);
+	}
+
+	private ResponseEntity<ErroResponse> corpoIlegivel(Throwable causa, HttpServletRequest requisicao) {
+		if (causa instanceof JacksonException jackson && !jackson.getPath().isEmpty()) {
 			String campo = jackson.getPath().stream()
 					.map(referencia -> referencia.getPropertyName() != null ? referencia.getPropertyName()
 							: "[" + referencia.getIndex() + "]")

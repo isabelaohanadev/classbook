@@ -3,6 +3,8 @@ package br.com.classbook.service;
 import java.time.Year;
 import java.util.List;
 
+import tools.jackson.databind.JsonNode;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,12 +34,16 @@ public class LivroService {
 
 	private final DisciplinaRepository disciplinaRepository;
 
+	private final MescladorDePatch mesclador;
+
 	public LivroService(LivroRepository livroRepository, AutorRepository autorRepository,
-			CategoriaRepository categoriaRepository, DisciplinaRepository disciplinaRepository) {
+			CategoriaRepository categoriaRepository, DisciplinaRepository disciplinaRepository,
+			MescladorDePatch mesclador) {
 		this.livroRepository = livroRepository;
 		this.autorRepository = autorRepository;
 		this.categoriaRepository = categoriaRepository;
 		this.disciplinaRepository = disciplinaRepository;
+		this.mesclador = mesclador;
 	}
 
 	@Transactional
@@ -67,12 +73,17 @@ public class LivroService {
 
 	@Transactional
 	public LivroResponse atualizar(Long id, LivroRequest request) {
+		return gravar(buscarOuLancar(id), request);
+	}
+
+	/**
+	 * Só os campos presentes em {@code alteracoes} mudam; as regras são as do {@link #atualizar}. Um
+	 * {@code null} em {@code categoriaId} ou {@code disciplinaId} tira o livro da categoria ou da disciplina.
+	 */
+	@Transactional
+	public LivroResponse atualizarParcialmente(Long id, JsonNode alteracoes) {
 		Livro livro = buscarOuLancar(id);
-		if (livroRepository.existsByIsbnAndIdNot(request.isbn(), id)) {
-			throw new ConflitoException("Já existe um livro com o ISBN " + request.isbn() + ".");
-		}
-		preencher(livro, request);
-		return LivroResponse.de(livroRepository.save(livro));
+		return gravar(livro, mesclador.mesclar(comoRequest(livro), alteracoes, LivroRequest.class));
 	}
 
 	@Transactional
@@ -92,6 +103,23 @@ public class LivroService {
 	private Livro buscarOuLancar(Long id) {
 		return livroRepository.findById(id)
 				.orElseThrow(() -> new RecursoNaoEncontradoException("Livro " + id + " não encontrado."));
+	}
+
+	private LivroResponse gravar(Livro livro, LivroRequest request) {
+		if (livroRepository.existsByIsbnAndIdNot(request.isbn(), livro.getId())) {
+			throw new ConflitoException("Já existe um livro com o ISBN " + request.isbn() + ".");
+		}
+		preencher(livro, request);
+		return LivroResponse.de(livroRepository.save(livro));
+	}
+
+	/** O estado atual do livro no formato do {@code PUT}, base da mesclagem do {@code PATCH}. */
+	private static LivroRequest comoRequest(Livro livro) {
+		Categoria categoria = livro.getCategoria();
+		Disciplina disciplina = livro.getDisciplina();
+		return new LivroRequest(livro.getTitulo(), livro.getIsbn(), livro.getAnoPublicacao(), livro.getDescricao(),
+				livro.getEditora(), livro.getAutor().getId(), categoria == null ? null : categoria.getId(),
+				disciplina == null ? null : disciplina.getId());
 	}
 
 	private void preencher(Livro livro, LivroRequest request) {

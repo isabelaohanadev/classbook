@@ -1,10 +1,12 @@
 package br.com.classbook.controller;
 
+import static br.com.classbook.Json.texto;
 import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -256,6 +258,93 @@ class DisciplinaControllerTests {
 				Arguments.of("série em minúsculas", "serieEscolar", "primeira_serie"));
 	}
 
+	@Test
+	void edicaoParcialAlteraSoOsCamposEnviados() throws Exception {
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), "1ª série",
+				SerieEscolar.PRIMEIRA_SERIE));
+
+		editarParcialmente(id, "{'descricao': 'Matemática da 1ª série do ensino médio'}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(id))
+				.andExpect(jsonPath("$.nome").value("Matemática"))
+				.andExpect(jsonPath("$.codigo").value(codigo("MAT-1")))
+				.andExpect(jsonPath("$.descricao").value("Matemática da 1ª série do ensino médio"))
+				.andExpect(jsonPath("$.serieEscolar").value("PRIMEIRA_SERIE"));
+		mockMvc.perform(get("/api/disciplinas/{id}", id))
+				.andExpect(jsonPath("$.descricao").value("Matemática da 1ª série do ensino médio"));
+	}
+
+	@Test
+	void edicaoParcialComNullLimpaOCampoOpcional() throws Exception {
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), "1ª série",
+				SerieEscolar.PRIMEIRA_SERIE));
+
+		editarParcialmente(id, "{'descricao': null}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.descricao").value(nullValue()))
+				.andExpect(jsonPath("$.codigo").value(codigo("MAT-1")));
+	}
+
+	@Test
+	void edicaoParcialNormalizaOCodigoComoOCadastro() throws Exception {
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		editarParcialmente(id, "{'codigo': ' " + codigo("mat-2") + " '}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.codigo").value(codigo("MAT-2")));
+	}
+
+	@Test
+	void edicaoParcialAceitaOTipoDeConteudoMergePatchJson() throws Exception {
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		mockMvc.perform(patch("/api/disciplinas/{id}", id).contentType("application/merge-patch+json")
+				.content(texto("{'serieEscolar': 'SEGUNDA_SERIE'}")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.serieEscolar").value("SEGUNDA_SERIE"));
+	}
+
+	@Test
+	void edicaoParcialComNullEmCampoObrigatorioRespondeBadRequestApontandoOCampo() throws Exception {
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		editarParcialmente(id, "{'serieEscolar': null}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("serieEscolar"));
+	}
+
+	@Test
+	void edicaoParcialComSerieForaDaListaRespondeBadRequestApontandoOCampo() throws Exception {
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		editarParcialmente(id, "{'serieEscolar': 'QUARTA_SERIE'}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("serieEscolar"));
+	}
+
+	@Test
+	void edicaoParcialComCodigoDeOutraDisciplinaRespondeConflict() throws Exception {
+		cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+		Long id = cadastrar(new DisciplinaRequest("Física", codigo("FIS-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		editarParcialmente(id, "{'codigo': '" + codigo("mat-1") + "'}")
+				.andExpect(status().isConflict());
+	}
+
+	@Test
+	void edicaoParcialMantendoOProprioCodigoRespondeOk() throws Exception {
+		Long id = cadastrar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		editarParcialmente(id, "{'codigo': '" + codigo("mat-1") + "', 'nome': 'Matemática Básica'}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.nome").value("Matemática Básica"));
+	}
+
+	@Test
+	void edicaoParcialComIdInexistenteRespondeNotFound() throws Exception {
+		editarParcialmente(-1L, "{'nome': 'Novo Nome'}").andExpect(status().isNotFound());
+	}
+
 	/** Corpo válido em que cada caso da matriz troca um único campo. */
 	private static Map<String, Object> corpoValido() {
 		return new HashMap<>(Map.of("nome", "Matemática", "codigo", codigo("MAT-1"), "descricao", "1ª série",
@@ -265,6 +354,11 @@ class DisciplinaControllerTests {
 	private ResultActions enviar(MockHttpServletRequestBuilder requisicao, Object corpo) throws Exception {
 		return mockMvc.perform(requisicao.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(corpo)));
+	}
+
+	private ResultActions editarParcialmente(Long id, String json) throws Exception {
+		return mockMvc.perform(patch("/api/disciplinas/{id}", id).contentType(MediaType.APPLICATION_JSON)
+				.content(texto(json)));
 	}
 
 	private Long cadastrar(DisciplinaRequest request) throws Exception {

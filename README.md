@@ -116,7 +116,7 @@ Com a aplicação no ar, a documentação das rotas fica disponível no navegado
 
 ### Rotas da API
 
-Cada recurso tem as cinco operações: `POST` (cadastra e responde `201` com `Location`), `GET` (lista), `GET /{id}` (consulta), `PUT /{id}` (edita) e `DELETE /{id}` (exclui e responde `204`).
+Cada recurso tem as seis operações: `POST` (cadastra e responde `201` com `Location`), `GET` (lista), `GET /{id}` (consulta), `PUT /{id}` (edita, substituindo o registro inteiro), `PATCH /{id}` (edita só os campos enviados, no formato JSON Merge Patch: campo ausente não muda e `null` limpa um campo opcional) e `DELETE /{id}` (exclui e responde `204`).
 
 | Recurso | Rota | Observações |
 | --- | --- | --- |

@@ -6,13 +6,20 @@ import java.util.List;
 import jakarta.validation.Valid;
 
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.ExampleObject;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 
+import tools.jackson.databind.JsonNode;
+
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -31,6 +38,8 @@ import br.com.classbook.service.MaterialDigitalService;
 @RestController
 @RequestMapping("/api/materiais")
 public class MaterialDigitalController {
+
+	private static final String EXEMPLO_PATCH = "{\"url\": \"https://exemplo.com/novo-link.pdf\"}";
 
 	private final MaterialDigitalService materialDigitalService;
 
@@ -78,6 +87,22 @@ public class MaterialDigitalController {
 	public MaterialDigitalResponse atualizar(@PathVariable Long id,
 			@Valid @RequestBody MaterialDigitalRequest request) {
 		return materialDigitalService.atualizar(id, request);
+	}
+
+	@PatchMapping(path = "/{id}", consumes = { MediaType.APPLICATION_JSON_VALUE, MergePatch.CONTENT_TYPE })
+	@Operation(summary = "Edita parcialmente um material digital", description = MergePatch.REGRAS
+			+ " Campos aceitos: titulo, formato, url, descricao, dataPublicacao e disciplinaId.")
+	@io.swagger.v3.oas.annotations.parameters.RequestBody(content = {
+			@Content(mediaType = MediaType.APPLICATION_JSON_VALUE, schema = @Schema(type = "object"),
+					examples = @ExampleObject(value = EXEMPLO_PATCH)),
+			@Content(mediaType = MergePatch.CONTENT_TYPE, schema = @Schema(type = "object"),
+					examples = @ExampleObject(value = EXEMPLO_PATCH)) })
+	@ApiResponse(responseCode = "200", description = "Material editado, com a disciplina resumida")
+	@ApiResponse(responseCode = "400", description = "Campo inválido, URL que não é http ou https, formato fora da "
+			+ "lista, disciplina inexistente, ID que não é número, corpo que não é um objeto JSON ou JSON malformado")
+	@ApiResponse(responseCode = "404", description = "Material não encontrado")
+	public MaterialDigitalResponse atualizarParcialmente(@PathVariable Long id, @RequestBody JsonNode alteracoes) {
+		return materialDigitalService.atualizarParcialmente(id, alteracoes);
 	}
 
 	@DeleteMapping("/{id}")

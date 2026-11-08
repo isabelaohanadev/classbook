@@ -1,10 +1,12 @@
 package br.com.classbook.controller;
 
+import static br.com.classbook.Json.texto;
 import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -245,6 +247,110 @@ class MaterialDigitalControllerTests {
 				Arguments.of("disciplina inexistente", "disciplinaId", -1));
 	}
 
+	@Test
+	void edicaoParcialAlteraSoOsCamposEnviados() throws Exception {
+		Long id = cadastrar("/api/materiais", new MaterialDigitalRequest("Lista de funções", FormatoMaterial.PDF,
+				"https://exemplo.com/funcoes.pdf", "Texto", LocalDate.of(2026, 3, 10), disciplinaId));
+
+		editarParcialmente(id, "{'url': 'https://exemplo.com/funcoes-v2.pdf'}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.id").value(id))
+				.andExpect(jsonPath("$.titulo").value("Lista de funções"))
+				.andExpect(jsonPath("$.formato").value("PDF"))
+				.andExpect(jsonPath("$.url").value("https://exemplo.com/funcoes-v2.pdf"))
+				.andExpect(jsonPath("$.descricao").value("Texto"))
+				.andExpect(jsonPath("$.dataPublicacao").value("2026-03-10"))
+				.andExpect(jsonPath("$.disciplina.id").value(disciplinaId))
+				.andExpect(jsonPath("$.disciplina.codigo").value(codigo("MAT-1")));
+		mockMvc.perform(get("/api/materiais/{id}", id))
+				.andExpect(jsonPath("$.url").value("https://exemplo.com/funcoes-v2.pdf"));
+	}
+
+	@Test
+	void edicaoParcialComNullLimpaOsCamposOpcionais() throws Exception {
+		Long id = cadastrar("/api/materiais", new MaterialDigitalRequest("Lista de funções", FormatoMaterial.PDF,
+				"https://exemplo.com/funcoes.pdf", "Texto", LocalDate.of(2026, 3, 10), disciplinaId));
+
+		editarParcialmente(id, "{'descricao': null, 'dataPublicacao': null}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.descricao").value(nullValue()))
+				.andExpect(jsonPath("$.dataPublicacao").value(nullValue()))
+				.andExpect(jsonPath("$.titulo").value("Lista de funções"))
+				.andExpect(jsonPath("$.disciplina.id").value(disciplinaId));
+	}
+
+	@Test
+	void edicaoParcialTrocaADisciplinaDoMaterial() throws Exception {
+		Long id = cadastrar("/api/materiais", material("Lista de funções", "https://exemplo.com/funcoes.pdf",
+				disciplinaId));
+		Long outraDisciplinaId = cadastrar("/api/disciplinas",
+				new DisciplinaRequest("Física", codigo("FIS-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		editarParcialmente(id, "{'disciplinaId': " + outraDisciplinaId + "}")
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.disciplina.id").value(outraDisciplinaId))
+				.andExpect(jsonPath("$.disciplina.nome").value("Física"))
+				.andExpect(jsonPath("$.titulo").value("Lista de funções"));
+	}
+
+	@Test
+	void edicaoParcialAceitaOTipoDeConteudoMergePatchJson() throws Exception {
+		Long id = cadastrar("/api/materiais", material("Lista de funções", "https://exemplo.com/funcoes.pdf",
+				disciplinaId));
+
+		mockMvc.perform(patch("/api/materiais/{id}", id).contentType("application/merge-patch+json")
+				.content(texto("{'formato': 'LINK'}")))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.formato").value("LINK"));
+	}
+
+	@Test
+	void edicaoParcialComDisciplinaInexistenteRespondeBadRequestSemMudarOMaterial() throws Exception {
+		Long id = cadastrar("/api/materiais", material("Lista de funções", "https://exemplo.com/funcoes.pdf",
+				disciplinaId));
+
+		editarParcialmente(id, "{'titulo': 'Outro título', 'disciplinaId': -1}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.mensagem").value("Disciplina -1 não existe."));
+	}
+
+	@Test
+	void edicaoParcialComDisciplinaNullRespondeBadRequestApontandoOCampo() throws Exception {
+		Long id = cadastrar("/api/materiais", material("Lista de funções", "https://exemplo.com/funcoes.pdf",
+				disciplinaId));
+
+		editarParcialmente(id, "{'disciplinaId': null}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("disciplinaId"));
+	}
+
+	@Test
+	void edicaoParcialComUrlQueNaoEhHttpRespondeBadRequestApontandoOCampo() throws Exception {
+		Long id = cadastrar("/api/materiais", material("Lista de funções", "https://exemplo.com/funcoes.pdf",
+				disciplinaId));
+
+		editarParcialmente(id, "{'url': 'ftp://exemplo.com/funcoes.pdf'}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("url"));
+		mockMvc.perform(get("/api/materiais/{id}", id))
+				.andExpect(jsonPath("$.url").value("https://exemplo.com/funcoes.pdf"));
+	}
+
+	@Test
+	void edicaoParcialComFormatoForaDaListaRespondeBadRequestApontandoOCampo() throws Exception {
+		Long id = cadastrar("/api/materiais", material("Lista de funções", "https://exemplo.com/funcoes.pdf",
+				disciplinaId));
+
+		editarParcialmente(id, "{'formato': 'pdf'}")
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.campos[0].campo").value("formato"));
+	}
+
+	@Test
+	void edicaoParcialComIdInexistenteRespondeNotFound() throws Exception {
+		editarParcialmente(-1L, "{'titulo': 'Novo título'}").andExpect(status().isNotFound());
+	}
+
 	/** Corpo válido em que cada caso da matriz troca um único campo. */
 	private Map<String, Object> corpoValido() {
 		return new HashMap<>(Map.of("titulo", "Lista de funções", "formato", "PDF",
@@ -259,6 +365,11 @@ class MaterialDigitalControllerTests {
 	private ResultActions enviar(MockHttpServletRequestBuilder requisicao, Object corpo) throws Exception {
 		return mockMvc.perform(requisicao.contentType(MediaType.APPLICATION_JSON)
 				.content(objectMapper.writeValueAsString(corpo)));
+	}
+
+	private ResultActions editarParcialmente(Long id, String json) throws Exception {
+		return mockMvc.perform(patch("/api/materiais/{id}", id).contentType(MediaType.APPLICATION_JSON)
+				.content(texto(json)));
 	}
 
 	private Long cadastrar(String rota, Object corpo) throws Exception {

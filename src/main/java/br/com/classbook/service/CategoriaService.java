@@ -2,6 +2,8 @@ package br.com.classbook.service;
 
 import java.util.List;
 
+import tools.jackson.databind.JsonNode;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,9 +23,13 @@ public class CategoriaService {
 
 	private final LivroRepository livroRepository;
 
-	public CategoriaService(CategoriaRepository categoriaRepository, LivroRepository livroRepository) {
+	private final MescladorDePatch mesclador;
+
+	public CategoriaService(CategoriaRepository categoriaRepository, LivroRepository livroRepository,
+			MescladorDePatch mesclador) {
 		this.categoriaRepository = categoriaRepository;
 		this.livroRepository = livroRepository;
+		this.mesclador = mesclador;
 	}
 
 	@Transactional
@@ -48,12 +54,14 @@ public class CategoriaService {
 
 	@Transactional
 	public CategoriaResponse atualizar(Long id, CategoriaRequest request) {
+		return gravar(buscarOuLancar(id), request);
+	}
+
+	/** Só os campos presentes em {@code alteracoes} mudam; as regras são as do {@link #atualizar}. */
+	@Transactional
+	public CategoriaResponse atualizarParcialmente(Long id, JsonNode alteracoes) {
 		Categoria categoria = buscarOuLancar(id);
-		if (categoriaRepository.existsByNomeIgnoreCaseAndIdNot(request.nome(), id)) {
-			throw new ConflitoException("Já existe uma categoria com o nome " + request.nome() + ".");
-		}
-		preencher(categoria, request);
-		return CategoriaResponse.de(categoriaRepository.save(categoria));
+		return gravar(categoria, mesclador.mesclar(comoRequest(categoria), alteracoes, CategoriaRequest.class));
 	}
 
 	@Transactional
@@ -68,6 +76,20 @@ public class CategoriaService {
 	private Categoria buscarOuLancar(Long id) {
 		return categoriaRepository.findById(id)
 				.orElseThrow(() -> new RecursoNaoEncontradoException("Categoria " + id + " não encontrada."));
+	}
+
+	private CategoriaResponse gravar(Categoria categoria, CategoriaRequest request) {
+		if (categoriaRepository.existsByNomeIgnoreCaseAndIdNot(request.nome(), categoria.getId())) {
+			throw new ConflitoException("Já existe uma categoria com o nome " + request.nome() + ".");
+		}
+		preencher(categoria, request);
+		return CategoriaResponse.de(categoriaRepository.save(categoria));
+	}
+
+	/** O estado atual da categoria no formato do {@code PUT}, base da mesclagem do {@code PATCH}. */
+	private static CategoriaRequest comoRequest(Categoria categoria) {
+		return new CategoriaRequest(categoria.getNome(), categoria.getDescricao(), categoria.getFaixaEtaria(),
+				categoria.getTipo());
 	}
 
 	private void preencher(Categoria categoria, CategoriaRequest request) {

@@ -4,11 +4,16 @@ import static br.com.classbook.Unico.codigo;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import jakarta.validation.ConstraintViolationException;
+
+import tools.jackson.core.JacksonException;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.transaction.annotation.Transactional;
 
+import br.com.classbook.Json;
 import br.com.classbook.dto.DisciplinaRequest;
 import br.com.classbook.dto.DisciplinaResponse;
 import br.com.classbook.dto.LivroRequest;
@@ -204,6 +209,91 @@ class DisciplinaServiceTests {
 				new DisciplinaRequest("Matemática Básica", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
 
 		assertThat(atualizada.nome()).isEqualTo("Matemática Básica");
+	}
+
+	@Test
+	void atualizarParcialmenteMudaSoOsCamposEnviados() {
+		DisciplinaResponse criada = disciplinaService
+				.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), "1ª série", SerieEscolar.PRIMEIRA_SERIE));
+
+		DisciplinaResponse atualizada = disciplinaService.atualizarParcialmente(criada.id(),
+				Json.de("{'descricao': 'Matemática da 1ª série do ensino médio'}"));
+
+		assertThat(atualizada).isEqualTo(new DisciplinaResponse(criada.id(), "Matemática", codigo("MAT-1"),
+				"Matemática da 1ª série do ensino médio", SerieEscolar.PRIMEIRA_SERIE));
+		assertThat(disciplinaRepository.findById(criada.id()).orElseThrow().getDescricao())
+				.isEqualTo("Matemática da 1ª série do ensino médio");
+	}
+
+	@Test
+	void atualizarParcialmenteComNullLimpaOCampoOpcional() {
+		DisciplinaResponse criada = disciplinaService
+				.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), "1ª série", SerieEscolar.PRIMEIRA_SERIE));
+
+		DisciplinaResponse atualizada = disciplinaService.atualizarParcialmente(criada.id(),
+				Json.de("{'descricao': null}"));
+
+		assertThat(atualizada.descricao()).isNull();
+		assertThat(atualizada.codigo()).isEqualTo(codigo("MAT-1"));
+	}
+
+	@Test
+	void atualizarParcialmenteNormalizaOCodigo() {
+		DisciplinaResponse criada = disciplinaService
+				.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		DisciplinaResponse atualizada = disciplinaService.atualizarParcialmente(criada.id(),
+				Json.de("{'codigo': ' " + codigo("mat-2") + " '}"));
+
+		assertThat(atualizada.codigo()).isEqualTo(codigo("MAT-2"));
+	}
+
+	@Test
+	void atualizarParcialmenteComCodigoDeOutraDisciplinaLancaConflito() {
+		disciplinaService.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null,
+				SerieEscolar.PRIMEIRA_SERIE));
+		DisciplinaResponse outra = disciplinaService
+				.criar(new DisciplinaRequest("Física", codigo("FIS-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		assertThatThrownBy(() -> disciplinaService.atualizarParcialmente(outra.id(),
+				Json.de("{'codigo': '" + codigo("mat-1") + "'}"))).isInstanceOf(ConflitoException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteMantendoOProprioCodigoNaoEhConflito() {
+		DisciplinaResponse criada = disciplinaService
+				.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		DisciplinaResponse atualizada = disciplinaService.atualizarParcialmente(criada.id(),
+				Json.de("{'codigo': '" + codigo("mat-1") + "', 'nome': 'Matemática Básica'}"));
+
+		assertThat(atualizada.nome()).isEqualTo("Matemática Básica");
+	}
+
+	@Test
+	void atualizarParcialmenteComSerieNullLancaViolacaoDeValidacao() {
+		DisciplinaResponse criada = disciplinaService
+				.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		assertThatThrownBy(() -> disciplinaService.atualizarParcialmente(criada.id(),
+				Json.de("{'serieEscolar': null}")))
+				.isInstanceOfSatisfying(ConstraintViolationException.class, ex -> assertThat(ex.getConstraintViolations())
+						.extracting(violacao -> violacao.getPropertyPath().toString()).containsExactly("serieEscolar"));
+	}
+
+	@Test
+	void atualizarParcialmenteComSerieForaDaListaLancaErroDoJackson() {
+		DisciplinaResponse criada = disciplinaService
+				.criar(new DisciplinaRequest("Matemática", codigo("MAT-1"), null, SerieEscolar.PRIMEIRA_SERIE));
+
+		assertThatThrownBy(() -> disciplinaService.atualizarParcialmente(criada.id(),
+				Json.de("{'serieEscolar': 'QUARTA_SERIE'}"))).isInstanceOf(JacksonException.class);
+	}
+
+	@Test
+	void atualizarParcialmenteComIdInexistenteLancaExcecao() {
+		assertThatThrownBy(() -> disciplinaService.atualizarParcialmente(-1L, Json.de("{'nome': 'Novo'}")))
+				.isInstanceOf(RecursoNaoEncontradoException.class);
 	}
 
 }

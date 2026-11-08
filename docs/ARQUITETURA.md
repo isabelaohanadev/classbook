@@ -63,7 +63,7 @@ Se o service lança uma exceção, a transação é desfeita e o tratador global
 
 - **Domínio em português, sufixos técnicos em inglês.** Classes, campos, métodos e mensagens ficam em português (RNF09), sem acentos nos identificadores (`MaterialDigital`, `serieEscolar`). Os sufixos seguem o Spring: `Repository`, `Service`, `Controller`, `Request`, `Response`, `Exception` e `Config`.
 - **Consultas derivadas do Spring Data** começam pelas palavras-chave em inglês, porque o Spring Data monta a consulta a partir delas: `existsByIsbn`, `existsByAutorId`, `existsByNomeIgnoreCase`.
-- **Métodos do service e do controller:** `criar`, `listar`, `buscarPorId`, `atualizar` e `excluir`, com os mesmos nomes nas duas camadas.
+- **Métodos do service e do controller:** `criar`, `listar`, `buscarPorId`, `atualizar`, `atualizarParcialmente` (o `PATCH`) e `excluir`, com os mesmos nomes nas duas camadas.
 - **JSON:** os campos têm o nome dos componentes do record, em camelCase (`anoPublicacao`, `autorId`), e os enums trafegam pelo nome da constante (`"PRIMEIRA_SERIE"`).
 
 ## Entidades
@@ -78,6 +78,7 @@ Se o service lança uma exceção, a transação é desfeita e o tratador global
 
 - **Records Java** em `dto/`: imutáveis e sem setters. O Jackson cria e serializa records sem nenhuma configuração.
 - **Um `Request` para `POST` e `PUT`.** O `PUT` substitui o registro inteiro ([contrato](MODELAGEM.md#livros-e-autores)), então os campos são os mesmos. O `Request` não tem `id`: o ID vem da rota (`/api/livros/{id}`), e um `id` enviado no corpo é ignorado.
+- **O `PATCH` não tem DTO próprio.** Ele reaproveita o `Request`: o service monta o `Request` com o estado atual do registro, o `MescladorDePatch` aplica por cima os campos enviados e o resultado segue o mesmo caminho do `PUT` ([Edição parcial](MODELAGEM.md#edição-parcial-patch)). Assim as regras de formato e de negócio não se repetem.
 - **Um `Response` para todas as saídas do recurso** (cadastro, edição, consulta e listagem): o `id` e os campos, sem dados internos.
 - **Relacionamentos:** o `Request` recebe o ID (`autorId`, `categoriaId`, `disciplinaId`), e o `Response` devolve um resumo aninhado (`autor: {id, nome}`), declarado como record interno do `Response` que o usa.
 - **Enums:** os DTOs usam os próprios enums de `model` (`TipoCategoria tipo`). O Jackson converte pelo nome exato da constante e responde `400` a um valor fora da lista ou com outra caixa (`"pdf"`), sem código nosso.
@@ -139,6 +140,9 @@ As anotações de validação de cada campo seguem as regras da [modelagem](MODE
 - **A conversão entre entidade e DTO acontece no service, dentro da transação.** Com `open-in-view=false` e associações `LAZY`, ler `livro.getAutor().getNome()` fora da transação lança `LazyInitializationException` (decisão 5 em [Decisões dos relacionamentos](MODELAGEM.md#decisões-dos-relacionamentos)).
   - **Entidade → `Response`:** `XxxResponse.de(entidade)`, chamado só pelo service.
   - **`Request` → entidade:** num método privado do service que preenche a entidade, usado no `criar` e no `atualizar`. Fica no service porque transformar `autorId` em `Autor` exige consultar o repositório e responder `400` se o autor não existir.
+  - **Entidade → `Request`:** num método privado `comoRequest(entidade)`, usado só pelo `atualizarParcialmente`, que parte do estado atual do registro.
+- **`atualizarParcialmente(id, JsonNode alteracoes)`** é a única operação do service que recebe um `JsonNode` em vez de um `Request`: o `PATCH` precisa distinguir o campo ausente (mantém) do `null` (limpa), e um record não guarda essa diferença. O service busca o registro (`404`), pede ao `MescladorDePatch` o `Request` mesclado e validado, e grava pelo mesmo método privado que o `atualizar` usa, então `PUT` e `PATCH` têm a mesma conferência de duplicidade e de referências.
+- **`MescladorDePatch`** (`@Component` em `service`) faz a mesclagem: converte o `Request` atual em JSON, sobrepõe os campos enviados (ignora os que não são do `Request`), converte de volta, pelo construtor que normaliza, e roda o Bean Validation, já que o `@Valid` do controller não vê esse resultado.
 
 ```java
 @Service
@@ -186,7 +190,7 @@ public class LivroService {
 
 - **`@RestController` com `@RequestMapping("/api/<recurso>")`,** seguindo as rotas e os [códigos HTTP](MODELAGEM.md#códigos-http) do contrato.
 - **Injeta só o service do recurso,** pelo construtor.
-- **`@Valid @RequestBody XxxRequest`** no `POST` e no `PUT`.
+- **`@Valid @RequestBody XxxRequest`** no `POST` e no `PUT`. O `PATCH` recebe `@RequestBody JsonNode` sem `@Valid`: o corpo só vira um `Request` completo dentro do service, que o valida (ver [Services](#services)). O `PATCH` aceita `application/json` e `application/merge-patch+json`.
 - **Respostas:** o `POST` devolve `ResponseEntity.created(location).body(...)` (`201` com `Location`); o `DELETE` é `void` com `@ResponseStatus(HttpStatus.NO_CONTENT)` (`204`); o `GET` e o `PUT` devolvem o `Response` direto (`200`).
 - **Sem `try/catch`:** as exceções seguem para o tratador global.
 
@@ -230,6 +234,7 @@ Cada controller documenta as próprias rotas (Issue #48), e o springdoc monta o 
 - **`@Operation(summary = "...")` em cada método,** com o verbo no presente (`"Cadastra uma disciplina"`). Uma regra que o cliente precisa conhecer vai em `description`.
 - **Um `@ApiResponse(responseCode = "...", description = "...")` por código possível,** inclusive o de sucesso. No `POST`, o `201` documentado substitui o `200` que o springdoc mostraria.
 - **Os erros não declaram corpo:** o `OpenApiConfig` põe o esquema do [`ErroResponse`](#formato-de-erro) em toda resposta 4xx.
+- **O `PATCH` documenta o corpo à mão,** porque o parâmetro é um `JsonNode` e o springdoc não tiraria dele a lista de campos: o `@RequestBody` do Swagger (`io.swagger.v3.oas.annotations.parameters.RequestBody`) declara os dois tipos de conteúdo com um exemplo inofensivo (um campo opcional, nunca um `null`), e o `@Operation` lista os campos aceitos com o texto de `MergePatch.REGRAS`.
 
 O `OpenApiConfigTests` confere que as rotas documentadas têm tag, resumo e descrição em todas as respostas. Ao documentar um novo controller, acrescente a rota à lista `ROTAS_DOCUMENTADAS` do teste.
 
@@ -284,7 +289,9 @@ O tratador global também cobre erros que o próprio Spring lança, sem exceçã
 | Situação | Exceção | Status |
 | --- | --- | --- |
 | Campo inválido no `Request` (`@Valid`) | `MethodArgumentNotValidException` | `400`, listando os campos com erro |
+| Campo inválido no resultado de um `PATCH` | `ConstraintViolationException` (lançada pelo `MescladorDePatch`) | `400`, no mesmo formato do `@Valid` |
 | JSON malformado ou enum fora da lista | `HttpMessageNotReadableException` | `400` |
+| Enum fora da lista ou valor de tipo errado num `PATCH` | `JacksonException` (lançada pelo `MescladorDePatch`) | `400`, apontando o campo |
 | Filtro que não é número (`?autorId=abc`) | `MethodArgumentTypeMismatchException` | `400` |
 | Restrição do banco violada que escapou do service | `DataIntegrityViolationException` | `409`, sem detalhes do banco |
 | Rota inexistente, método não suportado, corpo que não é JSON | `NoResourceFoundException`, `HttpRequestMethodNotSupportedException`, `HttpMediaTypeNotSupportedException` | `404`, `405`, `415` |

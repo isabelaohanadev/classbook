@@ -2,6 +2,8 @@ package br.com.classbook.service;
 
 import java.util.List;
 
+import tools.jackson.databind.JsonNode;
+
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,10 +24,13 @@ public class MaterialDigitalService {
 
 	private final DisciplinaRepository disciplinaRepository;
 
+	private final MescladorDePatch mesclador;
+
 	public MaterialDigitalService(MaterialDigitalRepository materialDigitalRepository,
-			DisciplinaRepository disciplinaRepository) {
+			DisciplinaRepository disciplinaRepository, MescladorDePatch mesclador) {
 		this.materialDigitalRepository = materialDigitalRepository;
 		this.disciplinaRepository = disciplinaRepository;
+		this.mesclador = mesclador;
 	}
 
 	@Transactional
@@ -48,9 +53,14 @@ public class MaterialDigitalService {
 
 	@Transactional
 	public MaterialDigitalResponse atualizar(Long id, MaterialDigitalRequest request) {
+		return gravar(buscarOuLancar(id), request);
+	}
+
+	/** Só os campos presentes em {@code alteracoes} mudam; as regras são as do {@link #atualizar}. */
+	@Transactional
+	public MaterialDigitalResponse atualizarParcialmente(Long id, JsonNode alteracoes) {
 		MaterialDigital material = buscarOuLancar(id);
-		preencher(material, request);
-		return MaterialDigitalResponse.de(materialDigitalRepository.save(material));
+		return gravar(material, mesclador.mesclar(comoRequest(material), alteracoes, MaterialDigitalRequest.class));
 	}
 
 	@Transactional
@@ -62,6 +72,17 @@ public class MaterialDigitalService {
 	private MaterialDigital buscarOuLancar(Long id) {
 		return materialDigitalRepository.findById(id)
 				.orElseThrow(() -> new RecursoNaoEncontradoException("Material " + id + " não encontrado."));
+	}
+
+	private MaterialDigitalResponse gravar(MaterialDigital material, MaterialDigitalRequest request) {
+		preencher(material, request);
+		return MaterialDigitalResponse.de(materialDigitalRepository.save(material));
+	}
+
+	/** O estado atual do material no formato do {@code PUT}, base da mesclagem do {@code PATCH}. */
+	private static MaterialDigitalRequest comoRequest(MaterialDigital material) {
+		return new MaterialDigitalRequest(material.getTitulo(), material.getFormato(), material.getUrl(),
+				material.getDescricao(), material.getDataPublicacao(), material.getDisciplina().getId());
 	}
 
 	private void preencher(MaterialDigital material, MaterialDigitalRequest request) {
